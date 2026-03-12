@@ -1,0 +1,231 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    height: 100vh;
+    background: url('banner-home-frota.png') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+body::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.75);
+    z-index: 0;
+}
+.container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+    padding: 20px;
+}
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+header h1 {
+    font-size: 28px;
+    color: #333;
+}
+.button {
+    position: relative;
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 18px;
+    color: #fff;
+    background-color: #d11a2d;
+    border-radius: 12px;
+    text-decoration: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 260px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+.button.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.tooltip {
+    visibility: hidden;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 2;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    white-space: nowrap;
+}
+.button:hover .tooltip,
+.button.touch .tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+/* Estilos para modais */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.close {
+    color: #aaa;
+    align-self: flex-end;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+}
+/* Nova cor para o botão de segunda tela */
+#btn-segunda-tela {
+    background-color: #ff4500; /* Laranja */
+}
+/* Nova cor para o botão telefones */
+#btn-telefones {
+    font-size: 18px;
+    color: #000000;
+    background-color: #00FA9A; /* verde claro */
+}
+/* Nova cor para o botão levantamentos */
+#btn-levantamentos {
+    font-size: 18px;
+    color: #000000;
+    background-color: #00FA9A; /* verde claro */
+    display: none !important;
+}
+.aviso-banner {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+    z-index: 100;
+    display: flex;                 /* garante centralização sempre */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;                 /* evita que o conteúdo encoste nas bordas */
+    cursor: pointer;
+}
+
+.aviso-conteudo {
+    background: linear-gradient(135deg, #ffffff, #fff5f5);
+    color: #d11a2d;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    width: min(420px, 90%);        /* mais inteligente que max-width */
+    border: 3px solid #d11a2d;
+}
+
+.aviso-conteudo h2 {
+    margin: 0 0 1rem;
+    font-size: clamp(1.6rem, 4vw, 2.1rem); /* ajusta automaticamente */
+}
+
+.aviso-conteudo p {
+    margin: 0.8rem 0;
+    font-size: clamp(1rem, 3.5vw, 1.15rem);
+    line-height: 1.4;
+}
+
+/* Ajustes extras para telas muito pequenas */
+@media (max-width: 380px) {
+    .aviso-conteudo {
+        padding: 1.5rem;
+        border-width: 2px;
+    }
+}
+.botao-fechar-banner {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    background-color: #d11a2d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.botao-fechar-banner .icone {
+    transition: opacity 0.2s ease;
+}
+
+.botao-fechar-banner .texto {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: normal;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+}
+
+.botao-fechar-banner:hover .icone {
+    opacity: 0;
+}
+
+.botao-fechar-banner:hover .texto {
+    opacity: 1;
+}
+
+.botao-fechar-banner:hover {
+    background-color: #a01624;
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    width: 80px;
+}
+
+.botao-fechar-banner:active {
+    transform: scale(0.95);
+}

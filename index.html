@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PENSO - Prancheta eletrônica</title>
+    <link rel="icon" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="aviso-temporario" class="aviso-banner">
+    <div class="aviso-conteudo">
+ <button class="botao-fechar-banner" onclick="fecharBanner()">
+            <span class="icone">×</span>
+            <span class="texto">FECHAR</span>
+        </button>
+        <h2>ATENÇÃO</h2>
+        <p>Período de inspeções 5S da frota Osasco iniciado em 11/03/2026.<br>
+           Preencha o formulário correspondente no menu INSPEÇÕES DE 5S.<br>
+			As inspeções se encerrarão dia 20/03/2026</p>
+        <p style="font-size: 0.9em; margin-top: 20px; opacity: 0.9;">
+        </p>
+    </div>
+</div>
+    <div id="main-screen" class="container">
+        <header>
+            <h1><i class="fas fa-clipboard-list"></i> Painel de Acessos</h1>
+        </header>
+
+        <a class="button" href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1">
+            <i class="fas fa-file-excel"></i> IR PARA RELATÓRIOS DE FISCAL
+        </a>
+
+        <a class="button" id="btn-ideias" href="https://forms.office.com/r/DFBt9eC2pX">
+            <i class="fas fa-lightbulb"></i> USINA DE IDEIAS
+            <span class="tooltip">Registre sua ideia e concorra a prêmios</span>
+        </a>
+
+        <a class="button" id="btn-telefones" href="https://forms.office.com/r/Vr3tWmLyv2">
+            <i class="fas fa-phone"></i> ATUALIZAÇÃO DE TELEFONES
+            <span class="tooltip">Atualize seus dados de contato</span>
+        </a>
+
+        <a class="button" id="btn-clandestinos-rto" href="#">
+            <i class="fas fa-ban"></i> CLANDESTINOS OSASCO e CAJAMAR
+        </a>
+
+        <a class="button" id="btn-inspecoes-5s" href="#">
+            <i class="fa-solid fa-magnifying-glass"></i> INSPEÇÕES DE 5S
+        </a>
+
+        <a class="button" id="btn-levantamentos" href="#">
+            <i class="fa-solid fa-list-ul"></i> Levantamentos
+        </a>
+
+        <a class="button" id="btn-segunda-tela" href="#">
+            <i class="fa-solid fa-key"></i> INSPETORES >>>>
+        </a>
+    </div>
+
+    <div id="inspector-screen" class="container" style="display: none;">
+        <header style="width: 100%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <h1><i class="fas fa-user-shield"></i> Tela de Inspetores</h1>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="logoutInspector()" class="button" 
+                        style="background-color:#d11a2d; min-width: auto; padding: 12px 20px;">
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <p id="welcome-msg" style="text-align:center; color:#333; font-size:18px; margin: 20px 0;">
+            Bem-vindo, Inspetor!
+        </p>
+
+        </a>
+		<a class="button" id="btn-Reladiario" href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog">
+                <i class="fa-solid fa-circle-user"></i> RELATÓRIO DIÁRIO (GOOGLE FORMS)
+         </a>
+		<a class="button" id="btn-Placas" href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d">
+                <i class="fa-solid fa-bus"></i> CONSULTA PLACAS
+        </a>
+            <a class="button" id="btn-Guaritas" href="https://forms.office.com/r/XDdEFdBwrC">
+                <i class="fas fa-clipboard-check"></i> 5S - GUARITAS
+            </a>
+		<a class="button" id="btn-Imagens" href="https://forms.office.com/r/XDdEFdBwrC">
+                <i class="fa-solid fa-video"></i> SOLICITAÇÃO DE IMAGEM
+            </a>
+       
+    </div>
+
+    <div id="modal-clandestinos-rto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modal-clandestinos-rto')">&times;</span>
+            <a class="button" href="https://forms.office.com/r/v4BMhNHbSR">
+                <i class="fas fa-ban"></i> RUA MELVIN JONES - CLANDESTINOS
+            </a>
+            <a class="button" href="https://forms.office.com/r/JF8tPFysX6">
+                <i class="fas fa-ban"></i> CLANDESTINOS - CAJAMAR
+            </a>
+        </div>
+    </div>
+     <!-- Modal para Levantamentos-->
+     <div id="modal-levantamentos" class="modal">
+        <div class="modal-content">
+<a class="button" href="https://forms.office.com/r/p6gvBtDSDP">
+                <i class="fa-solid fa-list-ul"></i> 07 - (06/03/2026) Nº 06, Av. Bento da Silva Bueno
+            </a>
+	<a class="button" href="https://forms.office.com/r/sQJLRP01GY">
+                <i class="fa-solid fa-list-ul"></i> 08 - (09/03/2026) Nº 72, R. Alexandrino Pinto da Silva
+            </a>
+	<a class="button" href="https://forms.office.com/r/vvFw0Xfg1U">
+                <i class="fa-solid fa-list-ul"></i> 09 - (10/03/2026) Nº 102, Av. Pedro Celestino L. Penteado
+            </a>
+	<a class="button" href="https://forms.office.com/r/YBvvJgHNx4">
+                <i class="fa-solid fa-list-ul"></i> 10 - (11/03/2026) Nº 555, Av. Prof. Walter Ribas de Andrade
+            </a>
+        </div>
+    </div>
+
+    <div id="modal-inspecoes-5s" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modal-inspecoes-5s')">&times;</span>
+            <a class="button" id="btn-osasco" href="https://forms.office.com/r/bkeF1EwmNC">
+                <i class="fas fa-clipboard-check"></i> 5S - FROTA DE OSASCO
+            </a>
+            <a class="button" id="btn-santana" href="https://forms.office.com/r/dhibquxks5">
+                <i class="fas fa-clipboard-check"></i> 5S - FROTA SANTANA DE PARNAÍBA
+            </a>
+        </div>
+    </div>
+
+    <div id="modal-login" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('modal-login')">&times;</span>
+            <h2 style="text-align:center; margin-bottom:20px;">🔐 Acesso Inspetores</h2>
+            
+            <form id="login-form">
+                <input type="password" id="password" placeholder="Digite sua senha exclusiva" required autofocus>
+                <button type="submit" class="button" style="width:100%; margin-top:15px;">
+                    Entrar
+                </button>
+            </form>
+            
+            <p id="login-error" style="color:red; text-align:center; display:none; margin-top:10px;">
+                Senha não reconhecida!
+            </p>
+        </div>
+
+    </div>
+        <!-- Overlay de carregamento -->
+    <div id="loading-overlay" style="display: none; position: fixed; z-index: 20; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.75); justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px 50px; border-radius: 16px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.4);">
+            <i class="fas fa-spinner fa-spin" style="font-size: 50px; color: #d11a2d; margin-bottom: 15px;"></i>
+            <p style="margin: 0; font-size: 18px; color: #333;">Carregando lista de inspetores...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
