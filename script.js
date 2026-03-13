@@ -65,8 +65,8 @@ function login(e) {
 function checkLoginStatus() {
     const logado = localStorage.getItem('inspectorLoggedIn');
     const nome = localStorage.getItem('inspectorName');
-    // Pegamos o perfil e garantimos que ele seja comparado sem espaços extras
-    const perfil = (localStorage.getItem('inspectorPerfil') || "").trim().toUpperCase(); 
+    // .trim() remove espaços invisíveis e .toUpperCase() evita erro de 'saf' vs 'SAF'
+    const perfil = (localStorage.getItem('inspectorPerfil') || "").trim().toUpperCase();
 
     const mainScreen = document.getElementById('main-screen');
     const inspectorScreen = document.getElementById('inspector-screen');
@@ -76,14 +76,14 @@ function checkLoginStatus() {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
         
-        // Saudação dinâmica conforme sua solicitação anterior
+        // Saudação conforme sua regra: SAF ganha "do", outros ganham vírgula
         const saudacao = (perfil === "SAF") 
             ? `Olá, ${nome} do <strong>${perfil}</strong>!` 
             : `Olá ${nome}, <strong>${perfil}</strong>!`;
-            
+        
         document.getElementById('welcome-msg').innerHTML = saudacao;
 
-        // VERIFICAÇÃO: Se for SAF, mostra a área admin
+        // VERIFICAÇÃO FINAL
         if (perfil === "SAF") {
             adminArea.style.display = 'block';
         } else {
