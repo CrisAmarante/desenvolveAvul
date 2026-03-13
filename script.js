@@ -1,5 +1,5 @@
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxKroMzAje1uCTRnEtbE7o5Mq5xoFUi5GkzdiwS_Kkw64_AzmlxVZJ54w_DX_jyVbJr/exec";
-let INSPETORES = {};
+
 let INSPETORES = {};
 
 const disableDates = {
