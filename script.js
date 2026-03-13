@@ -33,29 +33,24 @@ function carregarInspetores() {
 function login(e) {
     e.preventDefault();
     const senhaDigitada = document.getElementById('password').value.trim();
-    
-    // Converte a senha digitada em HASH SHA-256 para comparar com a planilha
     const hashDigitado = CryptoJS.SHA256(senhaDigitada).toString();
 
-    // Busca o usuário que possui esse Hash - o valor é um objeto {senha, perfil})
     const nomeEncontrado = Object.keys(INSPETORES).find(nome => {
         const item = INSPETORES[nome];
-        // Suporta tanto (string) quanto (objeto)
         return (typeof item === 'object' ? item.senha : item) === hashDigitado;
     });
 
     if (nomeEncontrado) {
         const dadosUsuario = INSPETORES[nomeEncontrado];
-        const perfil = typeof dadosUsuario === 'object' ? dadosUsuario.perfil : "PADRÃO";
+        // GARANTIA: Tenta ler 'perfil' ou 'funcao' para não dar erro
+        const perfil = dadosUsuario.perfil || dadosUsuario.funcao || "PADRÃO";
 
         localStorage.setItem('inspectorLoggedIn', 'true');
         localStorage.setItem('inspectorName', nomeEncontrado);
         localStorage.setItem('inspectorPerfil', perfil);
         
-        registrarLog(nomeEncontrado, "Login efetuado");
-        
         document.getElementById('modal-login').style.display = 'none';
-        checkLoginStatus();
+        checkLoginStatus(); // Chama a verificação imediatamente
     } else {
         document.getElementById('login-error').style.display = 'block';
         document.getElementById('password').value = '';
@@ -65,8 +60,8 @@ function login(e) {
 function checkLoginStatus() {
     const logado = localStorage.getItem('inspectorLoggedIn');
     const nome = localStorage.getItem('inspectorName');
-    // .trim() remove espaços invisíveis e .toUpperCase() evita erro de 'saf' vs 'SAF'
-    const perfil = (localStorage.getItem('inspectorPerfil') || "").trim().toUpperCase();
+    const perfilRaw = localStorage.getItem('inspectorPerfil') || "";
+    const perfil = perfilRaw.trim().toUpperCase();
 
     const mainScreen = document.getElementById('main-screen');
     const inspectorScreen = document.getElementById('inspector-screen');
@@ -76,16 +71,15 @@ function checkLoginStatus() {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
         
-        // Saudação conforme sua regra: SAF ganha "do", outros ganham vírgula
+        // Saudação dinâmica
         const saudacao = (perfil === "SAF") 
-            ? `Olá, ${nome} do <strong>${perfil}</strong>!` 
-            : `Olá ${nome}, <strong>${perfil}</strong>!`;
-        
+            ? `Olá, ${nome} do <strong>${perfilRaw}</strong>!` 
+            : `Olá ${nome}, <strong>${perfilRaw}</strong>!`;
         document.getElementById('welcome-msg').innerHTML = saudacao;
 
-        // VERIFICAÇÃO FINAL
+        // MOSTRAR ADMIN AREA
         if (perfil === "SAF") {
-            adminArea.style.display = 'block';
+            adminArea.style.setProperty('display', 'block', 'important');
         } else {
             adminArea.style.display = 'none';
         }
@@ -94,7 +88,6 @@ function checkLoginStatus() {
         inspectorScreen.style.display = 'none';
     }
 }
-
 // Funções para abrir/fechar modais
 function openModal(id) {
     document.getElementById(id).style.display = 'flex';
