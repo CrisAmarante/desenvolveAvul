@@ -8,13 +8,13 @@ const disableDates = {
 };
 
 // ==========================================================================
-// SINCRONIZAÇÃO COM GOOGLE SHEETS (JSONP)
+// SINCRONIZAÇÃO COM GOOGLE SHEETS
 // ==========================================================================
 
 function processarDadosPlanilha(dados) {
     if (dados && !dados.erro) {
         INSPETORES = dados;
-        console.log("✅ Dados sincronizados (Perfil SAF suportado)");
+        console.log("✅ Dados sincronizados");
     }
     document.getElementById('loading-overlay').style.display = 'none';
 }
@@ -42,7 +42,6 @@ function login(e) {
 
     if (nomeEncontrado) {
         const dadosUsuario = INSPETORES[nomeEncontrado];
-        // GARANTIA: Tenta ler 'perfil' ou 'funcao' para não dar erro
         const perfil = dadosUsuario.perfil || dadosUsuario.funcao || "PADRÃO";
 
         localStorage.setItem('inspectorLoggedIn', 'true');
@@ -50,7 +49,7 @@ function login(e) {
         localStorage.setItem('inspectorPerfil', perfil);
         
         document.getElementById('modal-login').style.display = 'none';
-        checkLoginStatus(); // Chama a verificação imediatamente
+        checkLoginStatus();
     } else {
         document.getElementById('login-error').style.display = 'block';
         document.getElementById('password').value = '';
@@ -71,30 +70,27 @@ function checkLoginStatus() {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
         
-        // Saudação dinâmica
         const saudacao = (perfil === "SAF") 
             ? `Olá, ${nome} do <strong>${perfilRaw}</strong>!` 
             : `Olá ${nome}, <strong>${perfilRaw}</strong>!`;
         document.getElementById('welcome-msg').innerHTML = saudacao;
 
-        // MOSTRAR ADMIN AREA
+        // SE FOR SAF, MOSTRA ÁREA E SINCRONIZA CHECKBOXES
         if (perfil === "SAF") {
-            adminArea.style.setProperty('display', 'block', 'important');
+            adminArea.style.display = 'block';
+            
+            // ITEM 3: Sincroniza o desenho do checkbox com a memória do navegador
+            document.getElementById('check-5s-santana').checked = localStorage.getItem('config_5s_santana_force') === 'true';
+            document.getElementById('check-levantamentos').checked = localStorage.getItem('config_levantamentos_force') === 'true';
         } else {
             adminArea.style.display = 'none';
         }
+        
+        aplicarBloqueioDeDatas(); // Garante que os botões atualizem ao entrar
     } else {
         mainScreen.style.display = 'flex';
         inspectorScreen.style.display = 'none';
     }
-}
-// Funções para abrir/fechar modais
-function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
-}
-
-function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
 }
 
 function logoutInspector() {
@@ -103,82 +99,21 @@ function logoutInspector() {
 }
 
 // ==========================================================================
-// FUNCIONALIDADE DE UPLOAD DE DOCUMENTOS
+// LÓGICA DE BLOQUEIO E LIBERAÇÃO DE BOTÕES
 // ==========================================================================
-
-document.getElementById('upload-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const fileInput = document.getElementById('file-input');
-    const descInput = document.getElementById('file-desc');
-    const status = document.getElementById('upload-status');
-    const btn = document.getElementById('btn-enviar-file');
-    const inspetor = localStorage.getItem('inspectorName');
-
-    if (!fileInput.files[0]) return;
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    status.style.display = 'block';
-    status.style.color = '#333';
-    status.innerText = "⏳ Enviando arquivo...";
-    btn.disabled = true;
-
-    reader.onload = function(event) {
-        const base64Data = event.target.result.split(',')[1];
-        
-        const formData = new URLSearchParams();
-        formData.append('fileData', base64Data);
-        formData.append('fileName', file.name);
-        formData.append('mimeType', file.type);
-        formData.append('descricao', descInput.value);
-        formData.append('usuario', inspetor);
-
-        fetch(URL_PLANILHA, {
-            method: 'POST',
-            body: formData,
-            mode: 'no-cors'
-        })
-        .then(() => {
-            status.innerText = "✅ Enviado com sucesso!";
-            status.style.color = "green";
-            document.getElementById('upload-form').reset();
-        })
-        .catch(() => {
-            status.innerText = "❌ Erro no envio.";
-            status.style.color = "red";
-        })
-        .finally(() => {
-            btn.disabled = false;
-        });
-    };
-    reader.readAsDataURL(file);
-});
-
-// ==========================================================================
-// UTILITÁRIOS E INICIALIZAÇÃO
-// ==========================================================================
-
-function registrarLog(nome, acao) {
-    const script = document.createElement('script');
-    script.src = `${URL_PLANILHA}?callback=console.log&acao=log&nome=${encodeURIComponent(nome)}&msg=${encodeURIComponent(acao)}`;
-    document.body.appendChild(script);
-}
 
 function aplicarBloqueioDeDatas() {
     const now = new Date();
     
-    // 1. Lógica para Santana de Parnaíba
+    // Controle do Botão Santana de Parnaíba
     const btnSantana = document.getElementById('btn-santana');
     if (btnSantana) {
         const dataBloqueio = disableDates['btn-santana'];
         const liberadoPeloAdmin = localStorage.getItem('config_5s_santana_force') === 'true';
 
-        // Bloqueia se a data não chegou E se o admin não liberou manualmente
         if (now < dataBloqueio && !liberadoPeloAdmin) {
             btnSantana.classList.add('disabled');
-            btnSantana.style.pointerEvents = 'none'; // Garante que não clica
+            btnSantana.style.pointerEvents = 'none';
             btnSantana.style.opacity = '0.5';
         } else {
             btnSantana.classList.remove('disabled');
@@ -187,7 +122,7 @@ function aplicarBloqueioDeDatas() {
         }
     }
 
-    // 2. Lógica para Osasco (Exemplo simples)
+    // Controle do Botão Osasco
     const btnOsasco = document.getElementById('btn-osasco');
     if (btnOsasco) {
         if (now < disableDates['btn-osasco']) {
@@ -198,10 +133,13 @@ function aplicarBloqueioDeDatas() {
     }
 }
 
+// ==========================================================================
+// EVENTOS E INICIALIZAÇÃO
+// ==========================================================================
+
 window.addEventListener('load', () => {
     carregarInspetores();
     checkLoginStatus();
-    aplicarBloqueioDeDatas();
 });
 
 document.getElementById('btn-segunda-tela').addEventListener('click', () => {
@@ -209,16 +147,22 @@ document.getElementById('btn-segunda-tela').addEventListener('click', () => {
 });
 
 document.getElementById('login-form').addEventListener('submit', login);
-// Monitora os cliques nos checkboxes da área SAF
+
+// LISTENERS PARA OS CHECKBOXES DA ÁREA SAF
 document.getElementById('check-5s-santana').addEventListener('change', function(e) {
-    const status = e.target.checked;
-    localStorage.setItem('config_5s_santana_force', status);
-    alert(status ? "Botão Santana liberado manualmente!" : "Botão Santana voltou ao bloqueio automático.");
-    aplicarBloqueioDeDatas(); // Atualiza a tela na hora
+    localStorage.setItem('config_5s_santana_force', e.target.checked);
+    aplicarBloqueioDeDatas();
 });
 
 document.getElementById('check-levantamentos').addEventListener('change', function(e) {
-    const status = e.target.checked;
-    localStorage.setItem('config_levantamentos_force', status);
+    localStorage.setItem('config_levantamentos_force', e.target.checked);
     aplicarBloqueioDeDatas();
 });
+
+// FUNÇÃO PARA FECHAR MODAIS (CHAMADA PELO HTML)
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
