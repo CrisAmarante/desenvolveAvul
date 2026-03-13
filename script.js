@@ -37,10 +37,10 @@ function login(e) {
     // Converte a senha digitada em HASH SHA-256 para comparar com a planilha
     const hashDigitado = CryptoJS.SHA256(senhaDigitada).toString();
 
-    // Busca o usuário que possui esse Hash (lembrando que agora o valor é um objeto {senha, perfil})
+    // Busca o usuário que possui esse Hash - o valor é um objeto {senha, perfil})
     const nomeEncontrado = Object.keys(INSPETORES).find(nome => {
         const item = INSPETORES[nome];
-        // Suporta tanto o formato antigo (string) quanto o novo (objeto)
+        // Suporta tanto (string) quanto (objeto)
         return (typeof item === 'object' ? item.senha : item) === hashDigitado;
     });
 
@@ -65,7 +65,7 @@ function login(e) {
 function checkLoginStatus() {
     const logado = localStorage.getItem('inspectorLoggedIn');
     const nome = localStorage.getItem('inspectorName');
-    // Pegamos o perfil e garantimos que ele seja comparado sem espaços extras
+    // Perfil comparado sem espaços extras
     const perfil = (localStorage.getItem('inspectorPerfil') || "").trim().toUpperCase(); 
 
     const mainScreen = document.getElementById('main-screen');
@@ -76,7 +76,7 @@ function checkLoginStatus() {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
         
-        // Saudação dinâmica conforme sua solicitação anterior
+        // Saudação dinâmica
         const saudacao = (perfil === "SAF") 
             ? `Olá, ${nome} do <strong>${perfil}</strong>!` 
             : `Olá ${nome}, <strong>${perfil}</strong>!`;
