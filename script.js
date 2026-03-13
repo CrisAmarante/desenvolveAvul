@@ -65,7 +65,7 @@ function login(e) {
 function checkLoginStatus() {
     const logado = localStorage.getItem('inspectorLoggedIn');
     const nome = localStorage.getItem('inspectorName');
-    // Perfil comparado sem espaços extras
+    // Pegamos o perfil e garantimos que ele seja comparado sem espaços extras
     const perfil = (localStorage.getItem('inspectorPerfil') || "").trim().toUpperCase(); 
 
     const mainScreen = document.getElementById('main-screen');
@@ -76,7 +76,7 @@ function checkLoginStatus() {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
         
-        // Saudação dinâmica
+        // Saudação dinâmica conforme sua solicitação anterior
         const saudacao = (perfil === "SAF") 
             ? `Olá, ${nome} do <strong>${perfil}</strong>!` 
             : `Olá ${nome}, <strong>${perfil}</strong>!`;
