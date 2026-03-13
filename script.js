@@ -65,7 +65,7 @@ function login(e) {
 function checkLoginStatus() {
     const logado = localStorage.getItem('inspectorLoggedIn');
     const nome = localStorage.getItem('inspectorName');
-    const perfil = localStorage.getItem('inspectorPerfil'); // Ex: SAF, Ger. de Operações...
+    const perfil = localStorage.getItem('inspectorPerfil'); // Ex: SAF, Encarregado de Fiscalização...
 
     const mainScreen = document.getElementById('main-screen');
     const inspectorScreen = document.getElementById('inspector-screen');
@@ -75,10 +75,15 @@ function checkLoginStatus() {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
         
-        // Saudação Personalizada: "Olá, Cristiano do SAF!" ou "Olá Joaquim, Ger. de Operações!"
-        const separador = (perfil === "SAF") ? " do " : ", ";
-        document.getElementById('welcome-msg').innerHTML = `Olá, ${nome}${separador}<strong>${perfil}</strong>!`;
+        // Lógica de saudação inteligente
+        // Se for SAF (departamento), usa "do". Se for cargo, usa vírgula.
+        const saudacao = (perfil === "SAF") 
+            ? `Olá, ${nome} do <strong>${perfil}</strong>!` 
+            : `Olá ${nome}, <strong>${perfil}</strong>!`;
+            
+        document.getElementById('welcome-msg').innerHTML = saudacao;
 
+        // Área Administrativa exclusiva para SAF
         if (perfil === "SAF") {
             adminArea.style.display = 'block';
         } else {
@@ -88,6 +93,15 @@ function checkLoginStatus() {
         mainScreen.style.display = 'flex';
         inspectorScreen.style.display = 'none';
     }
+}
+
+// Funções para abrir/fechar modais
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
 }
 
 function logoutInspector() {
