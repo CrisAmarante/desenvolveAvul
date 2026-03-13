@@ -168,10 +168,32 @@ function registrarLog(nome, acao) {
 
 function aplicarBloqueioDeDatas() {
     const now = new Date();
-    for (const [id, date] of Object.entries(disableDates)) {
-        const btn = document.getElementById(id);
-        if (btn && now < date) {
-            btn.classList.add('disabled');
+    
+    // 1. Lógica para Santana de Parnaíba
+    const btnSantana = document.getElementById('btn-santana');
+    if (btnSantana) {
+        const dataBloqueio = disableDates['btn-santana'];
+        const liberadoPeloAdmin = localStorage.getItem('config_5s_santana_force') === 'true';
+
+        // Bloqueia se a data não chegou E se o admin não liberou manualmente
+        if (now < dataBloqueio && !liberadoPeloAdmin) {
+            btnSantana.classList.add('disabled');
+            btnSantana.style.pointerEvents = 'none'; // Garante que não clica
+            btnSantana.style.opacity = '0.5';
+        } else {
+            btnSantana.classList.remove('disabled');
+            btnSantana.style.pointerEvents = 'auto';
+            btnSantana.style.opacity = '1';
+        }
+    }
+
+    // 2. Lógica para Osasco (Exemplo simples)
+    const btnOsasco = document.getElementById('btn-osasco');
+    if (btnOsasco) {
+        if (now < disableDates['btn-osasco']) {
+            btnOsasco.classList.add('disabled');
+        } else {
+            btnOsasco.classList.remove('disabled');
         }
     }
 }
@@ -187,3 +209,16 @@ document.getElementById('btn-segunda-tela').addEventListener('click', () => {
 });
 
 document.getElementById('login-form').addEventListener('submit', login);
+// Monitora os cliques nos checkboxes da área SAF
+document.getElementById('check-5s-santana').addEventListener('change', function(e) {
+    const status = e.target.checked;
+    localStorage.setItem('config_5s_santana_force', status);
+    alert(status ? "Botão Santana liberado manualmente!" : "Botão Santana voltou ao bloqueio automático.");
+    aplicarBloqueioDeDatas(); // Atualiza a tela na hora
+});
+
+document.getElementById('check-levantamentos').addEventListener('change', function(e) {
+    const status = e.target.checked;
+    localStorage.setItem('config_levantamentos_force', status);
+    aplicarBloqueioDeDatas();
+});
