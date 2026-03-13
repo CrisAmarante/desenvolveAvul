@@ -1,6 +1,9 @@
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxlo0yjd020iNdfE0zaPawlRcR3dAZtPjdIVLsLZ7eBjwjIJ10gXYlewxvvZpyNKaM/exec";
 
+
+
 let INSPETORES = {};
+let CONFIG_GLOBAL = {};
 
 const disableDates = {
     'btn-osasco': new Date('2026-02-19'),
@@ -13,8 +16,13 @@ const disableDates = {
 
 function processarDadosPlanilha(dados) {
     if (dados && !dados.erro) {
-        INSPETORES = dados;
-        console.log("✅ Dados sincronizados");
+        INSPETORES = dados.inspetores;
+        CONFIG_GLOBAL = dados.config; // Recebe as travas da aba "Config"
+        
+        console.log("✅ Dados e Configurações sincronizados");
+        
+        // Atualiza os botões assim que os dados chegam
+        aplicarBloqueioDeDatas();
     }
     document.getElementById('loading-overlay').style.display = 'none';
 }
@@ -27,7 +35,7 @@ function carregarInspetores() {
 }
 
 // ==========================================================================
-// SISTEMA DE LOGIN E CONTROLE DE PERFIL (SAF)
+// SISTEMA DE LOGIN E STATUS
 // ==========================================================================
 
 function login(e) {
@@ -36,14 +44,11 @@ function login(e) {
     const hashDigitado = CryptoJS.SHA256(senhaDigitada).toString();
 
     const nomeEncontrado = Object.keys(INSPETORES).find(nome => {
-        const item = INSPETORES[nome];
-        return (typeof item === 'object' ? item.senha : item) === hashDigitado;
+        return INSPETORES[nome].senha === hashDigitado;
     });
 
     if (nomeEncontrado) {
-        const dadosUsuario = INSPETORES[nomeEncontrado];
-        const perfil = dadosUsuario.perfil || dadosUsuario.funcao || "PADRÃO";
-
+        const perfil = INSPETORES[nomeEncontrado].perfil || "PADRÃO";
         localStorage.setItem('inspectorLoggedIn', 'true');
         localStorage.setItem('inspectorName', nomeEncontrado);
         localStorage.setItem('inspectorPerfil', perfil);
@@ -52,7 +57,6 @@ function login(e) {
         checkLoginStatus();
     } else {
         document.getElementById('login-error').style.display = 'block';
-        document.getElementById('password').value = '';
     }
 }
 
@@ -75,94 +79,86 @@ function checkLoginStatus() {
             : `Olá ${nome}, <strong>${perfilRaw}</strong>!`;
         document.getElementById('welcome-msg').innerHTML = saudacao;
 
-        // SE FOR SAF, MOSTRA ÁREA E SINCRONIZA CHECKBOXES
         if (perfil === "SAF") {
             adminArea.style.display = 'block';
-            
-            // ITEM 3: Sincroniza o desenho do checkbox com a memória do navegador
-            document.getElementById('check-5s-santana').checked = localStorage.getItem('config_5s_santana_force') === 'true';
-            document.getElementById('check-levantamentos').checked = localStorage.getItem('config_levantamentos_force') === 'true';
-        } else {
-            adminArea.style.display = 'none';
+            // Sincroniza os checks da tela com o que veio da planilha
+            document.getElementById('check-5s-santana').checked = CONFIG_GLOBAL['btn-santana'] === true;
+            document.getElementById('check-levantamentos').checked = CONFIG_GLOBAL['btn-levantamentos'] === true;
         }
-        
-        aplicarBloqueioDeDatas(); // Garante que os botões atualizem ao entrar
     } else {
         mainScreen.style.display = 'flex';
         inspectorScreen.style.display = 'none';
     }
 }
 
-function logoutInspector() {
-    localStorage.clear();
-    location.reload();
-}
-
 // ==========================================================================
-// LÓGICA DE BLOQUEIO E LIBERAÇÃO DE BOTÕES
+// LOGICA DE BLOQUEIO (DATA vs CONFIG SAF)
 // ==========================================================================
 
 function aplicarBloqueioDeDatas() {
     const now = new Date();
     
-    // Controle do Botão Santana de Parnaíba
-    const btnSantana = document.getElementById('btn-santana');
-    if (btnSantana) {
-        const dataBloqueio = disableDates['btn-santana'];
-        const liberadoPeloAdmin = localStorage.getItem('config_5s_santana_force') === 'true';
+    // Lista de botões para verificar
+    const botoes = [
+        { id: 'btn-santana', configKey: 'btn-santana' },
+        { id: 'btn-osasco', configKey: 'btn-osasco' }
+    ];
 
-        if (now < dataBloqueio && !liberadoPeloAdmin) {
-            btnSantana.classList.add('disabled');
-            btnSantana.style.pointerEvents = 'none';
-            btnSantana.style.opacity = '0.5';
-        } else {
-            btnSantana.classList.remove('disabled');
-            btnSantana.style.pointerEvents = 'auto';
-            btnSantana.style.opacity = '1';
-        }
-    }
+    botoes.forEach(item => {
+        const btn = document.getElementById(item.id);
+        if (!btn) return;
 
-    // Controle do Botão Osasco
-    const btnOsasco = document.getElementById('btn-osasco');
-    if (btnOsasco) {
-        if (now < disableDates['btn-osasco']) {
-            btnOsasco.classList.add('disabled');
+        const dataLimite = disableDates[item.id];
+        const liberadoPeloSAF = CONFIG_GLOBAL[item.configKey] === true;
+
+        // Regra: Bloqueia se a data não chegou E o SAF não liberou manualmente
+        if (now < dataLimite && !liberadoPeloSAF) {
+            btn.classList.add('disabled');
+            btn.style.opacity = "0.5";
+            btn.style.pointerEvents = "none";
         } else {
-            btnOsasco.classList.remove('disabled');
+            btn.classList.remove('disabled');
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
         }
-    }
+    });
 }
 
 // ==========================================================================
-// EVENTOS E INICIALIZAÇÃO
+// SALVAR CONFIGURAÇÃO GLOBAL (ÁREA SAF)
 // ==========================================================================
 
-window.addEventListener('load', () => {
-    carregarInspetores();
-    checkLoginStatus();
+async function salvarConfiguracaoGlobal(idBotao, status) {
+    const overlay = document.getElementById('loading-overlay');
+    overlay.style.display = 'flex';
+
+    const url = `${URL_PLANILHA}?tipo=config_botoes&idBotao=${idBotao}&status=${status}`;
+
+    try {
+        // Usamos modo no-cors para evitar erros de política de segurança do Google
+        await fetch(url, { method: 'POST', mode: 'no-cors' });
+        alert("Configuração salva para todos os usuários!");
+        location.reload(); // Recarrega para validar a nova config
+    } catch (e) {
+        alert("Erro ao salvar no banco de dados.");
+    } finally {
+        overlay.style.display = 'none';
+    }
+}
+
+// Evento do botão Salvar do Painel Admin
+document.querySelector('#admin-area button').addEventListener('click', () => {
+    const checkSantana = document.getElementById('check-5s-santana').checked;
+    const checkLevant = document.getElementById('check-levantamentos').checked;
+    
+    // Salva o de Santana (podemos expandir para salvar múltiplos de uma vez se quiser)
+    salvarConfiguracaoGlobal('btn-santana', checkSantana);
 });
 
+// Outros eventos
+window.addEventListener('load', () => { carregarInspetores(); checkLoginStatus(); });
+document.getElementById('login-form').addEventListener('submit', login);
 document.getElementById('btn-segunda-tela').addEventListener('click', () => {
     document.getElementById('modal-login').style.display = 'flex';
 });
-
-document.getElementById('login-form').addEventListener('submit', login);
-
-// LISTENERS PARA OS CHECKBOXES DA ÁREA SAF
-document.getElementById('check-5s-santana').addEventListener('change', function(e) {
-    localStorage.setItem('config_5s_santana_force', e.target.checked);
-    aplicarBloqueioDeDatas();
-});
-
-document.getElementById('check-levantamentos').addEventListener('change', function(e) {
-    localStorage.setItem('config_levantamentos_force', e.target.checked);
-    aplicarBloqueioDeDatas();
-});
-
-// FUNÇÃO PARA FECHAR MODAIS (CHAMADA PELO HTML)
-function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-}
-function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
-}
+function logoutInspector() { localStorage.clear(); location.reload(); }
