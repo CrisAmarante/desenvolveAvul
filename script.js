@@ -65,7 +65,7 @@ function login(e) {
 function checkLoginStatus() {
     const logado = localStorage.getItem('inspectorLoggedIn');
     const nome = localStorage.getItem('inspectorName');
-    const perfil = localStorage.getItem('inspectorPerfil');
+    const perfil = localStorage.getItem('inspectorPerfil'); // Ex: SAF, Ger. de Operações...
 
     const mainScreen = document.getElementById('main-screen');
     const inspectorScreen = document.getElementById('inspector-screen');
@@ -74,9 +74,11 @@ function checkLoginStatus() {
     if (logado === 'true') {
         mainScreen.style.display = 'none';
         inspectorScreen.style.display = 'flex';
-        document.getElementById('welcome-msg').innerHTML = `Olá, <strong>${nome}</strong>!`;
+        
+        // Saudação Personalizada: "Olá, Cristiano do SAF!" ou "Olá Joaquim, Ger. de Operações!"
+        const separador = (perfil === "SAF") ? " do " : ", ";
+        document.getElementById('welcome-msg').innerHTML = `Olá, ${nome}${separador}<strong>${perfil}</strong>!`;
 
-        // Lógica de acesso exclusivo SAF
         if (perfil === "SAF") {
             adminArea.style.display = 'block';
         } else {
