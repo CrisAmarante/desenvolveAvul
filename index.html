@@ -27,40 +27,49 @@
     </div>
 
     <div id="main-screen" class="container">
-        <header>
-            <h1><i class="fas fa-clipboard-list"></i> Painel de Acessos</h1>
-        </header>
+    <header>
+        <h1><i class="fas fa-clipboard-list"></i> Painel de Acessos</h1>
+    </header>
 
-        <a class="button" href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" target="_blank">
-            <i class="fas fa-file-excel"></i> Relatório de Ponto
-        </a>
+    <a class="button" href="#" onclick="openModal('modal-clandestinos')">
+        <i class="fas fa-bus"></i> Clandestinos / RTO
+    </a>
 
-        <a class="button" href="#" id="btn-segunda-tela">
-            <i class="fas fa-user-tie"></i> Área do Inspetor
-        </a>
+    <a class="button" href="#" onclick="openModal('modal-5s-geral')">
+        <i class="fas fa-check-double"></i> Inspeções de 5S (Frota)
+    </a>
 
-        <a class="button" id="btn-ideias" href="https://forms.gle/exemplo" target="_blank">
-            <i class="fas fa-lightbulb"></i> Sugestões / Ideias
-            <span class="tooltip">Compartilhe sua ideia com a SAF!</span>
-        </a>
-    </div>
+    <a class="button" href="https://link-relatorio-ponto" target="_blank">
+        <i class="fas fa-file-excel"></i> Relatório de Ponto
+    </a>
+
+    <a class="button" href="#" id="btn-segunda-tela" style="background-color: #333;">
+        <i class="fas fa-user-tie"></i> Área do Inspetor (Login)
+    </a>
+</div>
 
     <div id="inspector-screen" class="container" style="display: none;">
-        <header>
-            <h1 id="welcome-msg">Bem-vindo!</h1>
-        </header>
+    <header>
+        <h1 id="welcome-msg">Bem-vindo!</h1>
+    </header>
 
-        <a class="button" id="btn-clandestinos-rto" href="#">
-            <i class="fas fa-bus"></i> Clandestinos / RTO
-        </a>
+    <a class="button" href="#" id="btn-5s-guaritas">
+        <i class="fas fa-warehouse"></i> 5S das Guaritas
+    </a>
 
-        <a class="button" id="btn-levantamentos" href="#">
-            <i class="fas fa-chart-line"></i> Levantamentos
-        </a>
+    <a class="button" href="#" id="btn-relatorio-diario">
+        <i class="fas fa-edit"></i> Relatório Diário
+    </a>
 
-        <a class="button" id="btn-inspecoes-5s" href="#">
-            <i class="fas fa-check-double"></i> Inspeções de 5S
-        </a>
+    <a class="button" href="#" id="btn-solicitacao-imagens">
+        <i class="fas fa-video"></i> Solicitação de Imagens
+    </a>
+
+    <div class="card-upload">
+        </div>
+
+    <div id="admin-area" style="display: none;">
+        </div>
 
         <div class="card-upload" style="background: white; padding: 15px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 10px;">
             <h3 style="color: #d11a2d; margin-top: 0; font-size: 1.1rem;"><i class="fas fa-upload"></i> Enviar Documento/Foto</h3>
@@ -111,5 +120,27 @@
         function fecharBanner() { document.getElementById('aviso-temporario').style.display = 'none'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
+    <div id="modal-clandestinos" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modal-clandestinos')">&times;</span>
+        <h2 style="text-align:center;"><i class="fas fa-bus"></i> Clandestinos / RTO</h2>
+        <div class="modal-grid">
+            <a class="button" href="LINK_DO_FORM_MELVIN_JONES" target="_blank">Melvin Jones (Osasco)</a>
+            <a class="button" href="LINK_DO_FORM_CAJAMAR" target="_blank">Cajamar</a>
+        </div>
+    </div>
+</div>
+
+<div id="modal-5s-geral" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modal-5s-geral')">&times;</span>
+        <h2 style="text-align:center;"><i class="fas fa-check-double"></i> Inspeção 5S Frota</h2>
+        <div class="modal-grid">
+            <a class="button" id="btn-osasco" href="LINK_5S_OSASCO" target="_blank">Osasco</a>
+            <a class="button" id="btn-santana" href="LINK_5S_SANTANA" target="_blank">Santana de Parnaíba</a>
+        </div>
+    </div>
+</div>
 </body>
 </html>
+
