@@ -87,30 +87,76 @@ function renderizarGestaoSAF() {
 // 3. BLOQUEIOS DE INTERFACE
 // ==========================================================================
 
+// Procure a função aplicarBloqueioDeDatas e substitua por esta:
 function aplicarBloqueioDeDatas() {
     const now = new Date();
-    
-    // Lista de botões para controlar em todas as telas
     const IDs = ['btn-santana', 'btn-osasco', 'btn-5s-guaritas'];
 
     IDs.forEach(id => {
         const btn = document.getElementById(id);
         if (!btn) return;
 
+        // PRIORIDADE 1: O que o SAF definiu na planilha
         const liberadoSAF = CONFIG_GLOBAL[id] === true;
-        const dataBloqueio = disableDates[id];
+        
+        // PRIORIDADE 2: A data limite (se existir)
+        const dataLimite = disableDates[id];
+        const dataPassou = dataLimite && now >= dataLimite;
 
-        // Se o SAF liberou ou se a data já passou, o botão funciona
-        if (liberadoSAF || (dataBloqueio && now >= dataBloqueio)) {
+        // REGRA: Se o SAF liberou OU a data passou, fica ativo. 
+        // Se o SAF bloqueou (false), ele ignora a data e bloqueia.
+        if (liberadoSAF) {
             btn.style.opacity = "1";
             btn.style.pointerEvents = "auto";
             btn.classList.remove('disabled');
         } else {
+            // Se estiver falso na planilha, bloqueia independente da data
             btn.style.opacity = "0.4";
             btn.style.pointerEvents = "none";
             btn.classList.add('disabled');
         }
     });
+}
+
+// Procure a função renderizarGestaoSAF e garanta que os IDs batem com o HTML:
+function renderizarGestaoSAF() {
+    const container = document.getElementById('lista-gestao-levantamentos');
+    
+    // Atualiza Labels de Status
+    const mapeamento = [
+        { chk: 'check-5s-santana', lbl: 'status-santana', key: 'btn-santana' },
+        { chk: 'check-5s-osasco', lbl: 'status-osasco', key: 'btn-osasco' },
+        { chk: 'check-5s-guaritas', lbl: 'status-guaritas', key: 'btn-5s-guaritas' }
+    ];
+
+    mapeamento.forEach(item => {
+        const checkbox = document.getElementById(item.chk);
+        const label = document.getElementById(item.lbl);
+        const ativo = CONFIG_GLOBAL[item.key] === true;
+
+        if (checkbox) checkbox.checked = ativo;
+        if (label) {
+            label.innerHTML = ativo ? 
+                '<b style="color:green;">[ ATIVADO ]</b>' : 
+                '<b style="color:red;">[ BLOQUEADO ]</b>';
+        }
+    });
+
+    // Renderiza a lista de levantamentos com botão de excluir
+    if (container) {
+        container.innerHTML = "";
+        BOTOES_LEVANTAMENTO.forEach(item => {
+            const div = document.createElement('div');
+            div.className = "item-gestao"; // Use uma classe para facilitar o CSS
+            div.style = "display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;";
+            div.innerHTML = `
+                <span>${item.nome}</span>
+                <button onclick="gerenciarLevantamento('${item.nome}', 'deletar')" style="color:red; border:none; background:none; cursor:pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>`;
+            container.appendChild(div);
+        });
+    }
 }
 
 // ==========================================================================
