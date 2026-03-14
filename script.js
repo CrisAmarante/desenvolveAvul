@@ -65,7 +65,6 @@ function renderizarGestaoSAF() {
                 '<b style="color:red;">[ BLOQUEADO ]</b>';
         }
     });
-
     // 2. LISTA DE LEVANTAMENTOS DINÂMICOS
     container.innerHTML = "";
     BOTOES_LEVANTAMENTO.forEach(item => {
