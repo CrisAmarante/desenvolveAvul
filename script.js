@@ -1,9 +1,9 @@
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxlo0yjd020iNdfE0zaPawlRcR3dAZtPjdIVLsLZ7eBjwjIJ10gXYlewxvvZpyNKaM/exec";
 
 
-
 let INSPETORES = {};
 let CONFIG_GLOBAL = {};
+let BOTOES_LEVANTAMENTO = [];
 
 const disableDates = {
     'btn-osasco': new Date('2026-02-19'),
@@ -11,31 +11,50 @@ const disableDates = {
 };
 
 // ==========================================================================
-// SINCRONIZAÇÃO COM GOOGLE SHEETS
+// 1. SINCRONIZAÇÃO E RENDERIZAÇÃO
 // ==========================================================================
 
 function processarDadosPlanilha(dados) {
     if (dados && !dados.erro) {
         INSPETORES = dados.inspetores;
-        CONFIG_GLOBAL = dados.config; // Recebe as travas da aba "Config"
+        CONFIG_GLOBAL = dados.config;
+        BOTOES_LEVANTAMENTO = dados.botoesLevantamento;
         
-        console.log("✅ Dados e Configurações sincronizados");
+        console.log("✅ Dados sincronizados da nuvem");
         
-        // Atualiza os botões assim que os dados chegam
+        renderizarBotoesLevantamento();
         aplicarBloqueioDeDatas();
+        checkLoginStatus(); // Atualiza a interface com os novos dados
     }
     document.getElementById('loading-overlay').style.display = 'none';
 }
 
-function carregarInspetores() {
+function carregarDados() {
     document.getElementById('loading-overlay').style.display = 'flex';
     const script = document.createElement('script');
     script.src = `${URL_PLANILHA}?callback=processarDadosPlanilha&t=${new Date().getTime()}`;
     document.body.appendChild(script);
 }
 
+// Cria os botões dentro do Modal de Levantamentos
+function renderizarBotoesLevantamento() {
+    const container = document.getElementById('container-botoes-levantamento');
+    if (!container) return;
+    
+    container.innerHTML = ""; // Limpa os botões antigos
+    
+    BOTOES_LEVANTAMENTO.forEach(item => {
+        const btn = document.createElement('a');
+        btn.className = 'button';
+        btn.href = item.link;
+        btn.target = '_blank';
+        btn.innerHTML = `<i class="fas fa-file-alt"></i> ${item.nome}`;
+        container.appendChild(btn);
+    });
+}
+
 // ==========================================================================
-// SISTEMA DE LOGIN E STATUS
+// 2. SISTEMA DE LOGIN E STATUS
 // ==========================================================================
 
 function login(e) {
@@ -57,6 +76,7 @@ function login(e) {
         checkLoginStatus();
     } else {
         document.getElementById('login-error').style.display = 'block';
+        document.getElementById('password').value = '';
     }
 }
 
@@ -81,9 +101,10 @@ function checkLoginStatus() {
 
         if (perfil === "SAF") {
             adminArea.style.display = 'block';
-            // Sincroniza os checks da tela com o que veio da planilha
+            // Sincroniza o check da tela com o que veio da planilha (FIXO)
             document.getElementById('check-5s-santana').checked = CONFIG_GLOBAL['btn-santana'] === true;
-            document.getElementById('check-levantamentos').checked = CONFIG_GLOBAL['btn-levantamentos'] === true;
+        } else {
+            adminArea.style.display = 'none';
         }
     } else {
         mainScreen.style.display = 'flex';
@@ -91,74 +112,78 @@ function checkLoginStatus() {
     }
 }
 
+function logoutInspector() {
+    localStorage.clear();
+    location.reload();
+}
+
 // ==========================================================================
-// LOGICA DE BLOQUEIO (DATA vs CONFIG SAF)
+// 3. BLOQUEIOS E GESTÃO SAF
 // ==========================================================================
 
 function aplicarBloqueioDeDatas() {
     const now = new Date();
     
-    // Lista de botões para verificar
-    const botoes = [
-        { id: 'btn-santana', configKey: 'btn-santana' },
-        { id: 'btn-osasco', configKey: 'btn-osasco' }
-    ];
-
-    botoes.forEach(item => {
-        const btn = document.getElementById(item.id);
-        if (!btn) return;
-
-        const dataLimite = disableDates[item.id];
-        const liberadoPeloSAF = CONFIG_GLOBAL[item.configKey] === true;
-
-        // Regra: Bloqueia se a data não chegou E o SAF não liberou manualmente
-        if (now < dataLimite && !liberadoPeloSAF) {
-            btn.classList.add('disabled');
-            btn.style.opacity = "0.5";
-            btn.style.pointerEvents = "none";
+    // Bloqueio de Santana (Fixo + Override do SAF)
+    const btnSantana = document.getElementById('btn-santana');
+    if (btnSantana) {
+        const liberadoPeloSAF = CONFIG_GLOBAL['btn-santana'] === true;
+        if (now < disableDates['btn-santana'] && !liberadoPeloSAF) {
+            btnSantana.style.opacity = "0.5";
+            btnSantana.style.pointerEvents = "none";
         } else {
-            btn.classList.remove('disabled');
-            btn.style.opacity = "1";
-            btn.style.pointerEvents = "auto";
+            btnSantana.style.opacity = "1";
+            btnSantana.style.pointerEvents = "auto";
         }
-    });
-}
+    }
 
-// ==========================================================================
-// SALVAR CONFIGURAÇÃO GLOBAL (ÁREA SAF)
-// ==========================================================================
-
-async function salvarConfiguracaoGlobal(idBotao, status) {
-    const overlay = document.getElementById('loading-overlay');
-    overlay.style.display = 'flex';
-
-    const url = `${URL_PLANILHA}?tipo=config_botoes&idBotao=${idBotao}&status=${status}`;
-
-    try {
-        // Usamos modo no-cors para evitar erros de política de segurança do Google
-        await fetch(url, { method: 'POST', mode: 'no-cors' });
-        alert("Configuração salva para todos os usuários!");
-        location.reload(); // Recarrega para validar a nova config
-    } catch (e) {
-        alert("Erro ao salvar no banco de dados.");
-    } finally {
-        overlay.style.display = 'none';
+    // Bloqueio de Osasco (Apenas Data)
+    const btnOsasco = document.getElementById('btn-osasco');
+    if (btnOsasco && now < disableDates['btn-osasco']) {
+        btnOsasco.style.opacity = "0.5";
+        btnOsasco.style.pointerEvents = "none";
     }
 }
 
-// Evento do botão Salvar do Painel Admin
-document.querySelector('#admin-area button').addEventListener('click', () => {
+// Salvar todas as preferências do Painel SAF
+document.getElementById('btn-salvar-config').addEventListener('click', async () => {
+    const loader = document.getElementById('loading-overlay');
+    loader.style.display = 'flex';
+
     const checkSantana = document.getElementById('check-5s-santana').checked;
-    const checkLevant = document.getElementById('check-levantamentos').checked;
-    
-    // Salva o de Santana (podemos expandir para salvar múltiplos de uma vez se quiser)
-    salvarConfiguracaoGlobal('btn-santana', checkSantana);
+    const novoNome = document.getElementById('novo-nome-botao').value.trim();
+    const novoLink = document.getElementById('novo-link-botao').value.trim();
+
+    try {
+        // 1. Atualiza o status fixo de Santana
+        await fetch(`${URL_PLANILHA}?tipo=config_fixa&idBotao=btn-santana&status=${checkSantana}`, { method: 'POST', mode: 'no-cors' });
+
+        // 2. Se houver nome e link, cria um novo botão de levantamento
+        if (novoNome && novoLink) {
+            await fetch(`${URL_PLANILHA}?tipo=novo_levantamento&nome=${encodeURIComponent(novoNome)}&link=${encodeURIComponent(novoLink)}`, { method: 'POST', mode: 'no-cors' });
+        }
+
+        alert("Alterações salvas com sucesso!");
+        location.reload();
+    } catch (e) {
+        alert("Erro ao comunicar com o servidor.");
+    } finally {
+        loader.style.display = 'none';
+    }
 });
 
-// Outros eventos
-window.addEventListener('load', () => { carregarInspetores(); checkLoginStatus(); });
+// ==========================================================================
+// 4. INICIALIZAÇÃO E EVENTOS
+// ==========================================================================
+
+window.addEventListener('load', carregarDados);
+
 document.getElementById('login-form').addEventListener('submit', login);
+
 document.getElementById('btn-segunda-tela').addEventListener('click', () => {
     document.getElementById('modal-login').style.display = 'flex';
 });
-function logoutInspector() { localStorage.clear(); location.reload(); }
+
+// Funções chamadas pelo HTML
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
