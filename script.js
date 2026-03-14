@@ -41,27 +41,28 @@ function carregarDados() {
 // 2. GESTÃO VISUAL SAF (O QUE VOCÊ PEDIU)
 // ==========================================================================
 
+
+// Procure a função renderizarGestaoSAF e garanta que os IDs batem com o HTML:
 function renderizarGestaoSAF() {
     const container = document.getElementById('lista-gestao-levantamentos');
-    if (!container) return;
-
-    // 1. ATUALIZA OS CHECKS FIXOS (Santana, Osasco, Guaritas)
-    const fixos = [
-        { id: 'check-5s-santana', key: 'btn-santana', label: 'status-santana' },
-        { id: 'check-5s-osasco', key: 'btn-osasco', label: 'status-osasco' },
-        { id: 'check-5s-guaritas', key: 'btn-5s-guaritas', label: 'status-guaritas' }
+    
+    // Atualiza Labels de Status
+    const mapeamento = [
+        { chk: 'check-5s-santana', lbl: 'status-santana', key: 'btn-santana' },
+        { chk: 'check-5s-osasco', lbl: 'status-osasco', key: 'btn-osasco' },
+        { chk: 'check-5s-guaritas', lbl: 'status-guaritas', key: 'btn-5s-guaritas' }
     ];
 
-    fixos.forEach(item => {
-        const checkbox = document.getElementById(item.id);
-        const label = document.getElementById(item.label);
-        const estaAtivo = CONFIG_GLOBAL[item.key] === true;
+    mapeamento.forEach(item => {
+        const checkbox = document.getElementById(item.chk);
+        const label = document.getElementById(item.lbl);
+        const ativo = CONFIG_GLOBAL[item.key] === true;
 
-        if (checkbox) checkbox.checked = estaAtivo;
+        if (checkbox) checkbox.checked = ativo;
         if (label) {
-            label.innerHTML = estaAtivo ? 
-                '<span style="color:green; font-weight:bold;"> [ ATIVADO ]</span>' : 
-                '<span style="color:red; font-weight:bold;"> [ BLOQUEADO ]</span>';
+            label.innerHTML = ativo ? 
+                '<b style="color:green;">[ ATIVADO ]</b>' : 
+                '<b style="color:red;">[ BLOQUEADO ]</b>';
         }
     });
 
@@ -117,30 +118,6 @@ function aplicarBloqueioDeDatas() {
         }
     });
 }
-
-// Procure a função renderizarGestaoSAF e garanta que os IDs batem com o HTML:
-function renderizarGestaoSAF() {
-    const container = document.getElementById('lista-gestao-levantamentos');
-    
-    // Atualiza Labels de Status
-    const mapeamento = [
-        { chk: 'check-5s-santana', lbl: 'status-santana', key: 'btn-santana' },
-        { chk: 'check-5s-osasco', lbl: 'status-osasco', key: 'btn-osasco' },
-        { chk: 'check-5s-guaritas', lbl: 'status-guaritas', key: 'btn-5s-guaritas' }
-    ];
-
-    mapeamento.forEach(item => {
-        const checkbox = document.getElementById(item.chk);
-        const label = document.getElementById(item.lbl);
-        const ativo = CONFIG_GLOBAL[item.key] === true;
-
-        if (checkbox) checkbox.checked = ativo;
-        if (label) {
-            label.innerHTML = ativo ? 
-                '<b style="color:green;">[ ATIVADO ]</b>' : 
-                '<b style="color:red;">[ BLOQUEADO ]</b>';
-        }
-    });
 
     // Renderiza a lista de levantamentos com botão de excluir
     if (container) {
