@@ -65,39 +65,56 @@
             <i class="fas fa-edit"></i> Relatório Diário
         </a>
 
-        <a class="button" href="#" id="btn-solicitacao-imagens">
-            <i class="fas fa-video"></i> Solicitação de Imagens
-        </a>
-
         <div class="card-upload" style="background: white; padding: 15px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 10px; color: #333;">
-            <h3 style="color: #d11a2d; margin-top: 0; font-size: 1.1rem;"><i class="fas fa-upload"></i> Enviar Documento/Foto</h3>
+            <h3 style="color: #d11a2d; margin-top: 0; font-size: 1.1rem;"><i class="fas fa-upload"></i> Enviar Foto/Doc</h3>
             <form id="upload-form">
-                <input type="text" id="file-desc" placeholder="Descrição (ex: Foto Carro 100)" required style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px;">
-                <input type="file" id="file-input" required style="width: 100%; margin-bottom: 10px; font-size: 0.9rem;">
-                <button type="submit" id="btn-enviar-file" class="button" style="width: 100%; padding: 10px; font-size: 16px;">Enviar p/ Banco de Dados</button>
+                <input type="text" id="file-desc" placeholder="Descrição (ex: Carro 100)" required style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                <input type="file" id="file-input" required style="width: 100%; margin-bottom: 10px; font-size: 0.8rem;">
+                <button type="submit" id="btn-enviar-file" class="button" style="width: 100%; padding: 10px; font-size: 16px;">Enviar p/ Nuvem</button>
             </form>
-            <div id="upload-status" style="margin-top: 8px; font-size: 0.85rem; text-align: center; display: none;"></div>
+            <div id="upload-status" style="margin-top: 8px; font-size: 0.8rem; text-align: center; display: none;"></div>
         </div>
 
         <div id="admin-area" style="display: none; width: 100%; max-width: 450px; margin-top: 25px; border-top: 2px dashed #d11a2d; padding-top: 15px;">
-    <h3 style="color: #333; text-align: center;"><i class="fas fa-user-shield"></i> Gestão SAF</h3>
-    
-    <div style="background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); color: #333;">
-        <p style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee;">Bloqueios Fixos</p>
-        <label style="display: block; margin-bottom: 15px;"><input type="checkbox" id="check-5s-santana"> Liberar 5S Santana</label>
-        
-        <p style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee;">Levantamentos Ativos</p>
-        <div id="lista-gestao-levantamentos" style="margin-bottom: 15px; max-height: 200px; overflow-y: auto;">
-            </div>
+            <h3 style="color: #333; text-align: center;"><i class="fas fa-user-shield"></i> Gestão Administrativa SAF</h3>
+            
+            <div style="background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); color: #333;">
+                
+                <p style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem;">
+                    <i class="fas fa-lock-open"></i> Liberação de Formulários Fixos:
+                </p>
+                
+                <div style="font-size: 0.85rem; line-height: 1.8;">
+                    <label style="display: flex; align-items: center; justify-content: space-between;">
+                        <span><input type="checkbox" id="check-5s-santana"> 5S Santana de Parnaíba</span>
+                        <span id="status-santana"></span>
+                    </label>
+                    <label style="display: flex; align-items: center; justify-content: space-between;">
+                        <span><input type="checkbox" id="check-5s-osasco"> 5S Osasco</span>
+                        <span id="status-osasco"></span>
+                    </label>
+                    <label style="display: flex; align-items: center; justify-content: space-between;">
+                        <span><input type="checkbox" id="check-5s-guaritas"> 5S Guaritas</span>
+                        <span id="status-guaritas"></span>
+                    </label>
+                </div>
 
-        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-            <p style="font-size: 0.8rem; font-weight: bold; margin-bottom: 5px;">Adicionar Novo:</p>
-            <input type="text" id="novo-nome-botao" placeholder="Nome" style="width: 100%; padding: 6px; margin-bottom: 5px;">
-            <input type="text" id="novo-link-botao" placeholder="Link" style="width: 100%; padding: 6px; margin-bottom: 8px;">
-            <button class="button" id="btn-salvar-config" style="background: #28a745; width: 100%; padding: 8px; font-size: 14px;">Salvar Alterações</button>
+                <p style="font-weight: bold; margin: 15px 0 10px; border-bottom: 1px solid #eee; font-size: 0.9rem;">
+                    <i class="fas fa-list-check"></i> Levantamentos Ativos:
+                </p>
+                <div id="lista-gestao-levantamentos" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto;">
+                    </div>
+
+                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    <p style="font-size: 0.75rem; font-weight: bold; margin-bottom: 5px;">Criar Novo Levantamento:</p>
+                    <input type="text" id="novo-nome-botao" placeholder="Nome do Botão" style="width: 100%; padding: 6px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" id="novo-link-botao" placeholder="Link do Google Forms" style="width: 100%; padding: 6px; margin-bottom: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button class="button" id="btn-salvar-config" style="background: #28a745; width: 100%; padding: 10px; font-size: 14px;">
+                        <i class="fas fa-save"></i> Salvar Alterações Globais
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
         <button class="button" onclick="logoutInspector()" style="background: #333; margin-top: 20px;">
             <i class="fas fa-sign-out-alt"></i> Sair do Sistema
@@ -109,28 +126,17 @@
             <span class="close" onclick="closeModal('modal-login')">&times;</span>
             <h2 style="text-align:center;">🔐 Acesso Restrito</h2>
             <form id="login-form">
-                <input type="password" id="password" placeholder="Sua senha de Inspetor" required style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ccc;">
-                <button type="submit" class="button" style="width:100%; margin-top:15px;">Entrar</button>
+                <input type="password" id="password" placeholder="Digite sua senha" required style="width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #ccc;">
+                <button type="submit" class="button" style="width:100%; margin-top:15px;">Validar Acesso</button>
             </form>
-            <p id="login-error" style="color:red; text-align:center; display:none; margin-top:10px;">Senha inválida!</p>
-        </div>
-    </div>
-
-    <div id="modal-clandestinos" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('modal-clandestinos')">&times;</span>
-            <h2 style="text-align:center;"><i class="fas fa-bus"></i> Clandestinos / RTO</h2>
-            <div class="modal-grid">
-                <a class="button" href="LINK_MELVIN" target="_blank">Melvin Jones (Osasco)</a>
-                <a class="button" href="LINK_CAJAMAR" target="_blank">Cajamar</a>
-            </div>
+            <p id="login-error" style="color:red; text-align:center; display:none; margin-top:10px;">Acesso negado!</p>
         </div>
     </div>
 
     <div id="modal-5s-geral" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('modal-5s-geral')">&times;</span>
-            <h2 style="text-align:center;"><i class="fas fa-check-double"></i> Inspeção 5S Frota</h2>
+            <h2 style="text-align:center;"><i class="fas fa-check-double"></i> 5S da Frota</h2>
             <div class="modal-grid">
                 <a class="button" id="btn-osasco" href="LINK_OSASCO" target="_blank">Osasco</a>
                 <a class="button" id="btn-santana" href="LINK_SANTANA" target="_blank">Santana de Parnaíba</a>
@@ -149,8 +155,8 @@
 
     <div id="loading-overlay" style="display:none;">
         <div class="loader-box">
-            <i class="fas fa-spinner fa-spin fa-3x" style="color: #d11a2d;"></i>
-            <p style="margin-top: 15px; font-weight: bold;">Sincronizando com a Nuvem...</p>
+            <i class="fas fa-sync-alt fa-spin fa-3x" style="color: #d11a2d;"></i>
+            <p style="margin-top: 15px; font-weight: bold;">Sincronizando com a Planilha...</p>
         </div>
     </div>
 
