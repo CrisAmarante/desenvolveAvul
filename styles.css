@@ -9,6 +9,8 @@
   --accent: #d11a2d;
   --banner-bg: rgba(255, 233, 199, 0.95);
   --overlay: rgba(0,0,0,0.40);
+  --welcome-light: #222;
+  --welcome-dark: #eee;
 }
 
 body.dark {
@@ -19,6 +21,8 @@ body.dark {
   --accent: #ff5252;
   --banner-bg: rgba(55,55,55,0.80);
   --overlay: rgba(0,0,0,0.65);
+  --welcome-light: #eee;
+  --welcome-dark: #eee;
 }
 
 /* Fundo */
@@ -88,7 +92,6 @@ body.dark::before {
   z-index: 9999;
   text-align: center;
   font-size: 0.95rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 
 .banner-close {
@@ -102,26 +105,27 @@ body.dark::before {
   cursor: pointer;
 }
 
-/* GRID */
+/* GRID - Compacta para celular */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 13px;
-  padding: 16px 12px 90px;        /* mais espaço embaixo */
-  max-width: 100%;
+  padding: 16px 14px 100px;   /* espaço para botão Sair */
+  max-width: 420px;
   margin: 0 auto;
 }
 
+/* Cards compactos (usados nas duas telas) */
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
   border-radius: 16px;
-  padding: 14px 8px 12px;
+  padding: 13px 8px 11px;
   text-align: center;
   text-decoration: none;
   color: var(--text);
   font-weight: 500;
-  font-size: 0.89rem;
+  font-size: 0.87rem;           /* texto um pouco menor */
   box-shadow: 0 4px 12px rgba(0,0,0,0.20);
   border: 1px solid rgba(255,255,255,0.35);
   transition: all 0.22s ease;
@@ -129,24 +133,23 @@ body.dark::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1.05;
-  min-height: 108px;
+  aspect-ratio: 1 / 1.08;
+  min-height: 104px;            /* cards mais baixos */
 }
 
 .card:hover, .inspector-card:hover {
   transform: translateY(-5px) scale(1.06);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
 }
 
 .card-icon, .inspector-card .card-icon {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   background: rgba(209, 26, 45, 0.12);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
+  font-size: 1.7rem;
   color: var(--accent);
   margin-bottom: 6px;
 }
@@ -185,31 +188,26 @@ body.dark::before {
 
 #inspector-screen .welcome {
   text-align: center;
-  font-size: 1.35rem;
+  font-size: 1.32rem;
   font-weight: 600;
-  margin: 10px 0 20px 0;
-  color: var(--text);
+  margin: 12px 0 22px 0;
+  color: var(--text);                    /* cor adaptada ao tema */
 }
 
-/* Botão Sair - Canto inferior esquerdo com mais margem */
+/* Botão Sair - Canto inferior esquerdo */
 .logout-btn {
   position: fixed;
-  bottom: 24px;
+  bottom: 22px;
   left: 20px;
   background: #d11a2d;
   color: white;
   border: none;
-  padding: 13px 26px;
-  border-radius: 50px;           /* mais arredondado */
-  font-size: 1.05rem;
+  padding: 12px 26px;
+  border-radius: 50px;
+  font-size: 1.03rem;
   font-weight: 600;
-  box-shadow: 0 5px 15px rgba(209, 26, 45, 0.4);
+  box-shadow: 0 5px 15px rgba(209, 26, 45, 0.35);
   z-index: 1000;
-}
-
-.logout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(209, 26, 45, 0.45);
 }
 
 /* Modais */
