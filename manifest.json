@@ -1,6 +1,6 @@
 {
-  "name": "Relatórios Urubupungá",
-  "short_name": "Relatórios",
+  "name": "Ambiente de testes AVUL",
+  "short_name": "Testes Avul",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#d11a2d",
