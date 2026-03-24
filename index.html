@@ -32,46 +32,55 @@
 
     <div class="cards-grid">
 
-        <a href="https://gruponso-my.sharepoint.com/..." class="card" id="btn-relatorio-fiscais">
+        <!-- 1º - Relatório de Fiscais (destaque) -->
+        <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
+           class="card card-relatorio" id="btn-relatorio-fiscais">
             <div class="card-icon"><i class="fas fa-file-excel"></i></div>
             Relatórios de Fiscal
         </a>
 
+        <!-- Usina de Ideias -->
         <a href="https://forms.office.com/r/DFBt9eC2pX" class="card">
             <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
             Usina de Ideias
         </a>
 
+        <!-- Atualização de Telefones -->
         <a href="https://forms.office.com/r/Vr3tWmLyv2" class="card" id="btn-telefones">
             <div class="card-icon"><i class="fas fa-phone"></i></div>
             Atualização de Telefones
         </a>
 
+        <!-- Clandestinos -->
         <a href="#" id="btn-clandestinos-rto" class="card">
             <div class="card-icon"><i class="fas fa-ban"></i></div>
             Clandestinos Osasco e Cajamar
         </a>
 
+        <!-- Inspeções 5S -->
         <a href="#" id="btn-inspecoes-5s" class="card">
             <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
             Inspeções de 5S
         </a>
 
+        <!-- Levantamentos -->
         <a href="#" id="btn-levantamentos" class="card">
             <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
             Levantamentos
         </a>
 
-        <a href="#" id="btn-segunda-tela" class="card">
+        <!-- Último - Inspetores (destaque) -->
+        <a href="#" id="btn-segunda-tela" class="card card-inspetores">
             <div class="card-icon"><i class="fa-solid fa-key"></i></div>
             Inspetores
         </a>
+
     </div>
 </div>
 
 <!-- TELA INSPETORES -->
-<div id="inspector-screen" class="screen" style="display: none; flex-direction: column; align-items: center; gap: 25px; padding-top: 30px;">
-    <h2 id="welcome-msg" style="margin: 0; font-size: 1.6rem;"></h2>
+<div id="inspector-screen" class="screen" style="display: none;">
+    <h2 id="welcome-msg" style="margin: 0; font-size: 1.6rem; text-align: center;"></h2>
     
     <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog">
         <i class="fa-solid fa-circle-user"></i> Relatório Diário
@@ -86,12 +95,12 @@
         <i class="fa-solid fa-video"></i> Solicitação de Imagem
     </a>
 
-    <button onclick="logoutInspector()" class="logout-btn" style="margin-top: 20px;">
+    <button onclick="logoutInspector()" class="logout-btn" style="margin-top: 30px;">
         Sair
     </button>
 </div>
 
-<!-- Modais (mantidos com nova estrutura) -->
+<!-- MODAIS -->
 <div id="modal-clandestinos-rto" class="modal">
     <div class="modal-content">
         <div class="modal-header">
