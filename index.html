@@ -1,75 +1,143 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PENSO - Prancheta Eletrônica</title>
+    <link rel="icon" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <div id="aviso-temporario" class="aviso-banner" style="display:none;">
-        <div class="aviso-conteudo">
-            <button class="botao-fechar-banner" onclick="fecharBanner()">×</button>
-            <h2><i class="fas fa-exclamation-triangle"></i> COMUNICADO</h2>
-            <p id="banner-mensagem-texto"></p>
+<!-- Botão Tema -->
+<button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
+
+<!-- Banner Temporário -->
+<div id="aviso-temporario" class="banner">
+    <div>
+        <strong>ATENÇÃO</strong><br>
+        Período de inspeções 5S da frota Osasco iniciado.<br>
+        Preencha o formulário correspondente no menu <strong>INSPEÇÕES DE 5S</strong>.<br>
+        As inspeções se encerrarão em breve.
+    </div>
+    <button id="btn-fechar-banner" class="banner-close">×</button>
+</div>
+
+<!-- TELA PRINCIPAL -->
+<div id="main-screen" class="screen">
+    <h1 class="titulo"><i class="fas fa-clipboard-list"></i> Painel de Acessos</h1>
+
+    <div class="cards-grid">
+
+        <a href="https://gruponso-my.sharepoint.com/..." class="card" id="btn-relatorio-fiscais">
+            <div class="card-icon"><i class="fas fa-file-excel"></i></div>
+            Relatórios de Fiscal
+        </a>
+
+        <a href="https://forms.office.com/r/DFBt9eC2pX" class="card">
+            <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+            Usina de Ideias
+        </a>
+
+        <a href="https://forms.office.com/r/Vr3tWmLyv2" class="card" id="btn-telefones">
+            <div class="card-icon"><i class="fas fa-phone"></i></div>
+            Atualização de Telefones
+        </a>
+
+        <a href="#" id="btn-clandestinos-rto" class="card">
+            <div class="card-icon"><i class="fas fa-ban"></i></div>
+            Clandestinos Osasco e Cajamar
+        </a>
+
+        <a href="#" id="btn-inspecoes-5s" class="card">
+            <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            Inspeções de 5S
+        </a>
+
+        <a href="#" id="btn-levantamentos" class="card">
+            <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
+            Levantamentos
+        </a>
+
+        <a href="#" id="btn-segunda-tela" class="card">
+            <div class="card-icon"><i class="fa-solid fa-key"></i></div>
+            Inspetores
+        </a>
+    </div>
+</div>
+
+<!-- TELA INSPETORES -->
+<div id="inspector-screen" class="screen" style="display: none; flex-direction: column; align-items: center; gap: 25px; padding-top: 30px;">
+    <h2 id="welcome-msg" style="margin: 0; font-size: 1.6rem;"></h2>
+    
+    <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog">
+        <i class="fa-solid fa-circle-user"></i> Relatório Diário
+    </a>
+    <a class="button" href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d">
+        <i class="fa-solid fa-bus"></i> Consulta Placas
+    </a>
+    <a class="button" href="https://forms.office.com/r/XDdEFdBwrC">
+        <i class="fas fa-clipboard-check"></i> 5S - Guaritas
+    </a>
+    <a class="button" href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u">
+        <i class="fa-solid fa-video"></i> Solicitação de Imagem
+    </a>
+
+    <button onclick="logoutInspector()" class="logout-btn" style="margin-top: 20px;">
+        Sair
+    </button>
+</div>
+
+<!-- Modais (mantidos com nova estrutura) -->
+<div id="modal-clandestinos-rto" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Clandestinos</h2>
+            <button class="modal-close" onclick="window.modals.clandestinosRto.close()">×</button>
         </div>
+        <a class="modal-btn" href="https://forms.office.com/r/v4BMhNHbSR">Rua Melvin Jones - Clandestinos</a>
+        <a class="modal-btn" href="https://forms.office.com/r/JF8tPFysX6">Clandestinos - Cajamar</a>
     </div>
+</div>
 
-    <div id="main-screen" class="container">
-        <header><h1>Painel de Acessos</h1></header>
-        <a class="button" href="#" onclick="openModal('modal-clandestinos')"><i class="fas fa-bus"></i> Clandestinos / RTO</a>
-        <a class="button" href="#" onclick="openModal('modal-5s-geral')"><i class="fas fa-check-double"></i> Inspeções 5S Frota</a>
-        <a class="button" href="#" onclick="openModal('modal-levantamentos')"><i class="fas fa-chart-line"></i> Levantamentos</a>
-        <a class="button" href="#" id="btn-segunda-tela" style="background:#333;"><i class="fas fa-user-tie"></i> Área do Inspetor</a>
-    </div>
-
-    <div id="inspector-screen" class="container" style="display:none;">
-        <header><h1 id="welcome-msg">Bem-vindo!</h1></header>
-        <a class="button" href="#" id="btn-5s-guaritas"><i class="fas fa-warehouse"></i> 5S das Guaritas</a>
-        <a class="button" href="#" id="btn-relatorio-diario"><i class="fas fa-edit"></i> Relatório Diário</a>
-
-        <div id="admin-area" style="display:none; margin-top:20px; border-top:2px solid #d11a2d; padding-top:15px; width:100%;">
-            <div style="background:#fff; padding:15px; border-radius:12px; color:#333; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                <h3><i class="fas fa-user-shield"></i> Gestão SAF</h3>
-                
-                <p><b>Liberação de Formulários:</b></p>
-                <div style="font-size:0.85rem; margin-bottom:15px;">
-                    <label style="display:flex; justify-content:space-between;"><span><input type="checkbox" id="check-5s-santana"> 5S Santana</span> <span id="status-santana"></span></label>
-                    <label style="display:flex; justify-content:space-between;"><span><input type="checkbox" id="check-5s-osasco"> 5S Osasco</span> <span id="status-osasco"></span></label>
-                    <label style="display:flex; justify-content:space-between;"><span><input type="checkbox" id="check-5s-guaritas"> 5S Guaritas</span> <span id="status-guaritas"></span></label>
-                </div>
-
-                <p><b>Gestão do Banner:</b></p>
-                <label style="font-size:0.85rem;"><input type="checkbox" id="check-banner-ativo"> Exibir Banner na Home</label>
-                <textarea id="input-banner-texto" placeholder="Digite a mensagem do banner..." style="width:100%; height:60px; margin-top:5px; border-radius:5px; border:1px solid #ccc; padding:5px; font-family:sans-serif;"></textarea>
-
-                <p><b>Levantamentos Ativos:</b></p>
-                <div id="lista-gestao-levantamentos" style="margin-bottom:15px; border:1px solid #eee; border-radius:5px; max-height:100px; overflow-y:auto;"></div>
-
-                <div style="background:#f0f0f0; padding:8px; border-radius:8px;">
-                    <input type="text" id="novo-nome-botao" placeholder="Nome do novo botão" style="width:100%; margin-bottom:5px;">
-                    <input type="text" id="novo-link-botao" placeholder="Link do formulário" style="width:100%; margin-bottom:5px;">
-                    <button class="button" id="btn-salvar-config" style="background:#28a745; font-size:14px; padding:10px;">Salvar Todas as Alterações</button>
-                </div>
-            </div>
+<div id="modal-levantamentos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Levantamentos</h2>
+            <button class="modal-close" onclick="window.modals.levantamentos.close()">×</button>
         </div>
-        <button class="button" onclick="logoutInspector()" style="background:#333; margin-top:20px;">Sair</button>
+        <a class="modal-btn" href="https://forms.office.com/r/YBvvJgHNx4">Levantamento de saída da ETEC Fazendinha</a>
     </div>
+</div>
 
-    <div id="modal-login" class="modal"><div class="modal-content"><span class="close" onclick="closeModal('modal-login')">&times;</span><h2>Acesso Restrito</h2><form id="login-form"><input type="password" id="password" placeholder="Senha" required style="width:100%; padding:10px;"><button type="submit" class="button" style="width:100%; margin-top:10px;">Entrar</button></form><p id="login-error" style="color:red; display:none; text-align:center;">Senha incorreta.</p></div></div>
-    <div id="modal-5s-geral" class="modal"><div class="modal-content"><span class="close" onclick="closeModal('modal-5s-geral')">&times;</span><h2>5S Frota</h2><div class="modal-grid"><a class="button" id="btn-osasco" href="LINK_OSASCO" target="_blank">Osasco</a><a class="button" id="btn-santana" href="LINK_SANTANA" target="_blank">Santana</a></div></div></div>
-    <div id="modal-levantamentos" class="modal"><div class="modal-content"><span class="close" onclick="closeModal('modal-levantamentos')">&times;</span><h2>Levantamentos</h2><div id="container-botoes-levantamento" class="modal-grid"></div></div></div>
+<div id="modal-inspecoes-5s" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Inspeções 5S</h2>
+            <button class="modal-close" onclick="window.modals.inspecoes5s.close()">×</button>
+        </div>
+        <a class="modal-btn" id="btn-osasco" href="https://forms.office.com/r/bkeF1EwmNC">5S - Frota de Osasco</a>
+        <a class="modal-btn" id="btn-santana" href="https://forms.office.com/r/dhibquxks5">5S - Frota Santana de Parnaíba</a>
+    </div>
+</div>
 
-    <div id="loading-overlay" style="display:none;"><div class="loader-box"><i class="fas fa-sync fa-spin fa-3x"></i><p>Sincronizando...</p></div></div>
+<div id="modal-login" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🔐 Acesso Inspetores</h2>
+            <button class="modal-close" onclick="window.modals.login.close()">×</button>
+        </div>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="Digite sua senha exclusiva" required>
+            <div id="login-error" style="color:#ff4d4d; text-align:center; margin:10px 0; display:none;">Senha não reconhecida!</div>
+            <button type="submit" class="button">Entrar</button>
+        </form>
+    </div>
+</div>
 
-    <script src="script.js"></script>
-    <script>
-        function fecharBanner() { document.getElementById('aviso-temporario').style.display = 'none'; }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    </script>
+<script src="script.js"></script>
 </body>
 </html>
