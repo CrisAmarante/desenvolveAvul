@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PENSO - Prancheta Eletrônica</title>
     <link rel="icon" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
@@ -20,95 +20,92 @@
     <div>
         <strong>ATENÇÃO</strong><br>
         Período de inspeções 5S da frota Osasco iniciado.<br>
-        Preencha o formulário correspondente no menu <strong>INSPEÇÕES DE 5S</strong>.<br>
-        As inspeções se encerrarão em breve.
+        Preencha no menu INSPEÇÕES DE 5S.
     </div>
     <button id="btn-fechar-banner" class="banner-close">×</button>
 </div>
 
-<!-- TELA PRINCIPAL -->
-<div id="main-screen" class="screen">
+<!-- ====================== TELA PRINCIPAL (não logada) ====================== -->
+<div id="main-screen">
     <h1 class="titulo"><i class="fas fa-clipboard-list"></i> Painel de Acessos</h1>
 
     <div class="cards-grid">
-
-        <!-- 1º - Relatório de Fiscais (destaque) -->
         <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
            class="card card-relatorio" id="btn-relatorio-fiscais">
             <div class="card-icon"><i class="fas fa-file-excel"></i></div>
             Relatórios de Fiscal
         </a>
 
-        <!-- Usina de Ideias -->
         <a href="https://forms.office.com/r/DFBt9eC2pX" class="card">
             <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
             Usina de Ideias
         </a>
 
-        <!-- Atualização de Telefones -->
         <a href="https://forms.office.com/r/Vr3tWmLyv2" class="card" id="btn-telefones">
             <div class="card-icon"><i class="fas fa-phone"></i></div>
             Atualização de Telefones
         </a>
 
-        <!-- Clandestinos -->
         <a href="#" id="btn-clandestinos-rto" class="card">
             <div class="card-icon"><i class="fas fa-ban"></i></div>
-            Clandestinos Osasco e Cajamar
+            Clandestinos
         </a>
 
-        <!-- Inspeções 5S -->
         <a href="#" id="btn-inspecoes-5s" class="card">
             <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-            Inspeções de 5S
+            Inspeções 5S
         </a>
 
-        <!-- Levantamentos -->
         <a href="#" id="btn-levantamentos" class="card">
             <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
             Levantamentos
         </a>
 
-        <!-- Último - Inspetores (destaque) -->
         <a href="#" id="btn-segunda-tela" class="card card-inspetores">
             <div class="card-icon"><i class="fa-solid fa-key"></i></div>
             Inspetores
         </a>
-
     </div>
 </div>
 
-<!-- TELA INSPETORES -->
-<div id="inspector-screen" class="screen" style="display: none;">
-    <h2 id="welcome-msg" style="margin: 0; font-size: 1.6rem; text-align: center;"></h2>
-    
-    <a class="button" href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog">
-        <i class="fa-solid fa-circle-user"></i> Relatório Diário
-    </a>
-    <a class="button" href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d">
-        <i class="fa-solid fa-bus"></i> Consulta Placas
-    </a>
-    <a class="button" href="https://forms.office.com/r/XDdEFdBwrC">
-        <i class="fas fa-clipboard-check"></i> 5S - Guaritas
-    </a>
-    <a class="button" href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u">
-        <i class="fa-solid fa-video"></i> Solicitação de Imagem
-    </a>
+<!-- ====================== TELA INSPETORES (agora com mesmo design) ====================== -->
+<div id="inspector-screen" style="display: none;">
+    <h2 id="welcome-msg" class="welcome"></h2>
 
-    <button onclick="logoutInspector()" class="logout-btn" style="margin-top: 30px;">
-        Sair
-    </button>
+    <div class="cards-grid">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
+            <div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>
+            Relatório Diário
+        </a>
+
+        <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card">
+            <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
+            Consulta Placas
+        </a>
+
+        <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card">
+            <div class="card-icon"><i class="fas fa-clipboard-check"></i></div>
+            5S - Guaritas
+        </a>
+
+        <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card">
+            <div class="card-icon"><i class="fa-solid fa-video"></i></div>
+            Solicitação de Imagem
+        </a>
+    </div>
+
+    <button onclick="logoutInspector()" class="logout-btn">Sair</button>
 </div>
 
-<!-- MODAIS -->
+<!-- ====================== MODAIS ====================== -->
 <div id="modal-clandestinos-rto" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h2 class="modal-title">Clandestinos</h2>
             <button class="modal-close" onclick="window.modals.clandestinosRto.close()">×</button>
         </div>
-        <a class="modal-btn" href="https://forms.office.com/r/v4BMhNHbSR">Rua Melvin Jones - Clandestinos</a>
-        <a class="modal-btn" href="https://forms.office.com/r/JF8tPFysX6">Clandestinos - Cajamar</a>
+        <a class="modal-btn" href="https://forms.office.com/r/v4BMhNHbSR">Rua Melvin Jones</a>
+        <a class="modal-btn" href="https://forms.office.com/r/JF8tPFysX6">Cajamar</a>
     </div>
 </div>
 
@@ -118,7 +115,7 @@
             <h2 class="modal-title">Levantamentos</h2>
             <button class="modal-close" onclick="window.modals.levantamentos.close()">×</button>
         </div>
-        <a class="modal-btn" href="https://forms.office.com/r/YBvvJgHNx4">Levantamento de saída da ETEC Fazendinha</a>
+        <a class="modal-btn" href="https://forms.office.com/r/YBvvJgHNx4">Levantamento ETEC Fazendinha</a>
     </div>
 </div>
 
@@ -128,8 +125,8 @@
             <h2 class="modal-title">Inspeções 5S</h2>
             <button class="modal-close" onclick="window.modals.inspecoes5s.close()">×</button>
         </div>
-        <a class="modal-btn" id="btn-osasco" href="https://forms.office.com/r/bkeF1EwmNC">5S - Frota de Osasco</a>
-        <a class="modal-btn" id="btn-santana" href="https://forms.office.com/r/dhibquxks5">5S - Frota Santana de Parnaíba</a>
+        <a class="modal-btn" id="btn-osasco" href="https://forms.office.com/r/bkeF1EwmNC">Frota Osasco</a>
+        <a class="modal-btn" id="btn-santana" href="https://forms.office.com/r/dhibquxks5">Frota Santana</a>
     </div>
 </div>
 
@@ -141,7 +138,7 @@
         </div>
         <form id="login-form">
             <input type="password" id="password" placeholder="Digite sua senha exclusiva" required>
-            <div id="login-error" style="color:#ff4d4d; text-align:center; margin:10px 0; display:none;">Senha não reconhecida!</div>
+            <div id="login-error" style="color:#ff4d4d; text-align:center; margin:10px 0; display:none;">Senha incorreta!</div>
             <button type="submit" class="button">Entrar</button>
         </form>
     </div>
