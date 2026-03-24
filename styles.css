@@ -102,13 +102,13 @@ body.dark::before {
   cursor: pointer;
 }
 
-/* GRID - Mesmo design nas duas telas */
+/* GRID */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  padding: 16px 14px 80px;   /* espaço extra embaixo para o botão Sair */
-  max-width: 420px;
+  gap: 13px;
+  padding: 16px 12px 90px;        /* mais espaço embaixo */
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -191,21 +191,20 @@ body.dark::before {
   color: var(--text);
 }
 
-/* Botão Sair - Canto inferior esquerdo */
+/* Botão Sair - Canto inferior esquerdo com mais margem */
 .logout-btn {
   position: fixed;
-  bottom: 20px;
+  bottom: 24px;
   left: 20px;
   background: #d11a2d;
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 1.02rem;
-  font-weight: 500;
-  box-shadow: 0 4px 14px rgba(209, 26, 45, 0.35);
+  padding: 13px 26px;
+  border-radius: 50px;           /* mais arredondado */
+  font-size: 1.05rem;
+  font-weight: 600;
+  box-shadow: 0 5px 15px rgba(209, 26, 45, 0.4);
   z-index: 1000;
-  transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
