@@ -70,9 +70,11 @@
 </div>
 
 <div id="inspector-screen" class="screen-container" style="display: none;">
+
+    <!-- Título já existe fora, mas garantimos que esteja visível -->
+    
     <div class="side-panel">
         <h2 id="welcome-msg" class="welcome"></h2>
-        <button onclick="logoutInspector()" class="logout-btn">Sair</button>
     </div>
 
     <div class="grid-panel">
@@ -98,6 +100,8 @@
             </a>
         </div>
     </div>
+
+    <button onclick="logoutInspector()" class="logout-btn">Sair</button>
 </div>
 
 <div id="modal-clandestinos-rto" class="modal">
