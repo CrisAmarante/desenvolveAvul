@@ -1,34 +1,28 @@
 /* ============================================================
-   VARIÁVEIS E BASE
+   VARIÁVEIS E RESET
 ============================================================ */
 :root {
   --bg: rgba(255,255,255,0.88);
   --text: #222;
   --card-bg: rgba(255,255,255,0.88);
-  --modal-bg: rgba(255,255,255,0.95);
   --accent: #d11a2d;
-  --banner-bg: rgba(255, 233, 199, 0.95);
-  --overlay: rgba(0,0,0,0.40);
 }
 
 body.dark {
   --bg: rgba(18,18,18,0.90);
   --text: #eee;
   --card-bg: rgba(28,28,28,0.85);
-  --modal-bg: rgba(32,32,32,0.95);
   --accent: #ff5252;
-  --banner-bg: rgba(55,55,55,0.80);
-  --overlay: rgba(0,0,0,0.65);
 }
 
-/* Trava de Scroll Global */
+* { box-sizing: border-box; }
+
 html, body {
-  height: 100%;
+  height: 100vh;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Remove o scroll */
+  overflow: hidden; /* ELIMINA SCROLLING */
   font-family: system-ui, -apple-system, sans-serif;
-  color: var(--text);
 }
 
 body::before {
@@ -36,24 +30,38 @@ body::before {
   position: fixed;
   inset: 0;
   background: url('banner-home-frota.png') center/cover no-repeat;
-  filter: blur(10px) brightness(0.70);
+  filter: blur(8px) brightness(0.70);
   z-index: -2;
 }
 
-/* Layout de Colunas (Side 25% | Grid 75%) */
+/* TÍTULO COM ALTURA FIXA PARA EVITAR SOBREPOSIÇÃO */
+.titulo {
+  height: 50px;
+  background: rgba(0,0,0,0.70);
+  color: #fff !important;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: 100%;
+}
+
+/* LAYOUT 25% / 75% */
 .screen-container {
   display: flex;
   width: 100%;
-  height: calc(100vh - 54px); /* Desconta o título */
+  height: calc(100vh - 50px); /* Ocupa exatamente o que sobra do título */
 }
 
 .side-panel {
   width: 25%;
-  padding: 20px;
+  height: 100%;
+  padding: 15px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  box-sizing: border-box;
+  align-items: flex-start;
 }
 
 .grid-panel {
@@ -62,117 +70,88 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 15px;
-  box-sizing: border-box;
+  padding: 10px;
 }
 
-/* Título Superior */
-.titulo {
-  background: rgba(0,0,0,0.60);
-  color: #fff !important;
-  padding: 10px 0;
-  font-size: 1.25rem;
-  text-align: center;
-  margin: 0;
-  width: 100%;
-  z-index: 10;
-}
-
-/* Grid de Botões Quadrados */
+/* GRADE DE BOTÕES MENORES */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 8px; /* Reduzido */
   width: 100%;
-  max-width: 480px; /* Evita que os botões fiquem gigantes em telas largas */
+  max-width: 320px; /* Grade mais estreita para botões menores */
 }
 
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
-  border-radius: 12px; /* Cantos levemente arredondados */
+  border-radius: 10px;
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
-  font-size: 0.82rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
-  border: 1px solid rgba(255,255,255,0.35);
+  font-size: 0.75rem; /* Texto menor */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1; /* FORÇA O QUADRADO */
-  transition: transform 0.2s;
-  padding: 8px;
+  aspect-ratio: 1 / 1; 
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 5px;
   text-align: center;
 }
 
-.card:hover, .inspector-card:hover { transform: scale(1.04); }
-
 .card-icon {
-  font-size: 1.6rem;
+  font-size: 1.3rem; /* Ícone menor */
   color: var(--accent);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-/* Destaques (Estrela) */
-.card-relatorio, .card-inspetores { border: 2px solid var(--accent); }
+/* DESTAQUES */
+.card-relatorio, .card-inspetores { border: 2px solid var(--accent); position: relative; }
 .card-relatorio::after, .card-inspetores::after {
   content: "★";
   position: absolute;
-  top: 5px; right: 5px;
+  top: 4px; right: 4px;
   background: var(--accent); color: white;
-  font-size: 10px; width: 18px; height: 18px;
+  font-size: 8px; width: 14px; height: 14px;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
 
-/* Mensagem de Boas-Vindas */
+/* BOAS-VINDAS NO CANTO SUPERIOR ESQUERDO */
 .welcome {
-  font-size: 1.15rem;
-  text-align: left;
+  font-size: 1rem;
+  font-weight: 700;
   margin: 0;
-  color: var(--text);
-  word-wrap: break-word;
+  text-align: left;
+  line-height: 1.2;
 }
 
-/* Botão Sair - Agora dentro do side-panel */
 .logout-btn {
-  margin-top: auto; /* Joga para o fundo do side-panel */
-  margin-bottom: 30px;
+  margin-top: auto;
+  margin-bottom: 20px;
   background: #d11a2d;
   color: white;
   border: none;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-weight: bold;
-  cursor: pointer;
 }
 
-/* Botão Tema */
+/* TEMA E BANNER */
 .theme-toggle {
   position: fixed;
-  top: 8px; right: 8px;
+  top: 6px; right: 6px;
   z-index: 1000;
-  background: var(--card-bg);
-  border: none;
-  width: 38px; height: 38px;
+  width: 34px; height: 34px;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: none;
+  background: var(--card-bg);
 }
 
-/* Modais */
-.modal {
-  position: fixed; inset: 0;
-  display: none; justify-content: center; align-items: center;
-  background: var(--overlay); backdrop-filter: blur(6px); z-index: 10000;
-}
-.modal.is-open { display: flex; }
-.modal-content {
-  background: var(--modal-bg); width: 85%; max-width: 350px;
-  padding: 20px; border-radius: 16px;
-}
-.modal-btn {
-  display: block; padding: 12px; margin: 8px 0;
-  background: var(--accent); color: white; border-radius: 8px;
-  text-align: center; text-decoration: none;
+.banner {
+  display: none; /* Ativado via JS se necessário */
+  position: fixed; top: 50px; left: 0; right: 0;
+  background: #fff3cd; padding: 10px; z-index: 50;
+  text-align: center; font-size: 0.8rem;
 }
