@@ -26,7 +26,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Remove o scroll */
+  overflow: hidden;
   font-family: system-ui, -apple-system, sans-serif;
   color: var(--text);
 }
@@ -44,7 +44,7 @@ body::before {
 .screen-container {
   display: flex;
   width: 100%;
-  height: calc(100vh - 54px); /* Desconta o título */
+  height: calc(100vh - 54px);
 }
 
 .side-panel {
@@ -66,16 +66,25 @@ body::before {
   box-sizing: border-box;
 }
 
-/* Título Superior */
+/* ====================== TÍTULO - CORRIGIDO ====================== */
 .titulo {
-  background: rgba(0,0,0,0.60);
+  position: relative;
+  z-index: 20;
+  background: rgba(0,0,0,0.75);
   color: #fff !important;
-  padding: 10px 0;
-  font-size: 1.25rem;
+  padding: 12px 0;
+  font-size: 1.35rem;
   text-align: center;
   margin: 0;
   width: 100%;
-  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+@media (min-width: 769px) {
+    .titulo {
+        font-size: 1.45rem;
+        padding: 14px 0;
+    }
 }
 
 /* Grid de Botões Quadrados */
@@ -84,13 +93,13 @@ body::before {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   width: 100%;
-  max-width: 480px; /* Evita que os botões fiquem gigantes em telas largas */
+  max-width: 480px;
 }
 
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
-  border-radius: 12px; /* Cantos levemente arredondados */
+  border-radius: 12px;
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
@@ -101,13 +110,15 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1; /* FORÇA O QUADRADO */
+  aspect-ratio: 1 / 1;
   transition: transform 0.2s;
   padding: 8px;
   text-align: center;
 }
 
-.card:hover, .inspector-card:hover { transform: scale(1.04); }
+.card:hover, .inspector-card:hover { 
+  transform: scale(1.04); 
+}
 
 .card-icon {
   font-size: 1.6rem;
@@ -116,28 +127,52 @@ body::before {
 }
 
 /* Destaques (Estrela) */
-.card-relatorio, .card-inspetores { border: 2px solid var(--accent); }
+.card-relatorio, .card-inspetores { 
+  border: 2px solid var(--accent); 
+}
+
 .card-relatorio::after, .card-inspetores::after {
   content: "★";
   position: absolute;
-  top: 5px; right: 5px;
-  background: var(--accent); color: white;
-  font-size: 10px; width: 18px; height: 18px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  top: 5px; 
+  right: 5px;
+  background: var(--accent); 
+  color: white;
+  font-size: 10px; 
+  width: 18px; 
+  height: 18px;
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
 }
 
-/* Mensagem de Boas-Vindas */
+/* ====================== SAUDAÇÃO - CORRIGIDA ====================== */
 .welcome {
   font-size: 1.15rem;
-  text-align: justify;
+  text-align: left;
+  hyphens: auto;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.35;
   margin: 0;
   color: var(--text);
-  word-wrap: break-word;
 }
 
-/* Botão Sair - Agora dentro do side-panel */
+@media (max-width: 768px) {
+    .welcome {
+        font-size: 1.12rem;
+        padding-right: 15px;
+    }
+    
+    #inspector-screen .side-panel {
+        padding: 20px 15px 20px 20px;
+    }
+}
+
+/* Botão Sair */
 .logout-btn {
-  margin-top: auto; /* Joga para o fundo do side-panel */
+  margin-top: auto;
   margin-bottom: 30px;
   background: #d11a2d;
   color: white;
@@ -151,28 +186,48 @@ body::before {
 /* Botão Tema */
 .theme-toggle {
   position: fixed;
-  top: 8px; right: 8px;
+  top: 8px; 
+  right: 8px;
   z-index: 1000;
   background: var(--card-bg);
   border: none;
-  width: 38px; height: 38px;
+  width: 38px; 
+  height: 38px;
   border-radius: 50%;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 /* Modais */
 .modal {
-  position: fixed; inset: 0;
-  display: none; justify-content: center; align-items: center;
-  background: var(--overlay); backdrop-filter: blur(6px); z-index: 10000;
+  position: fixed; 
+  inset: 0;
+  display: none; 
+  justify-content: center; 
+  align-items: center;
+  background: var(--overlay); 
+  backdrop-filter: blur(6px); 
+  z-index: 10000;
 }
-.modal.is-open { display: flex; }
+
+.modal.is-open { 
+  display: flex; 
+}
+
 .modal-content {
-  background: var(--modal-bg); width: 85%; max-width: 350px;
-  padding: 20px; border-radius: 16px;
+  background: var(--modal-bg); 
+  width: 85%; 
+  max-width: 350px;
+  padding: 20px; 
+  border-radius: 16px;
 }
+
 .modal-btn {
-  display: block; padding: 12px; margin: 8px 0;
-  background: var(--accent); color: white; border-radius: 8px;
-  text-align: center; text-decoration: none;
+  display: block; 
+  padding: 12px; 
+  margin: 8px 0;
+  background: var(--accent); 
+  color: white; 
+  border-radius: 8px;
+  text-align: center; 
+  text-decoration: none;
 }
