@@ -12,98 +12,94 @@
 </head>
 <body>
 
-<!-- Botão Tema -->
 <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
 
-<!-- Banner Temporário -->
 <div id="aviso-temporario" class="banner">
     <div>
         <strong>ATENÇÃO</strong><br>
-        Período de inspeções 5S da frota Osasco iniciado.<br>
-        Preencha no menu INSPEÇÕES DE 5S.
+        Período de inspeções 5S da frota Osasco iniciado.
     </div>
     <button id="btn-fechar-banner" class="banner-close">×</button>
 </div>
 
-<!-- TÍTULO FIXO (mantido como você gostou) -->
 <h1 class="titulo"><i class="fas fa-clipboard-list"></i> PENSO - Prancheta Eletrônica</h1>
 
-<!-- ====================== TELA PRINCIPAL (não logada) ====================== -->
-<div id="main-screen">
+<div id="main-screen" class="screen-container">
+    <div class="side-panel">
+        </div>
+    
+    <div class="grid-panel">
+        <div class="cards-grid">
+            <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
+               class="card card-relatorio" id="btn-relatorio-fiscais">
+                <div class="card-icon"><i class="fas fa-file-excel"></i></div>
+                Relatórios de Fiscal
+            </a>
 
-    <div class="cards-grid">
-        <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
-           class="card card-relatorio" id="btn-relatorio-fiscais">
-            <div class="card-icon"><i class="fas fa-file-excel"></i></div>
-            Relatórios de Fiscal
-        </a>
+            <a href="https://forms.office.com/r/DFBt9eC2pX" class="card">
+                <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+                Usina de Ideias
+            </a>
 
-        <a href="https://forms.office.com/r/DFBt9eC2pX" class="card">
-            <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
-            Usina de Ideias
-        </a>
+            <a href="https://forms.office.com/r/Vr3tWmLyv2" class="card" id="btn-telefones">
+                <div class="card-icon"><i class="fas fa-phone"></i></div>
+                Telefones
+            </a>
 
-        <a href="https://forms.office.com/r/Vr3tWmLyv2" class="card" id="btn-telefones">
-            <div class="card-icon"><i class="fas fa-phone"></i></div>
-            Atualização de Telefones
-        </a>
+            <a href="#" id="btn-clandestinos-rto" class="card">
+                <div class="card-icon"><i class="fas fa-ban"></i></div>
+                Clandestinos
+            </a>
 
-        <a href="#" id="btn-clandestinos-rto" class="card">
-            <div class="card-icon"><i class="fas fa-ban"></i></div>
-            Clandestinos
-        </a>
+            <a href="#" id="btn-inspecoes-5s" class="card">
+                <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                Inspeções 5S
+            </a>
 
-        <a href="#" id="btn-inspecoes-5s" class="card">
-            <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-            Inspeções 5S
-        </a>
+            <a href="#" id="btn-levantamentos" class="card">
+                <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
+                Levantamentos
+            </a>
 
-        <a href="#" id="btn-levantamentos" class="card">
-            <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
-            Levantamentos
-        </a>
-
-        <a href="#" id="btn-segunda-tela" class="card card-inspetores">
-            <div class="card-icon"><i class="fa-solid fa-key"></i></div>
-            Inspetores
-        </a>
+            <a href="#" id="btn-segunda-tela" class="card card-inspetores">
+                <div class="card-icon"><i class="fa-solid fa-key"></i></div>
+                Inspetores
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- ====================== TELA INSPETORES (AJUSTADA) ====================== -->
-<div id="inspector-screen" style="display: none;">
-
-    <h2 id="welcome-msg" class="welcome"></h2>
-
-    <!-- AGORA USANDO O MESMO GRID DA TELA INICIAL -->
-    <div class="cards-grid">
-
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
-            <div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>
-            Relatório Diário
-        </a>
-
-        <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card">
-            <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
-            Consulta Placas
-        </a>
-
-        <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card">
-            <div class="card-icon"><i class="fas fa-clipboard-check"></i></div>
-            5S - Guaritas
-        </a>
-
-        <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card">
-            <div class="card-icon"><i class="fa-solid fa-video"></i></div>
-            Solicitação de Imagem
-        </a>
-
+<div id="inspector-screen" class="screen-container" style="display: none;">
+    <div class="side-panel">
+        <h2 id="welcome-msg" class="welcome"></h2>
+        <button onclick="logoutInspector()" class="logout-btn">Sair</button>
     </div>
 
-    <button onclick="logoutInspector()" class="logout-btn">Sair</button>
+    <div class="grid-panel">
+        <div class="cards-grid">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>
+                Relatório Diário
+            </a>
+
+            <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
+                Consulta Placas
+            </a>
+
+            <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card">
+                <div class="card-icon"><i class="fas fa-clipboard-check"></i></div>
+                5S - Guaritas
+            </a>
+
+            <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-video"></i></div>
+                Solicitação Imagem
+            </a>
+        </div>
+    </div>
 </div>
 
-<!-- ====================== MODAIS ====================== -->
 <div id="modal-clandestinos-rto" class="modal">
     <div class="modal-content">
         <div class="modal-header">
