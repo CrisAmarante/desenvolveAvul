@@ -24,9 +24,7 @@
 <h1 class="titulo"><i class="fas fa-clipboard-list"></i> PENSO - Prancheta Eletrônica</h1>
 
 <div id="main-screen" class="screen-container">
-    <div class="side-panel">
-        </div>
-    
+    <div class="side-panel"></div>
     <div class="grid-panel">
         <div class="cards-grid">
             <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
@@ -42,22 +40,22 @@
                 <div class="card-icon"><i class="fas fa-phone"></i></div>
                 Telefones
             </a>
-            <a href="#" id="btn-clandestinos-rto" class="card">
+            <div class="card" onclick="window.modals.clandestinosRto.open()" style="cursor:pointer">
                 <div class="card-icon"><i class="fas fa-ban"></i></div>
                 Clandestinos
-            </a>
-            <a href="#" id="btn-inspecoes-5s" class="card">
+            </div>
+            <div class="card" onclick="window.modals.inspecoes5s.open()" style="cursor:pointer">
                 <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
                 5S
-            </a>
-            <a href="#" id="btn-levantamentos" class="card">
+            </div>
+            <div class="card" onclick="window.modals.levantamentos.open()" style="cursor:pointer">
                 <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
                 Levantamentos
-            </a>
-            <a href="#" id="btn-segunda-tela" class="card card-inspetores">
+            </div>
+            <div class="card card-inspetores" onclick="window.modals.login.open()" style="cursor:pointer">
                 <div class="card-icon"><i class="fa-solid fa-key"></i></div>
                 Inspetores
-            </a>
+            </div>
         </div>
     </div>
 </div>
@@ -67,7 +65,6 @@
         <h2 id="welcome-msg" class="welcome"></h2>
         <button onclick="logoutInspector()" class="logout-btn">Sair</button>
     </div>
-
     <div class="grid-panel">
         <div class="cards-grid">
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
@@ -87,6 +84,52 @@
                 Imagens
             </a>
         </div>
+    </div>
+</div>
+
+<div id="modal-clandestinos-rto" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Clandestinos</h2>
+            <button class="modal-close" onclick="window.modals.clandestinosRto.close()">×</button>
+        </div>
+        <a class="modal-btn" href="https://forms.office.com/r/v4BMhNHbSR">Rua Melvin Jones</a>
+        <a class="modal-btn" href="https://forms.office.com/r/JF8tPFysX6">Cajamar</a>
+    </div>
+</div>
+
+<div id="modal-levantamentos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Levantamentos</h2>
+            <button class="modal-close" onclick="window.modals.levantamentos.close()">×</button>
+        </div>
+        <a class="modal-btn" href="https://forms.office.com/r/YBvvJgHNx4">Levantamento ETEC Fazendinha</a>
+    </div>
+</div>
+
+<div id="modal-inspecoes-5s" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Inspeções 5S</h2>
+            <button class="modal-close" onclick="window.modals.inspecoes5s.close()">×</button>
+        </div>
+        <a class="modal-btn" href="https://forms.office.com/r/bkeF1EwmNC">Frota Osasco</a>
+        <a class="modal-btn" href="https://forms.office.com/r/dhibquxks5">Frota Santana</a>
+    </div>
+</div>
+
+<div id="modal-login" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🔐 Acesso Inspetores</h2>
+            <button class="modal-close" onclick="window.modals.login.close()">×</button>
+        </div>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="Digite sua senha exclusiva" required>
+            <div id="login-error" style="color:#ff4d4d; text-align:center; margin:10px 0; display:none;">Senha incorreta!</div>
+            <button type="submit" class="button">Entrar</button>
+        </form>
     </div>
 </div>
 
