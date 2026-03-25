@@ -105,17 +105,17 @@ body.dark::before {
   cursor: pointer;
 }
 
-/* GRID - Compacta para celular */
+/* GRID - Base comum para ambas as telas */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 13px;
-  padding: 16px 14px 100px;   /* espaço para botão Sair */
+  padding: 16px 14px 100px;
   max-width: 420px;
   margin: 0 auto;
 }
 
-/* Cards compactos (usados nas duas telas) */
+/* Cards base (usados nas duas telas) */
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
@@ -125,7 +125,7 @@ body.dark::before {
   text-decoration: none;
   color: var(--text);
   font-weight: 500;
-  font-size: 0.87rem;           /* texto um pouco menor */
+  font-size: 0.87rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.20);
   border: 1px solid rgba(255,255,255,0.35);
   transition: all 0.22s ease;
@@ -134,7 +134,7 @@ body.dark::before {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1.08;
-  min-height: 104px;            /* cards mais baixos */
+  min-height: 104px;
 }
 
 .card:hover, .inspector-card:hover {
@@ -179,19 +179,43 @@ body.dark::before {
   justify-content: center;
 }
 
-/* ====================== TELA INSPETORES ====================== */
+/* ====================== TELA INSPETORES (AJUSTES ESPECÍFICOS) ====================== */
 #inspector-screen {
   padding-top: 20px;
   position: relative;
   min-height: 100vh;
 }
 
+/* Grade alinhada à direita na tela de inspetores */
+#inspector-screen .cards-grid {
+  margin: 0 20px 0 auto;    /* margem direita fixa, alinhada à direita */
+  margin-left: auto;        /* força alinhamento à direita */
+  margin-right: 20px;       /* pequeno espaçamento da borda direita */
+}
+
+/* Botões da tela de inspetores mais compactos */
+#inspector-screen .inspector-card {
+  padding: 8px 4px 8px;      /* menos espaço vertical */
+  font-size: 0.75rem;        /* fonte reduzida */
+  min-height: 88px;          /* altura reduzida */
+  aspect-ratio: auto;        /* remove a proporção fixa da tela principal */
+}
+
+/* Ícone reduzido para acompanhar */
+#inspector-screen .inspector-card .card-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+/* Mensagem de boas-vindas na tela de inspetores */
 #inspector-screen .welcome {
   text-align: center;
   font-size: 1.32rem;
   font-weight: 600;
   margin: 12px 0 22px 0;
-  color: var(--text);                    /* cor adaptada ao tema */
+  color: var(--text);
 }
 
 /* Botão Sair - Canto inferior esquerdo */
@@ -267,4 +291,12 @@ body.dark::before {
   text-align: center;
   text-decoration: none;
   font-size: 1.02rem;
+}
+
+/* Responsividade extra para telas muito pequenas */
+@media (max-width: 480px) {
+  #inspector-screen .cards-grid {
+    margin-right: 12px;
+    max-width: calc(100% - 24px);
+  }
 }
