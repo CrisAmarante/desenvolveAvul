@@ -111,7 +111,8 @@ body.dark::before {
   grid-template-columns: repeat(2, 1fr);
   gap: 13px;
   padding: 16px 14px 100px;
-  max-width: 420px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -134,7 +135,7 @@ body.dark::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1.08;
+  aspect-ratio: 1 / 1.15;
   min-height: 104px;
 }
 
@@ -184,7 +185,7 @@ body.dark::before {
 
 /* ====================== TELA INSPETORES ====================== */
 #inspector-screen {
-  padding-top: 20px;
+  padding-top: 10px;
   position: relative;
   min-height: 100vh;
 }
