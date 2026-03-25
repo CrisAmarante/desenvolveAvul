@@ -1,28 +1,34 @@
 /* ============================================================
-   VARIÁVEIS E RESET
+   VARIÁVEIS E BASE
 ============================================================ */
 :root {
   --bg: rgba(255,255,255,0.88);
   --text: #222;
   --card-bg: rgba(255,255,255,0.88);
+  --modal-bg: rgba(255,255,255,0.95);
   --accent: #d11a2d;
+  --banner-bg: rgba(255, 233, 199, 0.95);
+  --overlay: rgba(0,0,0,0.40);
 }
 
 body.dark {
   --bg: rgba(18,18,18,0.90);
   --text: #eee;
   --card-bg: rgba(28,28,28,0.85);
+  --modal-bg: rgba(32,32,32,0.95);
   --accent: #ff5252;
+  --banner-bg: rgba(55,55,55,0.80);
+  --overlay: rgba(0,0,0,0.65);
 }
 
-* { box-sizing: border-box; }
-
+/* Trava de Scroll Global */
 html, body {
-  height: 100vh;
+  height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* ELIMINA SCROLLING */
+  overflow: hidden; /* Remove o scroll */
   font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text);
 }
 
 body::before {
@@ -30,38 +36,24 @@ body::before {
   position: fixed;
   inset: 0;
   background: url('banner-home-frota.png') center/cover no-repeat;
-  filter: blur(8px) brightness(0.70);
+  filter: blur(10px) brightness(0.70);
   z-index: -2;
 }
 
-/* TÍTULO COM ALTURA FIXA PARA EVITAR SOBREPOSIÇÃO */
-.titulo {
-  height: 50px;
-  background: rgba(0,0,0,0.70);
-  color: #fff !important;
-  font-size: 1.15rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  width: 100%;
-}
-
-/* LAYOUT 25% / 75% */
+/* Layout de Colunas (Side 25% | Grid 75%) */
 .screen-container {
   display: flex;
   width: 100%;
-  height: calc(100vh - 50px); /* Ocupa exatamente o que sobra do título */
+  height: calc(100vh - 54px); /* Desconta o título */
 }
 
 .side-panel {
   width: 25%;
-  height: 100%;
-  padding: 15px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .grid-panel {
@@ -70,88 +62,117 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 15px;
+  box-sizing: border-box;
 }
 
-/* GRADE DE BOTÕES MENORES */
+/* Título Superior */
+.titulo {
+  background: rgba(0,0,0,0.60);
+  color: #fff !important;
+  padding: 10px 0;
+  font-size: 1.25rem;
+  text-align: center;
+  margin: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+/* Grid de Botões Quadrados */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px; /* Reduzido */
+  gap: 12px;
   width: 100%;
-  max-width: 320px; /* Grade mais estreita para botões menores */
+  max-width: 480px; /* Evita que os botões fiquem gigantes em telas largas */
 }
 
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
-  border-radius: 10px;
+  border-radius: 12px; /* Cantos levemente arredondados */
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
-  font-size: 0.75rem; /* Texto menor */
+  font-size: 0.82rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1; 
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 5px;
+  aspect-ratio: 1 / 1; /* FORÇA O QUADRADO */
+  transition: transform 0.2s;
+  padding: 8px;
   text-align: center;
 }
 
+.card:hover, .inspector-card:hover { transform: scale(1.04); }
+
 .card-icon {
-  font-size: 1.3rem; /* Ícone menor */
+  font-size: 1.6rem;
   color: var(--accent);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
-/* DESTAQUES */
-.card-relatorio, .card-inspetores { border: 2px solid var(--accent); position: relative; }
+/* Destaques (Estrela) */
+.card-relatorio, .card-inspetores { border: 2px solid var(--accent); }
 .card-relatorio::after, .card-inspetores::after {
   content: "★";
   position: absolute;
-  top: 4px; right: 4px;
+  top: 5px; right: 5px;
   background: var(--accent); color: white;
-  font-size: 8px; width: 14px; height: 14px;
+  font-size: 10px; width: 18px; height: 18px;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
 
-/* BOAS-VINDAS NO CANTO SUPERIOR ESQUERDO */
+/* Mensagem de Boas-Vindas */
 .welcome {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0;
+  font-size: 1.15rem;
   text-align: left;
-  line-height: 1.2;
+  margin: 0;
+  color: var(--text);
+  word-wrap: break-word;
 }
 
+/* Botão Sair - Agora dentro do side-panel */
 .logout-btn {
-  margin-top: auto;
-  margin-bottom: 20px;
+  margin-top: auto; /* Joga para o fundo do side-panel */
+  margin-bottom: 30px;
   background: #d11a2d;
   color: white;
   border: none;
-  padding: 8px 15px;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: 8px;
   font-weight: bold;
+  cursor: pointer;
 }
 
-/* TEMA E BANNER */
+/* Botão Tema */
 .theme-toggle {
   position: fixed;
-  top: 6px; right: 6px;
+  top: 8px; right: 8px;
   z-index: 1000;
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  border: none;
   background: var(--card-bg);
+  border: none;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
-.banner {
-  display: none; /* Ativado via JS se necessário */
-  position: fixed; top: 50px; left: 0; right: 0;
-  background: #fff3cd; padding: 10px; z-index: 50;
-  text-align: center; font-size: 0.8rem;
+/* Modais */
+.modal {
+  position: fixed; inset: 0;
+  display: none; justify-content: center; align-items: center;
+  background: var(--overlay); backdrop-filter: blur(6px); z-index: 10000;
+}
+.modal.is-open { display: flex; }
+.modal-content {
+  background: var(--modal-bg); width: 85%; max-width: 350px;
+  padding: 20px; border-radius: 16px;
+}
+.modal-btn {
+  display: block; padding: 12px; margin: 8px 0;
+  background: var(--accent); color: white; border-radius: 8px;
+  text-align: center; text-decoration: none;
 }
