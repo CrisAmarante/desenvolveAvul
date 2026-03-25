@@ -237,3 +237,115 @@ body::before {
   text-align: center; 
   text-decoration: none;
 }
+/* =============================================================
+   LAYOUT ESPECÍFICO DA TELA DE INSPETORES (SEGUNDA TELA)
+============================================================= */
+
+#inspector-screen {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    padding: 0;
+    position: relative;
+}
+
+/* Remove os estilos antigos de .screen-container para esta tela */
+#inspector-screen .screen-container {
+    display: none; /* desativa o layout antigo flex se ainda estiver */
+}
+
+/* Container principal da tela logada */
+#inspector-screen > .side-panel,
+#inspector-screen > .grid-panel {
+    display: none; /* vamos recriar o layout com CSS Grid */
+}
+
+/* ====================== NOVA ESTRUTURA ====================== */
+#inspector-screen {
+    display: grid;
+    grid-template-areas:
+        "titulo titulo"
+        "welcome grid"
+        "sair    grid";
+    grid-template-rows: auto 1fr auto;     /* título | conteúdo | sair */
+    grid-template-columns: 1fr 1fr;        /* 50% / 50%  → depois ajustamos */
+    height: 100vh;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Título ocupa toda a largura superior */
+#inspector-screen .titulo {
+    grid-area: titulo;
+    margin: 0;
+    width: 100%;
+    z-index: 30;
+}
+
+/* Saudação - Superior esquerdo (máximo 1/4 da tela) */
+#inspector-screen #welcome-msg {
+    grid-area: welcome;
+    align-self: start;
+    justify-self: start;
+    padding: 25px 30px 10px 30px;
+    font-size: 1.25rem;
+    max-width: 85%;
+    margin: 0;
+}
+
+/* Grid de botões - Superior direito (1/4 da tela) */
+#inspector-screen .grid-panel {
+    grid-area: grid;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 25px 30px 10px 10px;
+    height: 100%;
+}
+
+/* Ajuste fino no grid de cards */
+#inspector-screen .cards-grid {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    padding-top: 8px;
+}
+
+/* Botão Sair - Canto inferior esquerdo */
+#inspector-screen .logout-btn {
+    grid-area: sair;
+    align-self: end;
+    justify-self: start;
+    margin: 0 0 35px 30px;
+    width: auto;
+    min-width: 110px;
+    padding: 14px 24px;
+    font-size: 1rem;
+}
+
+/* Responsividade - Em telas menores (celulares) */
+@media (max-width: 768px) {
+    #inspector-screen {
+        grid-template-columns: 1fr;           /* empilha em mobile */
+        grid-template-areas:
+            "titulo"
+            "welcome"
+            "grid"
+            "sair";
+    }
+    
+    #inspector-screen #welcome-msg {
+        padding: 20px 25px 5px 25px;
+    }
+    
+    #inspector-screen .grid-panel {
+        padding: 10px 25px 20px;
+        justify-content: center;
+    }
+    
+    #inspector-screen .logout-btn {
+        margin: 10px 25px 30px;
+        justify-self: center;
+    }
+}
