@@ -1,5 +1,5 @@
 /* ============================================================
-   VARIÁVEIS DE TEMA (mantidas)
+   VARIÁVEIS E BASE
 ============================================================ */
 :root {
   --bg: rgba(255,255,255,0.88);
@@ -21,17 +21,14 @@ body.dark {
   --overlay: rgba(0,0,0,0.65);
 }
 
-/* Fundo */
-body {
-  font-family: system-ui, -apple-system, sans-serif;
+/* Trava de Scroll Global */
+html, body {
+  height: 100%;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  background: none !important;
+  overflow: hidden; /* Remove o scroll */
+  font-family: system-ui, -apple-system, sans-serif;
   color: var(--text);
-  position: relative;
-  overflow-x: hidden;
-  overflow-y: auto;
 }
 
 body::before {
@@ -43,300 +40,139 @@ body::before {
   z-index: -2;
 }
 
-body.dark::before {
-  filter: blur(10px) brightness(0.85);
-}
-
-.theme-toggle {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 10000;
-  background: var(--card-bg);
-  border: none;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  font-size: 1.3rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  backdrop-filter: blur(8px);
-}
-
-.titulo {
-  background: rgba(0,0,0,0.50);
-  color: #fff !important;
-  padding: 12px 0;
-  font-size: 1.38rem;
-  font-weight: 600;
-  text-align: center;
-  margin: 0;
+/* Layout de Colunas (Side 25% | Grid 75%) */
+.screen-container {
+  display: flex;
   width: 100%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  height: calc(100vh - 54px); /* Desconta o título */
 }
 
-#aviso-temporario {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: var(--banner-bg);
-  border-bottom: 5px solid #ff9800;
-  padding: 12px 16px;
-  z-index: 9999;
-  text-align: center;
-  font-size: 0.95rem;
-}
-
-.banner-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  color: #d11a2d;
-  cursor: pointer;
-}
-
-/* ========== GRID BASE ========== */
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 13px;
-  padding: 16px 14px;
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-/* Cards gerais */
-.card, .inspector-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  text-align: center;
-  text-decoration: none;
-  color: var(--text);
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
-  border: 1px solid rgba(255,255,255,0.35);
-  transition: all 0.22s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.card:hover, .inspector-card:hover {
-  transform: translateY(-5px) scale(1.06);
-}
-
-.card-icon, .inspector-card .card-icon {
-  width: 46px;
-  height: 46px;
-  background: rgba(209, 26, 45, 0.12);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.7rem;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-/* ========== TELA PRINCIPAL ========== */
-#main-screen {
-  min-height: calc(100vh - 60px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-#main-screen .card {
-  padding: 13px 8px 11px;
-  font-size: 0.87rem;
-  aspect-ratio: 1 / 1.08;
-  min-height: 104px;
-}
-
-.card-relatorio,
-.card-inspetores {
-  border: 2.5px solid var(--accent);
-  box-shadow: 0 6px 18px rgba(209, 26, 45, 0.35);
-  position: relative;
-}
-
-.card-relatorio::after,
-.card-inspetores::after {
-  content: "★";
-  position: absolute;
-  top: -8px;
-  right: -6px;
-  background: var(--accent);
-  color: white;
-  font-size: 12px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ========== TELA INSPETORES (layout à direita e cards compactos) ========== */
-#inspector-screen {
-  padding-top: 20px;
-  position: relative;
-  min-height: 100vh;
+.side-panel {
+  width: 25%;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   box-sizing: border-box;
 }
 
-/* Grade alinhada à direita */
-#inspector-screen .cards-grid {
-  margin: 0 20px 0 auto !important;
-  margin-left: auto !important;
-  margin-right: 20px !important;
-  padding: 12px 0 !important;
-  width: calc(100% - 40px);
-  max-width: 400px;
+.grid-panel {
+  width: 75%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  box-sizing: border-box;
 }
 
-/* CARDS DA TELA INSPETORES: FORMATO HORIZONTAL COMPACTO */
-#inspector-screen .inspector-card {
-  padding: 8px 4px !important;
-  font-size: 0.75rem !important;
-  min-height: 70px !important;   /* altura bem menor */
-  aspect-ratio: auto !important;
-  justify-content: center !important;
-}
-
-/* Ícone menor */
-#inspector-screen .inspector-card .card-icon {
-  width: 36px !important;
-  height: 36px !important;
-  font-size: 1.4rem !important;
-  margin-bottom: 4px !important;
-}
-
-/* Mensagem de boas-vindas */
-#inspector-screen .welcome {
+/* Título Superior */
+.titulo {
+  background: rgba(0,0,0,0.60);
+  color: #fff !important;
+  padding: 10px 0;
+  font-size: 1.25rem;
   text-align: center;
-  font-size: 1.32rem;
-  font-weight: 600;
-  margin: 8px 0 12px 0;
-  color: var(--text);
+  margin: 0;
+  width: 100%;
+  z-index: 10;
 }
 
-/* Botão Sair */
+/* Grid de Botões Quadrados */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 480px; /* Evita que os botões fiquem gigantes em telas largas */
+}
+
+.card, .inspector-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 12px; /* Cantos levemente arredondados */
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1; /* FORÇA O QUADRADO */
+  transition: transform 0.2s;
+  padding: 8px;
+  text-align: center;
+}
+
+.card:hover, .inspector-card:hover { transform: scale(1.04); }
+
+.card-icon {
+  font-size: 1.6rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+/* Destaques (Estrela) */
+.card-relatorio, .card-inspetores { border: 2px solid var(--accent); }
+.card-relatorio::after, .card-inspetores::after {
+  content: "★";
+  position: absolute;
+  top: 5px; right: 5px;
+  background: var(--accent); color: white;
+  font-size: 10px; width: 18px; height: 18px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+
+/* Mensagem de Boas-Vindas */
+.welcome {
+  font-size: 1.15rem;
+  text-align: left;
+  margin: 0;
+  color: var(--text);
+  word-wrap: break-word;
+}
+
+/* Botão Sair - Agora dentro do side-panel */
 .logout-btn {
-  position: fixed;
-  bottom: 22px;
-  left: 20px;
+  margin-top: auto; /* Joga para o fundo do side-panel */
+  margin-bottom: 30px;
   background: #d11a2d;
   color: white;
   border: none;
-  padding: 12px 26px;
-  border-radius: 50px;
-  font-size: 1.03rem;
-  font-weight: 600;
-  box-shadow: 0 5px 15px rgba(209, 26, 45, 0.35);
-  z-index: 1000;
-}
-
-/* ========== MODAIS ========== */
-.modal {
-  position: fixed;
-  inset: 0;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  background: var(--overlay);
-  backdrop-filter: blur(6px);
-  z-index: 10000;
-}
-
-.modal.is-open { display: flex; }
-
-.modal-content {
-  background: var(--modal-bg);
-  width: 90%;
-  max-width: 380px;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 12px 35px rgba(0,0,0,0.4);
-  transform: scale(0.94) translateY(30px);
-  opacity: 0;
-  transition: all 0.28s ease;
-}
-
-.modal.is-open .modal-content {
-  transform: scale(1) translateY(0);
-  opacity: 1;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.7rem;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
   cursor: pointer;
-  color: #777;
 }
 
-.button, .modal-btn {
-  display: block;
-  width: 100%;
-  padding: 13px;
-  margin: 8px 0;
-  background: var(--accent);
-  color: white;
-  border-radius: 12px;
-  text-align: center;
-  text-decoration: none;
-  font-size: 1.02rem;
+/* Botão Tema */
+.theme-toggle {
+  position: fixed;
+  top: 8px; right: 8px;
+  z-index: 1000;
+  background: var(--card-bg);
+  border: none;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
-/* ========== MEDIA QUERIES PARA ELIMINAR SCROLL ========== */
-@media (max-height: 640px) {
-  #main-screen .card {
-    padding: 8px 4px;
-    min-height: 88px;
-    font-size: 0.8rem;
-  }
-  #main-screen .card .card-icon {
-    width: 38px;
-    height: 38px;
-    font-size: 1.4rem;
-  }
-  .titulo {
-    padding: 8px 0;
-    font-size: 1.2rem;
-  }
-  #inspector-screen .cards-grid {
-    margin-right: 10px;
-    gap: 10px;
-  }
-  #inspector-screen .inspector-card {
-    min-height: 64px !important;
-    font-size: 0.7rem !important;
-  }
+/* Modais */
+.modal {
+  position: fixed; inset: 0;
+  display: none; justify-content: center; align-items: center;
+  background: var(--overlay); backdrop-filter: blur(6px); z-index: 10000;
 }
-
-@media (max-width: 480px) {
-  #inspector-screen .cards-grid {
-    margin-right: 12px !important;
-    max-width: calc(100% - 24px);
-  }
+.modal.is-open { display: flex; }
+.modal-content {
+  background: var(--modal-bg); width: 85%; max-width: 350px;
+  padding: 20px; border-radius: 16px;
+}
+.modal-btn {
+  display: block; padding: 12px; margin: 8px 0;
+  background: var(--accent); color: white; border-radius: 8px;
+  text-align: center; text-decoration: none;
 }
