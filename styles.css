@@ -110,13 +110,14 @@ body.dark::before {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 13px;
-  padding: 16px 14px 100px;   /* espaço para botão Sair */
+  padding: 16px 14px 100px;
   max-width: 420px;
   margin: 0 auto;
 }
 
-/* Cards compactos (usados nas duas telas) */
-.card, .inspector-card {
+/* Cards (tela inicial + tela logada) */
+.card,
+.inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
   border-radius: 16px;
@@ -125,7 +126,7 @@ body.dark::before {
   text-decoration: none;
   color: var(--text);
   font-weight: 500;
-  font-size: 0.87rem;           /* texto um pouco menor */
+  font-size: 0.87rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.20);
   border: 1px solid rgba(255,255,255,0.35);
   transition: all 0.22s ease;
@@ -134,14 +135,16 @@ body.dark::before {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1.08;
-  min-height: 104px;            /* cards mais baixos */
+  min-height: 104px;
 }
 
-.card:hover, .inspector-card:hover {
+.card:hover,
+.inspector-card:hover {
   transform: translateY(-5px) scale(1.06);
 }
 
-.card-icon, .inspector-card .card-icon {
+/* Ícones */
+.card-icon {
   width: 46px;
   height: 46px;
   background: rgba(209, 26, 45, 0.12);
@@ -154,7 +157,7 @@ body.dark::before {
   margin-bottom: 6px;
 }
 
-/* Destaque especial */
+/* Destaques */
 .card-relatorio,
 .card-inspetores {
   border: 2.5px solid var(--accent);
@@ -191,10 +194,10 @@ body.dark::before {
   font-size: 1.32rem;
   font-weight: 600;
   margin: 12px 0 22px 0;
-  color: var(--text);                    /* cor adaptada ao tema */
+  color: var(--text);
 }
 
-/* Botão Sair - Canto inferior esquerdo */
+/* Botão Sair */
 .logout-btn {
   position: fixed;
   bottom: 22px;
@@ -256,7 +259,8 @@ body.dark::before {
   color: #777;
 }
 
-.button, .modal-btn {
+.button,
+.modal-btn {
   display: block;
   width: 100%;
   padding: 13px;
