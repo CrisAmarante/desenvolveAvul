@@ -1,5 +1,5 @@
 /* ============================================================
-   VARIÁVEIS DE TEMA - 
+   VARIÁVEIS DE TEMA (mantidas)
 ============================================================ */
 :root {
   --bg: rgba(255,255,255,0.88);
@@ -9,8 +9,6 @@
   --accent: #d11a2d;
   --banner-bg: rgba(255, 233, 199, 0.95);
   --overlay: rgba(0,0,0,0.40);
-  --welcome-light: #222;
-  --welcome-dark: #eee;
 }
 
 body.dark {
@@ -21,8 +19,6 @@ body.dark {
   --accent: #ff5252;
   --banner-bg: rgba(55,55,55,0.80);
   --overlay: rgba(0,0,0,0.65);
-  --welcome-light: #eee;
-  --welcome-dark: #eee;
 }
 
 /* Fundo */
@@ -35,6 +31,7 @@ body {
   color: var(--text);
   position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body::before {
@@ -50,7 +47,6 @@ body.dark::before {
   filter: blur(10px) brightness(0.85);
 }
 
-/* Botão Tema */
 .theme-toggle {
   position: fixed;
   top: 12px;
@@ -66,7 +62,6 @@ body.dark::before {
   backdrop-filter: blur(8px);
 }
 
-/* Título Superior */
 .titulo {
   background: rgba(0,0,0,0.50);
   color: #fff !important;
@@ -77,9 +72,11 @@ body.dark::before {
   margin: 0;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-/* Banner */
 #aviso-temporario {
   display: none;
   position: fixed;
@@ -105,27 +102,25 @@ body.dark::before {
   cursor: pointer;
 }
 
-/* GRID - Base comum para ambas as telas */
+/* ========== GRID BASE ========== */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 13px;
-  padding: 16px 14px 100px;
+  padding: 16px 14px;
   max-width: 420px;
   margin: 0 auto;
 }
 
-/* Cards base (usados nas duas telas) */
+/* Cards gerais */
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
   border-radius: 16px;
-  padding: 13px 8px 11px;
   text-align: center;
   text-decoration: none;
   color: var(--text);
   font-weight: 500;
-  font-size: 0.87rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.20);
   border: 1px solid rgba(255,255,255,0.35);
   transition: all 0.22s ease;
@@ -133,8 +128,6 @@ body.dark::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1.08;
-  min-height: 104px;
 }
 
 .card:hover, .inspector-card:hover {
@@ -154,7 +147,21 @@ body.dark::before {
   margin-bottom: 6px;
 }
 
-/* Destaque especial */
+/* ========== TELA PRINCIPAL ========== */
+#main-screen {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#main-screen .card {
+  padding: 13px 8px 11px;
+  font-size: 0.87rem;
+  aspect-ratio: 1 / 1.08;
+  min-height: 104px;
+}
+
 .card-relatorio,
 .card-inspetores {
   border: 2.5px solid var(--accent);
@@ -179,46 +186,54 @@ body.dark::before {
   justify-content: center;
 }
 
-/* ====================== TELA INSPETORES (AJUSTES ESPECÍFICOS) ====================== */
+/* ========== TELA INSPETORES (layout à direita e cards compactos) ========== */
 #inspector-screen {
   padding-top: 20px;
   position: relative;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
-/* Grade alinhada à direita na tela de inspetores */
+/* Grade alinhada à direita */
 #inspector-screen .cards-grid {
-  margin: 0 20px 0 auto;    /* margem direita fixa, alinhada à direita */
-  margin-left: auto;        /* força alinhamento à direita */
-  margin-right: 20px;       /* pequeno espaçamento da borda direita */
+  margin: 0 20px 0 auto !important;
+  margin-left: auto !important;
+  margin-right: 20px !important;
+  padding: 12px 0 !important;
+  width: calc(100% - 40px);
+  max-width: 400px;
 }
 
-/* Botões da tela de inspetores mais compactos */
+/* CARDS DA TELA INSPETORES: FORMATO HORIZONTAL COMPACTO */
 #inspector-screen .inspector-card {
-  padding: 8px 4px 8px;      /* menos espaço vertical */
-  font-size: 0.75rem;        /* fonte reduzida */
-  min-height: 88px;          /* altura reduzida */
-  aspect-ratio: auto;        /* remove a proporção fixa da tela principal */
+  padding: 8px 4px !important;
+  font-size: 0.75rem !important;
+  min-height: 70px !important;   /* altura bem menor */
+  aspect-ratio: auto !important;
+  justify-content: center !important;
 }
 
-/* Ícone reduzido para acompanhar */
+/* Ícone menor */
 #inspector-screen .inspector-card .card-icon {
-  width: 40px;
-  height: 40px;
-  font-size: 1.5rem;
-  margin-bottom: 4px;
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 1.4rem !important;
+  margin-bottom: 4px !important;
 }
 
-/* Mensagem de boas-vindas na tela de inspetores */
+/* Mensagem de boas-vindas */
 #inspector-screen .welcome {
   text-align: center;
   font-size: 1.32rem;
   font-weight: 600;
-  margin: 12px 0 22px 0;
+  margin: 8px 0 12px 0;
   color: var(--text);
 }
 
-/* Botão Sair - Canto inferior esquerdo */
+/* Botão Sair */
 .logout-btn {
   position: fixed;
   bottom: 22px;
@@ -234,7 +249,7 @@ body.dark::before {
   z-index: 1000;
 }
 
-/* Modais */
+/* ========== MODAIS ========== */
 .modal {
   position: fixed;
   inset: 0;
@@ -293,10 +308,35 @@ body.dark::before {
   font-size: 1.02rem;
 }
 
-/* Responsividade extra para telas muito pequenas */
+/* ========== MEDIA QUERIES PARA ELIMINAR SCROLL ========== */
+@media (max-height: 640px) {
+  #main-screen .card {
+    padding: 8px 4px;
+    min-height: 88px;
+    font-size: 0.8rem;
+  }
+  #main-screen .card .card-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 1.4rem;
+  }
+  .titulo {
+    padding: 8px 0;
+    font-size: 1.2rem;
+  }
+  #inspector-screen .cards-grid {
+    margin-right: 10px;
+    gap: 10px;
+  }
+  #inspector-screen .inspector-card {
+    min-height: 64px !important;
+    font-size: 0.7rem !important;
+  }
+}
+
 @media (max-width: 480px) {
   #inspector-screen .cards-grid {
-    margin-right: 12px;
+    margin-right: 12px !important;
     max-width: calc(100% - 24px);
   }
 }
