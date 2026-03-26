@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - Versão FLEXBOX (Alternativa ao CSS Grid) 2026
+   CSS Completo - Versão FLEXBOX (sem Grid) - CORRIGIDO
 ============================================================ */
 
 :root {
@@ -88,14 +88,14 @@ body::before {
   margin-left: auto;
 }
 
-/* ====================== FLEXBOX GRID DE BOTÕES ====================== */
+/* ====================== FLEXBOX - GRID DE BOTÕES (CORRIGIDO) ====================== */
 .cards-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
   width: 100%;
   max-width: 480px;
-  justify-content: flex-end;        /* mantém alinhado à direita */
+  justify-content: flex-start;   /* garante que o último botão fique à esquerda */
 }
 
 .card, .inspector-card {
@@ -112,7 +112,7 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1 1 195px;                  /* 2 colunas no PC */
+  flex: 0 1 195px;               /* ← CORREÇÃO PRINCIPAL: tamanho fixo */
   min-width: 195px;
   aspect-ratio: 1 / 1;
   transition: transform 0.25s ease;
@@ -174,7 +174,7 @@ body::before {
   max-width: 480px;
 }
 
-/* Botão Sair */
+/* Botão Sair com nome discreto */
 #inspector-screen .logout-btn {
   margin: 0 auto 30px auto;
   min-width: 145px;
@@ -253,7 +253,7 @@ body::before {
   cursor: pointer;
 }
 
-/* ====================== RESPONSIVIDADE (MOBILE) ====================== */
+/* ====================== RESPONSIVIDADE ====================== */
 @media (max-width: 768px) {
   .screen-container,
   #inspector-screen .grid-panel {
@@ -265,7 +265,7 @@ body::before {
   }
 
   .card, .inspector-card {
-    flex: 1 1 165px;          /* 1 coluna no mobile */
+    flex: 0 1 165px;          /* tamanho fixo também no mobile */
     min-width: 165px;
     font-size: 0.78rem;
     padding: 8px;
