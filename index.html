@@ -147,6 +147,96 @@
         </form>
     </div>
 </div>
+    <!-- ====================== MODAL INSPEÇÃO VEICULAR DIÁRIA ====================== -->
+<div id="modal-inspecao-veicular" class="modal">
+  <div class="modal-content inspecao-modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">🚍 INSPEÇÃO VEICULAR DIÁRIA</h2>
+      <button class="modal-close" onclick="window.modals.inspecaoVeicular.close()">×</button>
+    </div>
+
+    <div id="inspecao-veicular-container">
+
+      <!-- Campos superiores -->
+      <div class="top-fields">
+        <div class="field"><label>CARRO</label><input type="text" id="carro" placeholder="___" maxlength="10"></div>
+        <div class="field"><label>LINHA</label><input type="text" id="linha" placeholder="___" maxlength="10"></div>
+        <div class="field"><label>TERMINAL</label><input type="text" id="terminal" placeholder="___" maxlength="10"></div>
+      </div>
+
+      <!-- Tabela -->
+      <table class="inspection-table" id="tabela-inspecao">
+        <thead>
+          <tr>
+            <th>ITEM</th>
+            <th>OK</th>
+            <th>COM DEFEITO</th>
+            <th>OBS.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Elevador -->
+          <tr data-item="elevador">
+            <td class="item-name">ELEVADOR</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
+          </tr>
+          <!-- Thoreb -->
+          <tr data-item="thoreb">
+            <td class="item-name">THOREB</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
+          </tr>
+          <!-- USB -->
+          <tr data-item="usb">
+            <td class="item-name">USB</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
+          </tr>
+          <!-- Ventilador -->
+          <tr data-item="ventilador">
+            <td class="item-name">VENTILADOR</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td class="obs-cell-vent">
+              <input type="text" class="obs-input" placeholder="Observação">
+              <div class="posicao-container">
+                <span class="posicao-label">POSIÇÃO</span>
+                <div class="posicao-buttons">
+                  <button type="button" class="pos-btn" data-pos="F">F</button>
+                  <button type="button" class="pos-btn" data-pos="M">M</button>
+                  <button type="button" class="pos-btn" data-pos="T">T</button>
+                </div>
+              </div>
+            </td>
+            <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Rodapé -->
+      <div class="bottom-fields">
+        <div class="field"><label>FISCAL</label><input type="text" id="fiscal" readonly></div>
+        <div class="field"><label>DATA</label><input type="text" id="data" readonly></div>
+        <div class="field"><label>HORA</label><input type="text" id="hora" readonly></div>
+      </div>
+
+      <!-- Botões finais -->
+      <div class="action-buttons">
+        <button id="btn-editar-inspecao" class="btn-secundario">EDITAR</button>
+        <button id="btn-apagar-inspecao" class="btn-secundario">APAGAR</button>
+        <button id="btn-enviar-inspecao" class="btn-principal">ENVIAR</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="script.js"></script>
 </body>
