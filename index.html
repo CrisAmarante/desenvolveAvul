@@ -24,10 +24,8 @@
 
 <h1 class="titulo"><i class="fas fa-clipboard-list"></i> PENSO - Prancheta Eletrônica</h1>
 
+<!-- ====================== TELA INICIAL (NÃO LOGADA) ====================== -->
 <div id="main-screen" class="screen-container">
-    <div class="side-panel">
-        </div>
-    
     <div class="grid-panel">
         <div class="cards-grid">
             <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
@@ -69,14 +67,8 @@
     </div>
 </div>
 
+<!-- ====================== TELA DE INSPETORES (LOGADA) ====================== -->
 <div id="inspector-screen" class="screen-container" style="display: none;">
-
-    <!-- Título já existe fora, mas garantimos que esteja visível -->
-    
-    <div class="side-panel">
-        <h2 id="welcome-msg" class="welcome"></h2>
-    </div>
-
     <div class="grid-panel">
         <div class="cards-grid">
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
@@ -100,10 +92,16 @@
             </a>
         </div>
     </div>
-
     <button onclick="logoutInspector()" class="logout-btn">Sair</button>
 </div>
 
+<!-- ====================== TOAST DE BOAS-VINDAS ====================== -->
+<div id="welcome-toast">
+    <div>Bem-vindo, <span id="toast-name" class="toast-name"></span>!</div>
+    <button class="toast-close" onclick="hideWelcomeToast()">×</button>
+</div>
+
+<!-- ====================== MODAIS ====================== -->
 <div id="modal-clandestinos-rto" class="modal">
     <div class="modal-content">
         <div class="modal-header">
