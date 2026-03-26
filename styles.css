@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo e Organizado - Versão Corrigida
+   CSS Completo e Organizado - Versão Responsiva 2026
 ============================================================ */
 
 :root {
@@ -32,7 +32,10 @@ html, body {
   font-family: system-ui, -apple-system, sans-serif;
   color: var(--text);
   background: transparent;
+  box-sizing: border-box;
 }
+
+* { box-sizing: border-box; }
 
 body::before {
   content: "";
@@ -58,18 +61,16 @@ body::before {
 }
 
 @media (min-width: 769px) {
-  .titulo {
-    font-size: 1.48rem;
-  }
+  .titulo { font-size: 1.48rem; }
 }
 
-/* ====================== LAYOUT PRINCIPAL (Tela não logada) ====================== */
+/* ====================== LAYOUT PRINCIPAL ====================== */
 .screen-container {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;           /* alinhado à direita */
   justify-content: center;
   height: 100%;
   gap: 20px;
@@ -78,15 +79,14 @@ body::before {
 
 .grid-panel {
   width: 100%;
-  max-width: 520px;
-  display: flex;
-  justify-content: center;
+  max-width: 480px;
+  margin-left: auto;               /* força alinhamento à direita */
 }
 
-/* Grid de Botões */
+/* Grid unificado - mesma dimensão nas duas telas */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
   gap: 14px;
   width: 100%;
   max-width: 480px;
@@ -111,6 +111,7 @@ body::before {
   padding: 10px;
   text-align: center;
   position: relative;
+  min-width: 0;
 }
 
 .card:hover, .inspector-card:hover { 
@@ -131,13 +132,11 @@ body::before {
 .card-relatorio::after, .card-inspetores::after {
   content: "★";
   position: absolute;
-  top: 8px; 
-  right: 8px;
+  top: 8px; right: 8px;
   background: var(--accent); 
   color: white;
   font-size: 11px; 
-  width: 20px; 
-  height: 20px;
+  width: 20px; height: 20px;
   border-radius: 50%; 
   display: flex; 
   align-items: center; 
@@ -145,105 +144,128 @@ body::before {
 }
 
 /* ====================== TELA DE INSPETORES (LOGADA) ====================== */
-
 #inspector-screen {
-    display: grid !important;
-    grid-template-areas:
-        "welcome titulo"
-        "welcome grid"
-        "sair    grid";
-    grid-template-rows: auto 1fr auto;
-    grid-template-columns: 38% 62%;
-    height: 100vh;
-    width: 100%;
-    gap: 0;
-    padding: 0;
-    overflow: hidden;
-    position: relative;
-    z-index: 1;
+  display: flex !important;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
-/* Saudação - Superior esquerdo */
-#inspector-screen #welcome-msg {
-    grid-area: welcome;
-    align-self: start;
-    justify-self: start;
-    padding: 32px 35px 15px 38px;
-    font-size: 1.32rem;
-    line-height: 1.45;
-    max-width: 92%;
-    margin: 0;
-    font-weight: 500;
-}
-
-/* Grid de botões - Superior direito */
 #inspector-screen .grid-panel {
-    grid-area: grid;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 28px 40px 25px 15px;
-    height: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;        /* lateral direita */
+  padding: 20px 35px 20px 20px;
 }
 
 #inspector-screen .cards-grid {
-    width: 100%;
-    max-width: 440px;
-    margin: 0 auto;
+  max-width: 480px;
 }
 
-/* Botão Sair - Canto inferior esquerdo */
+/* Botão Sair com nome discreto */
 #inspector-screen .logout-btn {
-    grid-area: sair;
-    align-self: end;
-    justify-self: start;
-    margin: 0 0 48px 38px;
-    min-width: 125px;
-    padding: 15px 30px;
-    font-size: 1.08rem;
-    background: #d11a2d;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-    transition: all 0.2s;
+  margin: 0 auto 40px auto;
+  min-width: 145px;
+  padding: 14px 32px;
+  font-size: 1.08rem;
+  background: #d11a2d;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.1;
 }
 
 #inspector-screen .logout-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+}
+
+#inspector-screen .logout-btn small {
+  font-size: 0.78rem;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+/* ====================== TOAST TEMPORÁRIO DE BOAS-VINDAS ====================== */
+#welcome-toast {
+  position: fixed;
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--modal-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  padding: 20px 32px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  font-size: 1.32rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--text);
+  z-index: 11000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+#welcome-toast.show {
+  display: flex;
+  opacity: 1;
+}
+
+#welcome-toast .toast-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.toast-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--accent);
+  cursor: pointer;
 }
 
 /* ====================== RESPONSIVIDADE ====================== */
 @media (max-width: 768px) {
-    #inspector-screen {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "titulo"
-            "welcome"
-            "grid"
-            "sair";
-    }
-    
-    #inspector-screen #welcome-msg {
-        padding: 25px 28px 12px 28px;
-        font-size: 1.22rem;
-    }
-    
-    #inspector-screen .grid-panel {
-        padding: 15px 30px 30px;
-    }
-    
-    #inspector-screen .logout-btn {
-        margin: 10px auto 45px;
-        justify-self: center;
-    }
-    
-    .cards-grid {
-        gap: 12px;
-    }
+  .screen-container,
+  #inspector-screen .grid-panel {
+    padding: 15px 20px;
+  }
+  
+  #inspector-screen .logout-btn {
+    margin: 10px auto 35px;
+  }
+  
+  .cards-grid {
+    gap: 12px;
+  }
+  
+  #welcome-toast {
+    top: 78px;
+    padding: 16px 24px;
+    font-size: 1.22rem;
+  }
 }
 
 /* ====================== MODAIS ====================== */
