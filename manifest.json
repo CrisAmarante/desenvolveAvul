@@ -1,15 +1,26 @@
 {
-  "name": "Ambiente de testes AVUL",
-  "short_name": "Testes Avul",
+  "name": "AMbiente de Testes",
+  "short_name": "PENSO",
+  "description": "Prancheta eletrônica -Ambiente de testes",
+  "id": "/desenvolveAvul/",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#d11a2d",
   "theme_color": "#d11a2d",
+  "orientation": "portrait-primary",
+  "version": "2026.03.25-v1",
   "icons": [
     {
       "src": "icon.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
