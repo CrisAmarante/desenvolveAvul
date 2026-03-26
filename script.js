@@ -8,7 +8,7 @@ let INSPETORES = {};
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
 const DATA_FIM_BANNER    = new Date('2026-07-21T00:01:00');
 
-// Bloqueio de botões por data (mantido da versão oficial)
+// Bloqueio de botões por data
 const disableDates = {
   'btn-osasco': new Date('2026-07-19'),
   'btn-santana': new Date('2026-07-03')
@@ -26,49 +26,39 @@ function getEl(id) {
 }
 
 // ====================================================================
-// CONTROLE DE MODAIS (UX moderna + acessibilidade)
+// CONTROLE DE MODAIS
 // ====================================================================
 class ModalController {
   constructor(modalId) {
     this.modal = getEl(modalId);
     if (!this.modal) return;
-
     this.content = this.modal.querySelector('.modal-content');
     this.isOpen = false;
-
     this.handleBackgroundClick = this.handleBackgroundClick.bind(this);
     this.handleEsc = this.handleEsc.bind(this);
   }
 
   open() {
     if (!this.modal || this.isOpen) return;
-
     this.modal.classList.add('is-open');
     document.body.classList.add('no-scroll');
     this.isOpen = true;
-
     this.modal.addEventListener('click', this.handleBackgroundClick);
     document.addEventListener('keydown', this.handleEsc);
-
     const firstFocusable = this.modal.querySelector('input, button, a, select, textarea');
     if (firstFocusable) firstFocusable.focus();
-
     logDebug(`Modal "${this.modal.id}" aberto.`);
   }
 
   close() {
     if (!this.modal || !this.isOpen) return;
-
     this.modal.classList.add('is-closing');
-
     setTimeout(() => {
       this.modal.classList.remove('is-open', 'is-closing');
       document.body.classList.remove('no-scroll');
       this.isOpen = false;
-
       this.modal.removeEventListener('click', this.handleBackgroundClick);
       document.removeEventListener('keydown', this.handleEsc);
-
       logDebug(`Modal "${this.modal.id}" fechado.`);
     }, 220);
   }
@@ -90,13 +80,7 @@ async function registrarLog(nomeApelido) {
     const formData = new URLSearchParams();
     formData.append("nome", nomeApelido);
     formData.append("acao", "Login bem-sucedido");
-
-    await fetch(URL_PLANILHA, {
-      method: "POST",
-      body: formData,
-      mode: "no-cors"
-    });
-
+    await fetch(URL_PLANILHA, { method: "POST", body: formData, mode: "no-cors" });
     logDebug("Log enviado:", nomeApelido);
   } catch (err) {
     console.warn("Falha ao registrar log:", err);
@@ -118,7 +102,7 @@ function carregarInspetores() {
 }
 
 // ====================================================================
-// LOGIN / LOGOUT
+// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO
 // ====================================================================
 function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
@@ -126,12 +110,20 @@ function checkLoginStatus() {
 
   const main = getEl('main-screen');
   const insp = getEl('inspector-screen');
-  const msg = getEl('welcome-msg');
 
   if (logado === 'true' && nome) {
     main.style.display = 'none';
     insp.style.display = 'flex';
-    if (msg) msg.textContent = `Bem-vindo, Inspetor ${nome}!`;
+    
+    showWelcomeToast(nome);
+    
+    const logoutBtn = insp.querySelector('.logout-btn');
+    if (logoutBtn) {
+      logoutBtn.innerHTML = `
+        Sair
+        <small>Inspetor ${nome}</small>
+      `;
+    }
   } else {
     main.style.display = 'flex';
     insp.style.display = 'none';
@@ -140,21 +132,16 @@ function checkLoginStatus() {
 
 function login(e) {
   e.preventDefault();
-
   const senhaInput = getEl('password');
   const errorMsg = getEl('login-error');
   const senha = senhaInput.value.trim();
 
-  const nomeEncontrado = Object.keys(INSPETORES).find(
-    nome => INSPETORES[nome] === senha
-  );
+  const nomeEncontrado = Object.keys(INSPETORES).find(nome => INSPETORES[nome] === senha);
 
   if (nomeEncontrado) {
     localStorage.setItem('inspectorLoggedIn', 'true');
     localStorage.setItem('inspectorName', nomeEncontrado);
-
     registrarLog(nomeEncontrado);
-
     window.modals.login.close();
     checkLoginStatus();
   } else {
@@ -168,6 +155,30 @@ function logoutInspector() {
   localStorage.removeItem('inspectorLoggedIn');
   localStorage.removeItem('inspectorName');
   checkLoginStatus();
+}
+
+// ====================== TOAST TEMPORÁRIO DE BOAS-VINDAS ======================
+function showWelcomeToast(nome) {
+  const toast = getEl('welcome-toast');
+  if (!toast) return;
+  
+  getEl('toast-name').textContent = nome;
+  toast.classList.add('show');
+
+  const autoHide = setTimeout(() => hideWelcomeToast(), 3500);
+
+  const clickHandler = () => {
+    hideWelcomeToast();
+    document.removeEventListener('click', clickHandler);
+    clearTimeout(autoHide);
+  };
+  
+  setTimeout(() => document.addEventListener('click', clickHandler), 300);
+}
+
+function hideWelcomeToast() {
+  const toast = getEl('welcome-toast');
+  if (toast) toast.classList.remove('show');
 }
 
 // ====================================================================
@@ -199,12 +210,7 @@ function mostrarBannerAviso() {
   const agora = new Date();
   const banner = getEl('aviso-temporario');
   if (!banner) return;
-
-  if (agora >= DATA_INICIO_BANNER && agora < DATA_FIM_BANNER) {
-    banner.style.display = 'flex';
-  } else {
-    banner.style.display = 'none';
-  }
+  banner.style.display = (agora >= DATA_INICIO_BANNER && agora < DATA_FIM_BANNER) ? 'flex' : 'none';
 }
 
 // ====================================================================
@@ -220,7 +226,6 @@ function initModals() {
 }
 
 function initEventListeners() {
-  // Botão Inspetores → abre modal de login
   getEl('btn-segunda-tela')?.addEventListener('click', (e) => {
     e.preventDefault();
     getEl('login-error').style.display = 'none';
@@ -228,10 +233,8 @@ function initEventListeners() {
     window.modals.login.open();
   });
 
-  // Formulário de login
   getEl('login-form')?.addEventListener('submit', login);
 
-  // Modais
   getEl('btn-clandestinos-rto')?.addEventListener('click', (e) => {
     e.preventDefault();
     window.modals.clandestinosRto.open();
@@ -247,7 +250,6 @@ function initEventListeners() {
     window.modals.inspecoes5s.open();
   });
 
-  // Botão fechar banner
   getEl('btn-fechar-banner')?.addEventListener('click', fecharBanner);
 }
 
@@ -267,10 +269,8 @@ function applyTheme(theme) {
 function initTheme() {
   const themeToggle = getEl('theme-toggle');
   if (!themeToggle) return;
-
   const savedTheme = localStorage.getItem("theme") || "light";
   applyTheme(savedTheme);
-
   themeToggle.addEventListener("click", () => {
     const current = localStorage.getItem("theme") === "dark" ? "light" : "dark";
     localStorage.setItem("theme", current);
@@ -291,5 +291,5 @@ window.addEventListener('load', () => {
   mostrarBannerAviso();
   aplicarBloqueioDeDatas();
 
-  logDebug("PWA PENSO carregada com sucesso (layout moderno aplicado).");
+  logDebug("PWA PENSO carregada com sucesso (responsividade corrigida).");
 });
