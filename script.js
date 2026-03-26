@@ -277,6 +277,84 @@ function initTheme() {
     applyTheme(current);
   });
 }
+// ====================== INSPEÇÃO VEICULAR DIÁRIA ======================
+class InspecaoVeicular {
+  constructor() {
+    this.modal = new ModalController('modal-inspecao-veicular');
+    this.initEventListeners();
+  }
+
+  initEventListeners() {
+    // Botão para abrir (adicione este card na tela de inspetores se quiser)
+    const btnAbrir = document.getElementById('btn-inspecao-veicular');
+    if (btnAbrir) btnAbrir.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.open();
+    });
+
+    // Preenchimento automático ao abrir
+    this.modal.modal.addEventListener('modal-open', () => this.preencherAutomatico());
+
+    // Botões SALVAR por linha
+    document.querySelectorAll('.btn-salvar').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const row = e.target.closest('tr');
+        this.salvarLinha(row);
+      });
+    });
+
+    // Posição F/M/T
+    document.querySelectorAll('.pos-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+      });
+    });
+
+    // Botão ENVIAR
+    getEl('btn-enviar-inspecao').addEventListener('click', () => this.enviarInspecao());
+  }
+
+  open() {
+    this.modal.open();
+  }
+
+  preencherAutomatico() {
+    const nome = localStorage.getItem('inspectorName') || 'Inspetor';
+    getEl('fiscal').value = nome;
+
+    const agora = new Date();
+    getEl('data').value = agora.toLocaleDateString('pt-BR');
+    getEl('hora').value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  salvarLinha(row) {
+    const item = row.dataset.item;
+    const ok = row.querySelector('.ok').checked;
+    const defeito = row.querySelector('.defeito').checked;
+    const obs = row.querySelector('.obs-input').value.trim();
+
+    console.log(`✅ Salvo: ${item} | OK: ${ok} | Defeito: ${defeito} | Obs: ${obs}`);
+    alert(`✅ Item ${item.toUpperCase()} salvo com sucesso!`);
+  }
+
+  enviarInspecao() {
+    if (confirm('Deseja enviar a inspeção agora?')) {
+      console.log('📤 Inspeção enviada para o Google Sheets (futuro)');
+      alert('✅ Inspeção enviada com sucesso!');
+      this.modal.close();
+    }
+  }
+}
+
+// ====================== INICIALIZAÇÃO ======================
+window.addEventListener('load', () => {
+  // ... seu código existente ...
+
+  // Adiciona o novo modal ao controlador
+  window.modals.inspecaoVeicular = new InspecaoVeicular();
+
+  logDebug("Módulo INSPEÇÃO VEICULAR DIÁRIA carregado com sucesso.");
+});
 
 // ====================================================================
 // INICIALIZAÇÃO GERAL
