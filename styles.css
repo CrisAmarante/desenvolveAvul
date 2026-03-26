@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - Versão Responsiva Final 2026
+   CSS Completo - Versão FLEXBOX (Alternativa ao CSS Grid) 2026
 ============================================================ */
 
 :root {
@@ -60,21 +60,21 @@ body::before {
   margin: 0;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  flex-shrink: 0; /* nunca encolhe */
+  flex-shrink: 0;
 }
 
 @media (min-width: 769px) {
   .titulo { font-size: 1.48rem; }
 }
 
-/* ====================== CONTAINER RESPONSIVO PRINCIPAL ====================== */
+/* ====================== CONTAINER RESPONSIVO ====================== */
 .screen-container {
-  flex: 1;                    /* ocupa exatamente o espaço restante após o título */
+  flex: 1;
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;      /* tudo alinhado à direita */
+  align-items: flex-end;
   justify-content: center;
   width: 100%;
   padding: 20px;
@@ -85,16 +85,17 @@ body::before {
 .grid-panel {
   width: 100%;
   max-width: 480px;
-  margin-left: auto;          /* força alinhamento à direita */
+  margin-left: auto;
 }
 
-/* Grid unificado - mesma dimensão nas duas telas */
+/* ====================== FLEXBOX GRID DE BOTÕES ====================== */
 .cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   width: 100%;
   max-width: 480px;
+  justify-content: flex-end;        /* mantém alinhado à direita */
 }
 
 .card, .inspector-card {
@@ -111,12 +112,13 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  flex: 1 1 195px;                  /* 2 colunas no PC */
+  min-width: 195px;
   aspect-ratio: 1 / 1;
   transition: transform 0.25s ease;
   padding: 10px;
   text-align: center;
   position: relative;
-  min-width: 0;
 }
 
 .card:hover, .inspector-card:hover { 
@@ -153,7 +155,6 @@ body::before {
   flex: 1 !important;
   display: flex !important;
   flex-direction: column;
-  height: auto;
   width: 100%;
   padding: 0;
   overflow: hidden;
@@ -173,7 +174,7 @@ body::before {
   max-width: 480px;
 }
 
-/* Botão Sair com nome discreto */
+/* Botão Sair */
 #inspector-screen .logout-btn {
   margin: 0 auto 30px auto;
   min-width: 145px;
@@ -205,7 +206,7 @@ body::before {
   opacity: 0.9;
 }
 
-/* ====================== TOAST DE BOAS-VINDAS ====================== */
+/* ====================== TOAST ====================== */
 #welcome-toast {
   position: fixed;
   top: 85px;
@@ -260,11 +261,12 @@ body::before {
   }
 
   .cards-grid {
-    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
     gap: 10px;
   }
 
   .card, .inspector-card {
+    flex: 1 1 165px;          /* 1 coluna no mobile */
+    min-width: 165px;
     font-size: 0.78rem;
     padding: 8px;
   }
@@ -286,7 +288,7 @@ body::before {
   }
 }
 
-/* ====================== MODAIS ====================== */
+/* ====================== MODAIS, TEMA E BANNER ====================== */
 .modal {
   position: fixed; 
   inset: 0;
@@ -298,9 +300,7 @@ body::before {
   z-index: 10000;
 }
 
-.modal.is-open { 
-  display: flex; 
-}
+.modal.is-open { display: flex; }
 
 .modal-content {
   background: var(--modal-bg); 
@@ -318,10 +318,7 @@ body::before {
   margin-bottom: 15px;
 }
 
-.modal-title {
-  margin: 0;
-  font-size: 1.25rem;
-}
+.modal-title { margin: 0; font-size: 1.25rem; }
 
 .modal-close {
   background: none;
@@ -343,7 +340,6 @@ body::before {
   font-weight: 500;
 }
 
-/* ====================== BOTÃO DE TEMA ====================== */
 .theme-toggle {
   position: fixed;
   top: 12px; 
@@ -359,7 +355,6 @@ body::before {
   cursor: pointer;
 }
 
-/* ====================== BANNER TEMPORÁRIO ====================== */
 #aviso-temporario.banner {
   position: fixed;
   top: 70px;
@@ -389,12 +384,8 @@ body::before {
   padding: 0 8px;
 }
 
-/* ====================== OUTROS ====================== */
-button, a {
-  cursor: pointer;
-}
+button, a { cursor: pointer; }
 
-/* Força visibilidade quando logado */
 #inspector-screen[style*="display: none"] {
   display: none !important;
 }
