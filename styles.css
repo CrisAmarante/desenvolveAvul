@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo e Organizado - Versão Responsiva 2026
+   CSS Completo - Versão Responsiva Final 2026
 ============================================================ */
 
 :root {
@@ -32,6 +32,8 @@ html, body {
   font-family: system-ui, -apple-system, sans-serif;
   color: var(--text);
   background: transparent;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
 }
 
@@ -46,7 +48,7 @@ body::before {
   z-index: -2;
 }
 
-/* Título Principal */
+/* Título Principal - fixo no topo */
 .titulo {
   position: relative;
   z-index: 30;
@@ -58,35 +60,38 @@ body::before {
   margin: 0;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  flex-shrink: 0; /* nunca encolhe */
 }
 
 @media (min-width: 769px) {
   .titulo { font-size: 1.48rem; }
 }
 
-/* ====================== LAYOUT PRINCIPAL ====================== */
+/* ====================== CONTAINER RESPONSIVO PRINCIPAL ====================== */
 .screen-container {
+  flex: 1;                    /* ocupa exatamente o espaço restante após o título */
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;           /* alinhado à direita */
+  align-items: flex-end;      /* tudo alinhado à direita */
   justify-content: center;
-  height: 100%;
-  gap: 20px;
+  width: 100%;
   padding: 20px;
+  overflow: hidden;
+  gap: 20px;
 }
 
 .grid-panel {
   width: 100%;
   max-width: 480px;
-  margin-left: auto;               /* força alinhamento à direita */
+  margin-left: auto;          /* força alinhamento à direita */
 }
 
 /* Grid unificado - mesma dimensão nas duas telas */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
   gap: 14px;
   width: 100%;
   max-width: 480px;
@@ -143,11 +148,12 @@ body::before {
   justify-content: center;
 }
 
-/* ====================== TELA DE INSPETORES (LOGADA) ====================== */
+/* ====================== TELA DE INSPETORES ====================== */
 #inspector-screen {
+  flex: 1 !important;
   display: flex !important;
   flex-direction: column;
-  height: 100vh;
+  height: auto;
   width: 100%;
   padding: 0;
   overflow: hidden;
@@ -159,7 +165,7 @@ body::before {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: flex-end;        /* lateral direita */
+  justify-content: flex-end;
   padding: 20px 35px 20px 20px;
 }
 
@@ -169,7 +175,7 @@ body::before {
 
 /* Botão Sair com nome discreto */
 #inspector-screen .logout-btn {
-  margin: 0 auto 40px auto;
+  margin: 0 auto 30px auto;
   min-width: 145px;
   padding: 14px 32px;
   font-size: 1.08rem;
@@ -199,7 +205,7 @@ body::before {
   opacity: 0.9;
 }
 
-/* ====================== TOAST TEMPORÁRIO DE BOAS-VINDAS ====================== */
+/* ====================== TOAST DE BOAS-VINDAS ====================== */
 #welcome-toast {
   position: fixed;
   top: 85px;
@@ -246,21 +252,33 @@ body::before {
   cursor: pointer;
 }
 
-/* ====================== RESPONSIVIDADE ====================== */
+/* ====================== RESPONSIVIDADE (MOBILE) ====================== */
 @media (max-width: 768px) {
   .screen-container,
   #inspector-screen .grid-panel {
     padding: 15px 20px;
   }
-  
-  #inspector-screen .logout-btn {
-    margin: 10px auto 35px;
-  }
-  
+
   .cards-grid {
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 10px;
   }
-  
+
+  .card, .inspector-card {
+    font-size: 0.78rem;
+    padding: 8px;
+  }
+
+  .card-icon {
+    font-size: 1.45rem;
+  }
+
+  #inspector-screen .logout-btn {
+    margin: 10px auto 25px auto;
+    padding: 13px 28px;
+    font-size: 1.02rem;
+  }
+
   #welcome-toast {
     top: 78px;
     padding: 16px 24px;
