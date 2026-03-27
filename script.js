@@ -1,10 +1,11 @@
+// ====================================================================
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
 
-let INSPETORES = {}; // formato: { apelido: { hash, nome, funcao } }
+let INSPETORES = {}; // estrutura: { apelido: { hash, nome, funcao } }
 
-// Período do banner 
+// Período do banner
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
 const DATA_FIM_BANNER    = new Date('2026-07-21T00:01:00');
 
@@ -103,7 +104,7 @@ async function registrarLog(nomeApelido) {
 // ====================================================================
 function processarDadosPlanilha(dados) {
   // Espera-se que 'dados' seja um objeto com chave = apelido e valor = { hash, nome, funcao }
-  // Se a planilha retornar um array, converta aqui (por segurança)
+  // Se a planilha retornar um array (caso o doGet ainda não esteja ajustado), converta:
   if (Array.isArray(dados)) {
     const novoObjeto = {};
     dados.forEach(row => {
@@ -117,24 +118,8 @@ function processarDadosPlanilha(dados) {
     });
     INSPETORES = novoObjeto;
   } else {
-    // Se já for um objeto, apenas filtra ativos (se houver campo ativo)
-    INSPETORES = {};
-    for (const [apelido, info] of Object.entries(dados)) {
-      if (info.ativo !== "NÃO" && info.ativo !== "NAO" && info.ativo !== "SIM") {
-        // Se não houver campo ativo, assume ativo
-        INSPETORES[apelido] = {
-          hash: info.hash,
-          nome: info.nome,
-          funcao: info.funcao
-        };
-      } else if (info.ativo === "SIM") {
-        INSPETORES[apelido] = {
-          hash: info.hash,
-          nome: info.nome,
-          funcao: info.funcao
-        };
-      }
-    }
+    // Já é objeto no formato esperado
+    INSPETORES = dados || {};
   }
   logDebug("Inspetores carregados com hash.");
 }
@@ -146,41 +131,8 @@ function carregarInspetores() {
 }
 
 // ====================================================================
-// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO (com hash)
+// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO
 // ====================================================================
-async function login(e) {
-  e.preventDefault();
-  const senhaInput = getEl('password');
-  const errorMsg = getEl('login-error');
-  const senha = senhaInput.value.trim();
-
-  let nomeEncontrado = null;
-  let apelidoEncontrado = null;
-
-  // Itera sobre todos os apelidos (salt) e testa o hash
-  for (const [apelido, info] of Object.entries(INSPETORES)) {
-    const hashCalculado = await hashPassword(senha, apelido);
-    if (hashCalculado === info.hash) {
-      nomeEncontrado = info.nome;
-      apelidoEncontrado = apelido;
-      break;
-    }
-  }
-
-  if (nomeEncontrado) {
-    localStorage.setItem('inspectorLoggedIn', 'true');
-    localStorage.setItem('inspectorName', nomeEncontrado);
-    localStorage.setItem('inspectorApelido', apelidoEncontrado);
-    registrarLog(apelidoEncontrado);
-    window.modals.login.close();
-    checkLoginStatus();
-  } else {
-    errorMsg.style.display = 'block';
-    senhaInput.value = '';
-    senhaInput.focus();
-  }
-}
-
 function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
   const nome = localStorage.getItem('inspectorName');
@@ -204,6 +156,39 @@ function checkLoginStatus() {
   } else {
     main.style.display = 'flex';
     insp.style.display = 'none';
+  }
+}
+
+async function login(e) {
+  e.preventDefault();
+  const senhaInput = getEl('password');
+  const errorMsg = getEl('login-error');
+  const senha = senhaInput.value.trim();
+
+  let nomeEncontrado = null;
+  let apelidoEncontrado = null;
+
+  // Itera sobre todos os apelidos (salt) e testa o hash
+  for (const [apelido, info] of Object.entries(INSPETORES)) {
+    const hashCalculado = await hashPassword(senha, apelido);
+    if (hashCalculado === info.hash) {
+      nomeEncontrado = info.nome;
+      apelidoEncontrado = apelido;
+      break;
+    }
+  }
+
+  if (nomeEncontrado) {
+    localStorage.setItem('inspectorLoggedIn', 'true');
+    localStorage.setItem('inspectorName', nomeEncontrado);
+    localStorage.setItem('inspectorApelido', apelidoEncontrado);
+    registrarLog(apelidoEncontrado); // envia o apelido para o log
+    window.modals.login.close();
+    checkLoginStatus();
+  } else {
+    errorMsg.style.display = 'block';
+    senhaInput.value = '';
+    senhaInput.focus();
   }
 }
 
@@ -312,7 +297,7 @@ class InspecaoVeicular {
 
   open() {
     this.modal.open();
-    this.preencherAutomatico(); // preenche assim que o modal é aberto
+    this.preencherAutomatico();
   }
 
   preencherAutomatico() {
@@ -360,7 +345,6 @@ function initModals() {
     levantamentos: new ModalController('modal-levantamentos'),
     inspecoes5s: new ModalController('modal-inspecoes-5s')
   };
-  // Adiciona o modal da inspeção veicular
   window.modals.inspecaoVeicular = new InspecaoVeicular();
 }
 
@@ -372,10 +356,10 @@ function initEventListeners() {
     window.modals.login.open();
   });
 
-  // Remove o listener antigo e adiciona o novo assíncrono
+  // Substitui o evento do formulário pelo novo login assíncrono
   const loginForm = getEl('login-form');
   if (loginForm) {
-    loginForm.removeEventListener('submit', login);
+    loginForm.removeEventListener('submit', login); // remove o antigo se existir
     loginForm.addEventListener('submit', login);
   }
 
@@ -435,5 +419,5 @@ window.addEventListener('load', () => {
   mostrarBannerAviso();
   aplicarBloqueioDeDatas();
 
-  logDebug("PWA PENSO carregada com sucesso (hash + salt implementado).");
+  logDebug("PWA PENSO carregada com sucesso (hash implementado).");
 });
