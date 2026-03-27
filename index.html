@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260327-3">
 </head>
 <body>
 
@@ -71,36 +71,31 @@
 <div id="inspector-screen" class="screen-container" style="display: none;">
     <div class="grid-panel">
         <div class="cards-grid">
-    <!-- Botão 1 -->
-    <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
-        <div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>
-        Relatório Diário
-    </a>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>
+                Relatório Diário
+            </a>
 
-    <!-- Botão 2 -->
-    <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card">
-        <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
-        Consulta Placas
-    </a>
+            <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
+                Consulta Placas
+            </a>
 
-    <!-- Botão 3 -->
-    <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card">
-        <div class="card-icon"><i class="fas fa-clipboard-check"></i></div>
-        5S - Guaritas
-    </a>
+            <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card">
+                <div class="card-icon"><i class="fas fa-clipboard-check"></i></div>
+                5S - Guaritas
+            </a>
 
-    <!-- Botão 4 -->
-    <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card">
-        <div class="card-icon"><i class="fa-solid fa-video"></i></div>
-        Solicitação Imagem
-    </a>
+            <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-video"></i></div>
+                Solicitação Imagem
+            </a>
 
-    <!-- ==================== NOVO 5º BOTÃO ==================== -->
-    <a href="#" id="btn-inspecao-veicular" class="inspector-card">
-        <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
-        Inspeção Veicular<br>Diária
-    </a>
-</div>
+            <a href="#" id="btn-inspecao-veicular" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
+                Inspeção Veicular<br>Diária
+            </a>
+        </div>
     </div>
     <button onclick="logoutInspector()" class="logout-btn">Sair</button>
 </div>
@@ -157,7 +152,8 @@
         </form>
     </div>
 </div>
-    <!-- ====================== MODAL INSPEÇÃO VEICULAR DIÁRIA ====================== -->
+
+<!-- ====================== MODAL INSPEÇÃO VEICULAR DIÁRIA ====================== -->
 <div id="modal-inspecao-veicular" class="modal">
   <div class="modal-content inspecao-modal-content">
     <div class="modal-header">
@@ -166,27 +162,17 @@
     </div>
 
     <div id="inspecao-veicular-container">
-
-      <!-- Campos superiores -->
       <div class="top-fields">
         <div class="field"><label>CARRO</label><input type="text" id="carro" placeholder="___" maxlength="10"></div>
         <div class="field"><label>LINHA</label><input type="text" id="linha" placeholder="___" maxlength="10"></div>
         <div class="field"><label>TERMINAL</label><input type="text" id="terminal" placeholder="___" maxlength="10"></div>
       </div>
 
-      <!-- Tabela -->
       <table class="inspection-table" id="tabela-inspecao">
         <thead>
-          <tr>
-            <th>ITEM</th>
-            <th>OK</th>
-            <th>COM DEFEITO</th>
-            <th>OBS.</th>
-            <th></th>
-          </tr>
+          <tr><th>ITEM</th><th>OK</th><th>COM DEFEITO</th><th>OBS.</th><th></th></tr>
         </thead>
         <tbody>
-          <!-- Elevador -->
           <tr data-item="elevador">
             <td class="item-name">ELEVADOR</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
@@ -194,7 +180,6 @@
             <td><input type="text" class="obs-input" placeholder="Observação"></td>
             <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
           </tr>
-          <!-- Thoreb -->
           <tr data-item="thoreb">
             <td class="item-name">THOREB</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
@@ -202,7 +187,6 @@
             <td><input type="text" class="obs-input" placeholder="Observação"></td>
             <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
           </tr>
-          <!-- USB -->
           <tr data-item="usb">
             <td class="item-name">USB</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
@@ -210,7 +194,6 @@
             <td><input type="text" class="obs-input" placeholder="Observação"></td>
             <td class="action-cell"><button class="btn-salvar">SALVAR</button></td>
           </tr>
-          <!-- Ventilador -->
           <tr data-item="ventilador">
             <td class="item-name">VENTILADOR</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
@@ -231,14 +214,12 @@
         </tbody>
       </table>
 
-      <!-- Rodapé -->
       <div class="bottom-fields">
         <div class="field"><label>FISCAL</label><input type="text" id="fiscal" readonly></div>
         <div class="field"><label>DATA</label><input type="text" id="data" readonly></div>
         <div class="field"><label>HORA</label><input type="text" id="hora" readonly></div>
       </div>
 
-      <!-- Botões finais -->
       <div class="action-buttons">
         <button id="btn-editar-inspecao" class="btn-secundario">EDITAR</button>
         <button id="btn-apagar-inspecao" class="btn-secundario">APAGAR</button>
