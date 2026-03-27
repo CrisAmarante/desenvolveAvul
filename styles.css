@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - Versão FLEXBOX (sem Grid) - CORRIGIDO
+   CSS Completo - VERSÃO CORRIGIDA COM SCROLL E RESPONSIVIDADE
 ============================================================ */
 
 :root {
@@ -24,20 +24,20 @@ body.dark {
 }
 
 /* ====================== BASE GLOBAL ====================== */
-html, body {
-  height: 100%;
+* {
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: var(--text);
-  background: transparent;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
 }
 
-* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto; /* ← CORRIGIDO: permite scroll */
+}
 
 body::before {
   content: "";
@@ -48,9 +48,14 @@ body::before {
   z-index: -2;
 }
 
+body.dark::before {
+  filter: blur(10px) brightness(0.85);
+}
+
 /* Título Principal - fixo no topo */
 .titulo {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 30;
   background: rgba(0,0,0,0.75);
   color: #fff !important;
@@ -60,75 +65,70 @@ body::before {
   margin: 0;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  flex-shrink: 0;
 }
 
 @media (min-width: 769px) {
   .titulo { font-size: 1.48rem; }
 }
 
-/* ====================== CONTAINER RESPONSIVO ====================== */
+/* ====================== CONTAINERS ====================== */
 .screen-container {
-  flex: 1;
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
+  min-height: calc(100vh - 65px);
   width: 100%;
   padding: 20px;
-  overflow: hidden;
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .grid-panel {
   width: 100%;
-  max-width: 480px;
-  margin-left: auto;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-/* ====================== FLEXBOX - GRID DE BOTÕES (CORRIGIDO) ====================== */
+/* ====================== GRID DE BOTÕES ====================== */
 .cards-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 16px;
   width: 100%;
-  max-width: 480px;
-  justify-content: flex-start;   /* garante que o último botão fique à esquerda */
+  justify-content: center;
 }
 
+/* Cards - tamanho flexível responsivo */
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
-  border-radius: 12px;
+  border-radius: 16px;
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.20);
   border: 1px solid rgba(255,255,255,0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 0 1 195px;               /* ← CORREÇÃO PRINCIPAL: tamanho fixo */
-  min-width: 195px;
-  aspect-ratio: 1 / 1;
+  flex: 1 1 calc(50% - 16px); /* ← CORRIGIDO: tamanho flexível */
+  min-width: 140px;
+  min-height: 120px;
   transition: transform 0.25s ease;
-  padding: 10px;
+  padding: 12px 8px;
   text-align: center;
   position: relative;
 }
 
 .card:hover, .inspector-card:hover { 
-  transform: scale(1.05); 
+  transform: scale(1.02); 
 }
 
 .card-icon {
-  font-size: 1.65rem;
+  font-size: 1.8rem;
   color: var(--accent);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 /* Destaques */
@@ -139,11 +139,13 @@ body::before {
 .card-relatorio::after, .card-inspetores::after {
   content: "★";
   position: absolute;
-  top: 8px; right: 8px;
+  top: 8px;
+  right: 8px;
   background: var(--accent); 
   color: white;
-  font-size: 11px; 
-  width: 20px; height: 20px;
+  font-size: 10px; 
+  width: 18px;
+  height: 18px;
   border-radius: 50%; 
   display: flex; 
   align-items: center; 
@@ -152,38 +154,34 @@ body::before {
 
 /* ====================== TELA DE INSPETORES ====================== */
 #inspector-screen {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column;
+  min-height: calc(100vh - 65px);
   width: 100%;
-  padding: 0;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 #inspector-screen .grid-panel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 20px 35px 20px 20px;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 #inspector-screen .cards-grid {
-  max-width: 480px;
+  gap: 16px;
 }
 
 /* Botão Sair com nome discreto */
-#inspector-screen .logout-btn {
-  margin: 0 auto 30px auto;
-  min-width: 145px;
+.logout-btn {
+  margin: 30px auto 20px auto;
+  min-width: 160px;
   padding: 14px 32px;
   font-size: 1.08rem;
   background: #d11a2d;
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 50px;
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.25);
@@ -191,17 +189,17 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  line-height: 1.1;
+  gap: 4px;
+  line-height: 1.2;
 }
 
-#inspector-screen .logout-btn:hover {
+.logout-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0,0,0,0.3);
 }
 
-#inspector-screen .logout-btn small {
-  font-size: 0.78rem;
+.logout-btn small {
+  font-size: 0.75rem;
   font-weight: 400;
   opacity: 0.9;
 }
@@ -209,18 +207,18 @@ body::before {
 /* ====================== TOAST ====================== */
 #welcome-toast {
   position: fixed;
-  top: 85px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--modal-bg);
   backdrop-filter: blur(12px);
   border-radius: 16px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-  padding: 20px 32px;
-  max-width: 340px;
+  padding: 16px 32px;
+  max-width: 320px;
   width: 90%;
   text-align: center;
-  font-size: 1.32rem;
+  font-size: 1.2rem;
   line-height: 1.4;
   font-weight: 500;
   color: var(--text);
@@ -244,47 +242,111 @@ body::before {
 
 .toast-close {
   position: absolute;
-  top: 12px;
-  right: 14px;
+  top: 8px;
+  right: 12px;
   background: none;
   border: none;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   color: var(--accent);
   cursor: pointer;
 }
 
 /* ====================== RESPONSIVIDADE ====================== */
-@media (max-width: 768px) {
+
+/* Telas pequenas (celulares ≤ 480px) */
+@media (max-width: 480px) {
   .screen-container,
-  #inspector-screen .grid-panel {
-    padding: 15px 20px;
+  #inspector-screen {
+    padding: 15px 12px;
   }
 
   .cards-grid {
-    gap: 10px;
+    gap: 12px;
   }
 
   .card, .inspector-card {
-    flex: 0 1 165px;          /* tamanho fixo também no mobile */
-    min-width: 165px;
-    font-size: 0.78rem;
-    padding: 8px;
+    flex: 1 1 calc(50% - 12px);
+    min-width: 130px;
+    min-height: 110px;
+    font-size: 0.75rem;
+    padding: 10px 6px;
+    border-radius: 14px;
   }
 
   .card-icon {
-    font-size: 1.45rem;
+    font-size: 1.5rem;
+    margin-bottom: 6px;
   }
 
-  #inspector-screen .logout-btn {
-    margin: 10px auto 25px auto;
-    padding: 13px 28px;
-    font-size: 1.02rem;
+  .logout-btn {
+    margin: 20px auto 15px auto;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    min-width: 140px;
+  }
+
+  .logout-btn small {
+    font-size: 0.7rem;
   }
 
   #welcome-toast {
-    top: 78px;
-    padding: 16px 24px;
-    font-size: 1.22rem;
+    top: 70px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    max-width: 280px;
+  }
+
+  .titulo {
+    padding: 10px 0;
+    font-size: 1.2rem;
+  }
+}
+
+/* Telas médias (celulares maiores 481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .screen-container,
+  #inspector-screen {
+    padding: 20px 16px;
+  }
+
+  .cards-grid {
+    gap: 14px;
+  }
+
+  .card, .inspector-card {
+    flex: 1 1 calc(50% - 14px);
+    min-width: 150px;
+    min-height: 115px;
+    font-size: 0.8rem;
+    padding: 12px 8px;
+  }
+
+  .card-icon {
+    font-size: 1.65rem;
+  }
+}
+
+/* Telas grandes (tablets e desktop) */
+@media (min-width: 769px) {
+  .screen-container,
+  #inspector-screen {
+    padding: 30px 20px;
+  }
+
+  .cards-grid {
+    gap: 20px;
+    max-width: 600px;
+  }
+
+  .card, .inspector-card {
+    flex: 1 1 calc(33.333% - 20px);
+    min-width: 160px;
+    min-height: 130px;
+    font-size: 0.9rem;
+  }
+
+  .card-icon {
+    font-size: 2rem;
   }
 }
 
@@ -304,10 +366,10 @@ body::before {
 
 .modal-content {
   background: var(--modal-bg); 
-  width: 85%; 
-  max-width: 360px;
-  padding: 22px; 
-  border-radius: 16px;
+  width: 90%; 
+  max-width: 380px;
+  padding: 24px; 
+  border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
@@ -315,10 +377,14 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
-.modal-title { margin: 0; font-size: 1.25rem; }
+.modal-title { 
+  margin: 0; 
+  font-size: 1.3rem; 
+  font-weight: 600;
+}
 
 .modal-close {
   background: none;
@@ -326,18 +392,28 @@ body::before {
   font-size: 1.8rem;
   cursor: pointer;
   color: #666;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: var(--accent);
 }
 
 .modal-btn {
   display: block; 
   padding: 14px; 
-  margin: 10px 0;
+  margin: 12px 0;
   background: var(--accent); 
   color: white; 
-  border-radius: 10px;
+  border-radius: 12px;
   text-align: center; 
   text-decoration: none;
   font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.modal-btn:hover {
+  opacity: 0.9;
 }
 
 .theme-toggle {
@@ -353,6 +429,12 @@ body::before {
   box-shadow: 0 3px 10px rgba(0,0,0,0.25);
   font-size: 1.1rem;
   cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: transform 0.2s;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
 }
 
 #aviso-temporario.banner {
@@ -362,7 +444,7 @@ body::before {
   transform: translateX(-50%);
   background: var(--banner-bg);
   color: #333;
-  padding: 14px 24px;
+  padding: 12px 20px;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.3);
   z-index: 9999;
@@ -384,15 +466,12 @@ body::before {
   padding: 0 8px;
 }
 
-button, a { cursor: pointer; }
-
-#inspector-screen[style*="display: none"] {
-  display: none !important;
-}
 /* ====================== INSPEÇÃO VEICULAR DIÁRIA ====================== */
 .inspecao-modal-content {
-  max-width: 520px !important;
+  max-width: 600px !important;
   width: 95% !important;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .top-fields,
@@ -404,19 +483,22 @@ button, a { cursor: pointer; }
 }
 
 .field label {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text);
+  display: block;
   margin-bottom: 4px;
 }
 
 .field input {
+  width: 100%;
   padding: 10px 12px;
   border: 2px solid #cbd5e1;
   border-radius: 8px;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   text-align: center;
   background: var(--card-bg);
+  color: var(--text);
 }
 
 .inspection-table {
@@ -432,13 +514,13 @@ button, a { cursor: pointer; }
 .inspection-table th {
   background: var(--accent);
   color: white;
-  padding: 12px 8px;
-  font-size: 0.85rem;
+  padding: 10px 6px;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
 .inspection-table td {
-  padding: 10px 8px;
+  padding: 8px 6px;
   border-bottom: 1px solid #e2e8f0;
   text-align: center;
 }
@@ -447,26 +529,34 @@ button, a { cursor: pointer; }
   text-align: left !important;
   font-weight: 700;
   color: var(--text);
-  padding-left: 14px;
+  padding-left: 10px;
+  font-size: 0.8rem;
 }
 
 .custom-checkbox {
   display: block;
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   margin: 0 auto;
   cursor: pointer;
 }
 
-.custom-checkbox input { opacity: 0; width: 0; height: 0; }
+.custom-checkbox input { 
+  opacity: 0; 
+  width: 0; 
+  height: 0; 
+}
 
 .checkmark {
   position: absolute;
-  top: 0; left: 0;
-  width: 28px; height: 28px;
+  top: 0; 
+  left: 0;
+  width: 24px; 
+  height: 24px;
   background: #e2e8f0;
   border-radius: 6px;
+  transition: background 0.2s;
 }
 
 .custom-checkbox input:checked + .checkmark {
@@ -478,26 +568,35 @@ button, a { cursor: pointer; }
   position: absolute;
   display: none;
   color: white;
-  font-size: 18px;
-  top: 50%; left: 50%;
+  font-size: 14px;
+  top: 50%; 
+  left: 50%;
   transform: translate(-50%, -50%);
 }
 
-.custom-checkbox input:checked + .checkmark:after { display: block; }
+.custom-checkbox input:checked + .checkmark:after { 
+  display: block; 
+}
 
 .obs-input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
+  font-size: 0.75rem;
 }
 
-.obs-cell-vent { position: relative; }
+.obs-cell-vent { 
+  position: relative; 
+}
 
-.posicao-container { margin-top: 8px; text-align: center; }
+.posicao-container { 
+  margin-top: 6px; 
+  text-align: center; 
+}
 
 .posicao-label {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: #64748b;
   display: block;
@@ -506,19 +605,20 @@ button, a { cursor: pointer; }
 
 .posicao-buttons {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
 }
 
 .pos-btn {
-  width: 42px;
-  height: 42px;
+  width: 32px;
+  height: 32px;
   border: 2px solid #64748b;
   background: var(--card-bg);
   color: var(--accent);
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .pos-btn.active {
@@ -531,37 +631,75 @@ button, a { cursor: pointer; }
   background: #10b981;
   color: white;
   border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-weight: 600;
+  font-size: 0.7rem;
   width: 100%;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-salvar:hover {
+  opacity: 0.9;
 }
 
 .action-buttons {
   display: flex;
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .btn-secundario {
   flex: 1;
-  padding: 14px;
-  font-size: 1.05rem;
+  padding: 12px;
+  font-size: 0.9rem;
   font-weight: 600;
   border: 2px solid #64748b;
   background: var(--card-bg);
   color: var(--text);
   border-radius: 10px;
+  cursor: pointer;
 }
 
 .btn-principal {
   flex: 2;
-  padding: 14px;
-  font-size: 1.05rem;
+  padding: 12px;
+  font-size: 0.95rem;
   font-weight: 700;
   background: var(--accent);
   color: white;
   border: none;
   border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Ajustes para o modal de inspeção em telas pequenas */
+@media (max-width: 480px) {
+  .inspection-table th,
+  .inspection-table td {
+    padding: 6px 4px;
+    font-size: 0.7rem;
+  }
+  
+  .btn-salvar {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+  }
+  
+  .pos-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .top-fields,
+  .bottom-fields {
+    gap: 8px;
+  }
+  
+  .field input {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
 }
