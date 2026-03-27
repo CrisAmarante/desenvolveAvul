@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - VERSÃO COM TOAST POSICIONADO CORRETAMENTE
+   CSS Completo - VERSÃO CORRIGIDA (toast posicionado, botões uniformes)
 ============================================================ */
 
 :root {
@@ -208,7 +208,7 @@ body.dark::before {
 /* ====================== TOAST ====================== */
 #welcome-toast {
   position: fixed;
-  top: 70px;               /* logo abaixo do título (sticky) */
+  top: 70px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--modal-bg);
@@ -448,7 +448,7 @@ body.dark::before {
 
 #aviso-temporario.banner {
   position: fixed;
-  top: 70px;               /* mesma altura do toast, abaixo do título */
+  top: 70px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--banner-bg);
