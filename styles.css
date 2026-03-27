@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - VERSÃO CORRIGIDA (botões com tamanho uniforme)
+   CSS Completo - VERSÃO COM TOAST POSICIONADO CORRETAMENTE
 ============================================================ */
 
 :root {
@@ -112,7 +112,6 @@ body.dark::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* ← CORREÇÃO: largura fixa, sem crescimento automático */
   flex: 0 0 auto;
   width: calc(50% - 12px);
   min-width: 140px;
@@ -123,7 +122,6 @@ body.dark::before {
   position: relative;
 }
 
-/* Remove o hover que poderia causar desalinhamento */
 .card:hover, .inspector-card:hover { 
   transform: scale(1.02); 
 }
@@ -210,18 +208,19 @@ body.dark::before {
 /* ====================== TOAST ====================== */
 #welcome-toast {
   position: fixed;
-  top: 80px;
+  top: 70px;               /* logo abaixo do título (sticky) */
   left: 50%;
   transform: translateX(-50%);
   background: var(--modal-bg);
   backdrop-filter: blur(12px);
   border-radius: 16px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-  padding: 16px 32px;
-  max-width: 320px;
-  width: 90%;
+  padding: 14px 28px;
+  max-width: 300px;
+  width: auto;
+  min-width: 200px;
   text-align: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   line-height: 1.4;
   font-weight: 500;
   color: var(--text);
@@ -229,8 +228,12 @@ body.dark::before {
   display: none;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 #welcome-toast.show {
@@ -244,14 +247,24 @@ body.dark::before {
 }
 
 .toast-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
   background: none;
   border: none;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   color: var(--accent);
   cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* Ajuste para telas pequenas: quebrar linha e reduzir padding */
+@media (max-width: 480px) {
+  #welcome-toast {
+    top: 65px;
+    padding: 10px 18px;
+    font-size: 0.95rem;
+    max-width: 260px;
+    white-space: normal;
+  }
 }
 
 /* ====================== RESPONSIVIDADE ====================== */
@@ -290,13 +303,6 @@ body.dark::before {
 
   .logout-btn small {
     font-size: 0.7rem;
-  }
-
-  #welcome-toast {
-    top: 70px;
-    padding: 12px 24px;
-    font-size: 1rem;
-    max-width: 280px;
   }
 
   .titulo {
@@ -442,18 +448,18 @@ body.dark::before {
 
 #aviso-temporario.banner {
   position: fixed;
-  top: 70px;
+  top: 70px;               /* mesma altura do toast, abaixo do título */
   left: 50%;
   transform: translateX(-50%);
   background: var(--banner-bg);
   color: #333;
-  padding: 12px 20px;
+  padding: 10px 18px;
   border-radius: 12px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.3);
   z-index: 9999;
   display: none;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   max-width: 90%;
   text-align: center;
   font-weight: 500;
@@ -463,10 +469,10 @@ body.dark::before {
 .banner-close {
   background: none;
   border: none;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   cursor: pointer;
   color: #d11a2d;
-  padding: 0 8px;
+  padding: 0 6px;
 }
 
 /* ====================== INSPEÇÃO VEICULAR DIÁRIA ====================== */
