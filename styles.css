@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - VERSÃO CORRIGIDA COM SCROLL E RESPONSIVIDADE
+   CSS Completo - VERSÃO CORRIGIDA (botões com tamanho uniforme)
 ============================================================ */
 
 :root {
@@ -36,7 +36,7 @@ html, body {
   color: var(--text);
   background: transparent;
   overflow-x: hidden;
-  overflow-y: auto; /* ← CORRIGIDO: permite scroll */
+  overflow-y: auto;
 }
 
 body::before {
@@ -97,7 +97,7 @@ body.dark::before {
   justify-content: center;
 }
 
-/* Cards - tamanho flexível responsivo */
+/* Cards - TODOS COM MESMO TAMANHO (largura fixa percentual) */
 .card, .inspector-card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
@@ -112,7 +112,9 @@ body.dark::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex: 1 1 calc(50% - 16px); /* ← CORRIGIDO: tamanho flexível */
+  /* ← CORREÇÃO: largura fixa, sem crescimento automático */
+  flex: 0 0 auto;
+  width: calc(50% - 12px);
   min-width: 140px;
   min-height: 120px;
   transition: transform 0.25s ease;
@@ -121,6 +123,7 @@ body.dark::before {
   position: relative;
 }
 
+/* Remove o hover que poderia causar desalinhamento */
 .card:hover, .inspector-card:hover { 
   transform: scale(1.02); 
 }
@@ -265,7 +268,7 @@ body.dark::before {
   }
 
   .card, .inspector-card {
-    flex: 1 1 calc(50% - 12px);
+    width: calc(50% - 8px);
     min-width: 130px;
     min-height: 110px;
     font-size: 0.75rem;
@@ -314,7 +317,7 @@ body.dark::before {
   }
 
   .card, .inspector-card {
-    flex: 1 1 calc(50% - 14px);
+    width: calc(50% - 10px);
     min-width: 150px;
     min-height: 115px;
     font-size: 0.8rem;
@@ -326,7 +329,7 @@ body.dark::before {
   }
 }
 
-/* Telas grandes (tablets e desktop) */
+/* Telas grandes (tablets e desktop) - 3 colunas */
 @media (min-width: 769px) {
   .screen-container,
   #inspector-screen {
@@ -335,11 +338,11 @@ body.dark::before {
 
   .cards-grid {
     gap: 20px;
-    max-width: 600px;
+    max-width: 700px;
   }
 
   .card, .inspector-card {
-    flex: 1 1 calc(33.333% - 20px);
+    width: calc(33.333% - 14px);
     min-width: 160px;
     min-height: 130px;
     font-size: 0.9rem;
