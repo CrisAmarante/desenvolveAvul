@@ -2,7 +2,7 @@
 // ====================================================================
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
 
-let INSPETORES = {};
+let INSPETORES = {}; // formato: { apelido: { hash, nome, funcao } }
 
 // Período do banner 
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
@@ -23,6 +23,17 @@ function logDebug(...args) {
 
 function getEl(id) {
   return document.getElementById(id);
+}
+
+// ====================================================================
+// FUNÇÃO DE HASH (SHA-256) – mesmo algoritmo do servidor
+// ====================================================================
+async function hashPassword(password, salt) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + salt);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ====================================================================
@@ -88,11 +99,44 @@ async function registrarLog(nomeApelido) {
 }
 
 // ====================================================================
-// CARREGAMENTO DA LISTA DE INSPETORES
+// CARREGAMENTO DA LISTA DE INSPETORES (com hash)
 // ====================================================================
 function processarDadosPlanilha(dados) {
-  INSPETORES = dados || {};
-  logDebug("Inspetores carregados com sucesso.");
+  // Espera-se que 'dados' seja um objeto com chave = apelido e valor = { hash, nome, funcao }
+  // Se a planilha retornar um array, converta aqui (por segurança)
+  if (Array.isArray(dados)) {
+    const novoObjeto = {};
+    dados.forEach(row => {
+      if (row.apelido && row.hash && row.ativo === "SIM") {
+        novoObjeto[row.apelido] = {
+          hash: row.hash,
+          nome: row.nome,
+          funcao: row.funcao
+        };
+      }
+    });
+    INSPETORES = novoObjeto;
+  } else {
+    // Se já for um objeto, apenas filtra ativos (se houver campo ativo)
+    INSPETORES = {};
+    for (const [apelido, info] of Object.entries(dados)) {
+      if (info.ativo !== "NÃO" && info.ativo !== "NAO" && info.ativo !== "SIM") {
+        // Se não houver campo ativo, assume ativo
+        INSPETORES[apelido] = {
+          hash: info.hash,
+          nome: info.nome,
+          funcao: info.funcao
+        };
+      } else if (info.ativo === "SIM") {
+        INSPETORES[apelido] = {
+          hash: info.hash,
+          nome: info.nome,
+          funcao: info.funcao
+        };
+      }
+    }
+  }
+  logDebug("Inspetores carregados com hash.");
 }
 
 function carregarInspetores() {
@@ -102,8 +146,41 @@ function carregarInspetores() {
 }
 
 // ====================================================================
-// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO
+// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO (com hash)
 // ====================================================================
+async function login(e) {
+  e.preventDefault();
+  const senhaInput = getEl('password');
+  const errorMsg = getEl('login-error');
+  const senha = senhaInput.value.trim();
+
+  let nomeEncontrado = null;
+  let apelidoEncontrado = null;
+
+  // Itera sobre todos os apelidos (salt) e testa o hash
+  for (const [apelido, info] of Object.entries(INSPETORES)) {
+    const hashCalculado = await hashPassword(senha, apelido);
+    if (hashCalculado === info.hash) {
+      nomeEncontrado = info.nome;
+      apelidoEncontrado = apelido;
+      break;
+    }
+  }
+
+  if (nomeEncontrado) {
+    localStorage.setItem('inspectorLoggedIn', 'true');
+    localStorage.setItem('inspectorName', nomeEncontrado);
+    localStorage.setItem('inspectorApelido', apelidoEncontrado);
+    registrarLog(apelidoEncontrado);
+    window.modals.login.close();
+    checkLoginStatus();
+  } else {
+    errorMsg.style.display = 'block';
+    senhaInput.value = '';
+    senhaInput.focus();
+  }
+}
+
 function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
   const nome = localStorage.getItem('inspectorName');
@@ -130,30 +207,10 @@ function checkLoginStatus() {
   }
 }
 
-function login(e) {
-  e.preventDefault();
-  const senhaInput = getEl('password');
-  const errorMsg = getEl('login-error');
-  const senha = senhaInput.value.trim();
-
-  const nomeEncontrado = Object.keys(INSPETORES).find(nome => INSPETORES[nome] === senha);
-
-  if (nomeEncontrado) {
-    localStorage.setItem('inspectorLoggedIn', 'true');
-    localStorage.setItem('inspectorName', nomeEncontrado);
-    registrarLog(nomeEncontrado);
-    window.modals.login.close();
-    checkLoginStatus();
-  } else {
-    errorMsg.style.display = 'block';
-    senhaInput.value = '';
-    senhaInput.focus();
-  }
-}
-
 function logoutInspector() {
   localStorage.removeItem('inspectorLoggedIn');
   localStorage.removeItem('inspectorName');
+  localStorage.removeItem('inspectorApelido');
   checkLoginStatus();
 }
 
@@ -315,7 +372,12 @@ function initEventListeners() {
     window.modals.login.open();
   });
 
-  getEl('login-form')?.addEventListener('submit', login);
+  // Remove o listener antigo e adiciona o novo assíncrono
+  const loginForm = getEl('login-form');
+  if (loginForm) {
+    loginForm.removeEventListener('submit', login);
+    loginForm.addEventListener('submit', login);
+  }
 
   getEl('btn-clandestinos-rto')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -373,5 +435,5 @@ window.addEventListener('load', () => {
   mostrarBannerAviso();
   aplicarBloqueioDeDatas();
 
-  logDebug("PWA PENSO carregada com sucesso (responsividade corrigida).");
+  logDebug("PWA PENSO carregada com sucesso (hash + salt implementado).");
 });
