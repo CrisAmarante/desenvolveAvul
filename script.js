@@ -169,7 +169,6 @@ async function checkLoginStatus() {
 
       localStorage.setItem('inspectorRole', role);
 
-      // Botão visível para todos exceto MONITOR
       if (btnInspecao && role !== 'MONITOR') {
         btnInspecao.style.display = 'flex';
       } else if (btnInspecao) {
@@ -346,7 +345,6 @@ class InspecaoVeicular {
     if (canCreateInspection) {
       this.openForm();
     } else {
-      // Para perfis que não criam, abrir diretamente a consulta
       await this.conferirInspecoes();
     }
   }
@@ -465,38 +463,37 @@ class InspecaoVeicular {
     }
   }
 
-  async conferirInspecoes() {
+  // Consulta via JSONP (evita CORS)
+  conferirInspecoes() {
     const hoje = new Date().toLocaleDateString('pt-BR');
-    let url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}`;
+    let fiscalParam = '';
     if (currentUserRole === 'FISCAL') {
       const fiscalNome = localStorage.getItem('inspectorName');
-      url += `&fiscal=${encodeURIComponent(fiscalNome)}`;
+      fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
 
-    console.log('Consultando inspeções via:', url); // Diagnóstico
+    return new Promise((resolve, reject) => {
+      const callbackName = 'consultarInspecoesCallback_' + Date.now();
+      window[callbackName] = (dados) => {
+        if (dados.length === 0) {
+          alert('Nenhuma inspeção encontrada para hoje.');
+        } else {
+          mostrarModalConferir(dados, currentUserRole);
+        }
+        delete window[callbackName];
+        resolve();
+      };
 
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const dados = await response.json();
-      if (dados.length === 0) {
-        alert('Nenhuma inspeção encontrada para hoje.');
-        return;
-      }
-      mostrarModalConferir(dados, currentUserRole);
-    } catch (err) {
-      console.error('Erro ao consultar inspeções:', err);
-      // Mensagem mais descritiva
-      let msg = 'Erro ao consultar. ';
-      if (err.message.includes('Failed to fetch')) {
-        msg += 'Verifique se o servidor está acessível e se as permissões CORS estão configuradas.';
-      } else {
-        msg += err.message;
-      }
-      alert(msg);
-    }
+      const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = () => {
+        delete window[callbackName];
+        alert('Erro ao consultar. Verifique sua conexão.');
+        reject();
+      };
+      document.body.appendChild(script);
+    });
   }
 }
 
