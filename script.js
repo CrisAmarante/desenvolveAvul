@@ -170,7 +170,7 @@ async function checkLoginStatus() {
 
   if (logado === 'true' && nome) {
     if (apelido && INSPETORES[apelido]) {
-      const role = INSPETORES[apelido].funcao;
+      const role = (INSPETORES[apelido].funcao || '').trim().toUpperCase();
       currentUserRole = role;
       canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
 
@@ -374,11 +374,7 @@ class InspecaoVeicular {
   openForm() {
     this.modal.open();
     this.preencherAutomatico();
-    // Reset any previous selections
-    document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false);
-    document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
-
+    this.resetForm(); // limpa campos anteriores
     // Ajustar visibilidade do botão "Conferir" (apenas para fiscal)
     const btnConferir = document.getElementById('btn-conferir-inspecoes');
     if (btnConferir) {
@@ -400,6 +396,17 @@ class InspecaoVeicular {
     if (horaInput) {
       horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     }
+  }
+
+  resetForm() {
+    // Limpa campo carro
+    const carroInput = document.getElementById('carro');
+    if (carroInput) carroInput.value = '';
+    // Limpa checkboxes e observações
+    document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
+    document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
+    // Mantém terminal, fiscal, data, hora (já estão preenchidos)
   }
 
   coletarDados() {
@@ -453,7 +460,7 @@ class InspecaoVeicular {
       ventilador: dados.itens.ventilador
     };
 
-    // Gera o resumo para confirmação (usando dadosEnvio)
+    // Gera o resumo para confirmação
     let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dadosEnvio.carro}\nTerminal: ${dadosEnvio.terminal}\nFiscal: ${dadosEnvio.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
     const itens = dados.itens;
     for (const [item, info] of Object.entries(itens)) {
@@ -478,7 +485,7 @@ class InspecaoVeicular {
         })
       });
       alert('✅ Inspeção enviada com sucesso!');
-      this.modal.close();
+      this.resetForm(); // limpa apenas os campos preenchidos, mantém o modal aberto
     } catch (err) {
       console.error('Erro ao enviar inspeção:', err);
       alert('❌ Erro ao enviar. Tente novamente.');
@@ -489,15 +496,15 @@ class InspecaoVeicular {
     const hoje = new Date().toLocaleDateString('pt-BR');
     let url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}`;
     if (currentUserRole === 'FISCAL') {
-      // Fiscal vê apenas suas próprias inspeções
       const fiscalNome = localStorage.getItem('inspectorName');
       url += `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
-    // Para os demais perfis (exceto MONITOR, que não tem acesso), retorna todas
+    console.log('Consultando:', url); // Debug
 
     try {
       const response = await fetch(url);
       const dados = await response.json();
+      console.log('Dados recebidos:', dados); // Debug
       if (dados.length === 0) {
         alert('Nenhuma inspeção encontrada para hoje.');
         return;
