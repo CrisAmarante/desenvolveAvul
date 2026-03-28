@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20260328-1">
+    <link rel="stylesheet" href="styles.css?v=20260328-2">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -94,7 +94,6 @@
                 Solicitação Imagem
             </a>
 
-            <!-- Botão de Inspeção Veicular – visibilidade controlada via JS -->
             <a href="#" id="btn-inspecao-veicular" class="inspector-card" style="display: none;">
                 <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
                 Inspeção Veicular<br>Diária
@@ -181,7 +180,7 @@
 
       <table class="inspection-table" id="tabela-inspecao">
         <thead>
-          <tr><th>ITEM</th><th>OK</th><th>COM DEFEITO</th><th>OBS.</th><th></th></tr>
+          <tr><th>ITEM</th><th>OK</th><th>COM DEFEITO</th><th>OBS.</th><th>POSIÇÃO (Ventilador)</th> </tr>
         </thead>
         <tbody>
           <tr data-item="elevador">
@@ -189,30 +188,29 @@
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
             <td><input type="text" class="obs-input" placeholder="Observação"></td>
-            <td class="action-cell"><span class="status-icon"></span></td>
+            <td class="posicao-cell"></td>
           </tr>
           <tr data-item="thoreb">
             <td class="item-name">THOREB</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
             <td><input type="text" class="obs-input" placeholder="Observação"></td>
-            <td class="action-cell"><span class="status-icon"></span></td>
+            <td class="posicao-cell"></td>
           </tr>
           <tr data-item="usb">
             <td class="item-name">USB</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
             <td><input type="text" class="obs-input" placeholder="Observação"></td>
-            <td class="action-cell"><span class="status-icon"></span></td>
+            <td class="posicao-cell"></td>
           </tr>
           <tr data-item="ventilador">
             <td class="item-name">VENTILADOR</td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
             <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
-            <td class="obs-cell-vent">
-              <input type="text" class="obs-input" placeholder="Observação">
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="posicao-cell">
               <div class="posicao-container">
-                <span class="posicao-label">POSIÇÃO</span>
                 <div class="posicao-buttons">
                   <button type="button" class="pos-btn" data-pos="F">F</button>
                   <button type="button" class="pos-btn" data-pos="M">M</button>
@@ -220,7 +218,6 @@
                 </div>
               </div>
             </td>
-            <td class="action-cell"><span class="status-icon"></span></td>
           </tr>
         </tbody>
       </table>
