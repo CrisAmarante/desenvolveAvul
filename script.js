@@ -461,9 +461,7 @@ class InspecaoVeicular {
         })
       });
       alert('✅ Inspeção enviada com sucesso!');
-      // Após envio, reseta o formulário, mas não fecha o modal
       this.resetarFormulario();
-      // Mantém terminal e campos autopreenchidos
     } catch (err) {
       console.error('Erro ao enviar inspeção:', err);
       alert('❌ Erro ao enviar. Tente novamente.');
@@ -478,10 +476,14 @@ class InspecaoVeicular {
       url += `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
 
+    logDebug('Consultando inspeções:', url);
     try {
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const dados = await response.json();
+      logDebug('Dados recebidos:', dados);
       if (dados.length === 0) {
         alert('Nenhuma inspeção encontrada para hoje.');
         return;
