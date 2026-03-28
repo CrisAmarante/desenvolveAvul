@@ -100,8 +100,10 @@ async function registrarLog(nomeApelido) {
 }
 
 // ====================================================================
-// CARREGAMENTO DA LISTA DE INSPETORES (com hash)
+// CARREGAMENTO DA LISTA DE INSPETORES (com hash) – ATUALIZADO COM CACHE BUSTING E CALLBACK ÚNICO
 // ====================================================================
+let refreshPromise = null;
+
 function processarDadosPlanilha(dados) {
   // Espera-se que 'dados' seja um objeto com chave = apelido e valor = { hash, nome, funcao }
   // Se a planilha retornar um array (caso o doGet ainda não esteja ajustado), converta:
@@ -124,34 +126,76 @@ function processarDadosPlanilha(dados) {
   logDebug("Inspetores carregados com hash.");
 }
 
+async function refreshInspetores() {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = new Promise((resolve, reject) => {
+    // Remove qualquer script antigo com o atributo específico
+    const oldScript = document.querySelector('script[data-inspetores-callback]');
+    if (oldScript) oldScript.remove();
+
+    const callbackName = 'processarDadosPlanilha_' + Date.now();
+    window[callbackName] = function(dados) {
+      processarDadosPlanilha(dados);
+      delete window[callbackName];
+      refreshPromise = null;
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.setAttribute('data-inspetores-callback', 'true');
+    // Adiciona cache busting com timestamp
+    script.src = `${URL_PLANILHA}?callback=${callbackName}&_=${Date.now()}`;
+    script.onerror = (err) => {
+      console.error('Erro ao carregar inspetores', err);
+      delete window[callbackName];
+      refreshPromise = null;
+      reject(err);
+    };
+    document.body.appendChild(script);
+  });
+
+  return refreshPromise;
+}
+
+// Mantém uma função para compatibilidade
 function carregarInspetores() {
-  const script = document.createElement('script');
-  script.src = `${URL_PLANILHA}?callback=processarDadosPlanilha`;
-  document.body.appendChild(script);
+  return refreshInspetores();
 }
 
 // ====================================================================
-// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO
+// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO – COM VERIFICAÇÃO DE SESSÃO APÓS RECARGA
 // ====================================================================
-function checkLoginStatus() {
+async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
   const nome = localStorage.getItem('inspectorName');
+  const apelido = localStorage.getItem('inspectorApelido');
 
   const main = getEl('main-screen');
   const insp = getEl('inspector-screen');
 
   if (logado === 'true' && nome) {
-    main.style.display = 'none';
-    insp.style.display = 'flex';
-    
-    showWelcomeToast(nome);
-    
-    const logoutBtn = insp.querySelector('.logout-btn');
-    if (logoutBtn) {
-      logoutBtn.innerHTML = `
-        Sair
-        <small>Inspetor ${nome}</small>
-      `;
+    // Verifica se o inspetor ainda está na lista atualizada
+    if (apelido && INSPETORES[apelido]) {
+      main.style.display = 'none';
+      insp.style.display = 'flex';
+      showWelcomeToast(nome);
+      const logoutBtn = insp.querySelector('.logout-btn');
+      if (logoutBtn) {
+        logoutBtn.innerHTML = `
+          Sair
+          <small>Inspetor ${nome}</small>
+        `;
+      }
+    } else {
+      // Inspetor não existe mais ou foi desativado: desloga automaticamente
+      localStorage.removeItem('inspectorLoggedIn');
+      localStorage.removeItem('inspectorName');
+      localStorage.removeItem('inspectorApelido');
+      main.style.display = 'flex';
+      insp.style.display = 'none';
+      // Opcional: mostrar mensagem de sessão expirada (usar toast)
+      showToastMessage('Sessão expirada. Faça login novamente.', 3000);
     }
   } else {
     main.style.display = 'flex';
@@ -165,10 +209,12 @@ async function login(e) {
   const errorMsg = getEl('login-error');
   const senha = senhaInput.value.trim();
 
+  // Garante que os inspetores estejam carregados antes de tentar autenticar
+  await refreshInspetores();
+
   let nomeEncontrado = null;
   let apelidoEncontrado = null;
 
-  // Itera sobre todos os apelidos (salt) e testa o hash
   for (const [apelido, info] of Object.entries(INSPETORES)) {
     const hashCalculado = await hashPassword(senha, apelido);
     if (hashCalculado === info.hash) {
@@ -221,6 +267,34 @@ function showWelcomeToast(nome) {
 function hideWelcomeToast() {
   const toast = getEl('welcome-toast');
   if (toast) toast.classList.remove('show');
+}
+
+// Toast genérico para mensagens (opcional)
+function showToastMessage(message, duration = 3000) {
+  let toast = getEl('message-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'message-toast';
+    toast.className = 'toast-message';
+    document.body.appendChild(toast);
+    // Adicionar estilos inline simples ou usar CSS
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    toast.style.color = '#fff';
+    toast.style.padding = '8px 16px';
+    toast.style.borderRadius = '8px';
+    toast.style.zIndex = '11000';
+    toast.style.fontSize = '0.9rem';
+    toast.style.display = 'none';
+  }
+  toast.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, duration);
 }
 
 // ====================================================================
@@ -293,6 +367,16 @@ class InspecaoVeicular {
     if (btnEnviar) {
       btnEnviar.addEventListener('click', () => this.enviarInspecao());
     }
+
+    // Botões EDITAR e APAGAR (implementação básica)
+    const btnEditar = document.getElementById('btn-editar-inspecao');
+    if (btnEditar) {
+      btnEditar.addEventListener('click', () => this.editarInspecao());
+    }
+    const btnApagar = document.getElementById('btn-apagar-inspecao');
+    if (btnApagar) {
+      btnApagar.addEventListener('click', () => this.apagarInspecao());
+    }
   }
 
   open() {
@@ -323,6 +407,7 @@ class InspecaoVeicular {
     const obs = row.querySelector('.obs-input').value.trim();
 
     console.log(`✅ Salvo: ${item} | OK: ${ok} | Defeito: ${defeito} | Obs: ${obs}`);
+    // Aqui você pode armazenar localmente, por exemplo em um objeto ou localStorage
     alert(`✅ Item ${item.toUpperCase()} salvo com sucesso!`);
   }
 
@@ -331,6 +416,26 @@ class InspecaoVeicular {
       console.log('📤 Inspeção enviada para o Google Sheets (futuro)');
       alert('✅ Inspeção enviada com sucesso!');
       this.modal.close();
+    }
+  }
+
+  editarInspecao() {
+    // Exemplo: reabrir para edição
+    console.log('Editar inspeção');
+    alert('Funcionalidade de edição em desenvolvimento.');
+  }
+
+  apagarInspecao() {
+    if (confirm('Tem certeza que deseja apagar todos os dados da inspeção atual?')) {
+      // Limpar campos
+      document.getElementById('carro').value = '';
+      document.getElementById('linha').value = '';
+      document.getElementById('terminal').value = '';
+      // Resetar checkboxes e observações
+      document.querySelectorAll('#tabela-inspecao .ok, #tabela-inspecao .defeito').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#tabela-inspecao .obs-input').forEach(inp => inp.value = '');
+      document.querySelectorAll('.pos-btn.active').forEach(btn => btn.classList.remove('active'));
+      alert('Dados da inspeção apagados.');
     }
   }
 }
@@ -356,10 +461,9 @@ function initEventListeners() {
     window.modals.login.open();
   });
 
-  // Substitui o evento do formulário pelo novo login assíncrono
   const loginForm = getEl('login-form');
   if (loginForm) {
-    loginForm.removeEventListener('submit', login); // remove o antigo se existir
+    loginForm.removeEventListener('submit', login);
     loginForm.addEventListener('submit', login);
   }
 
@@ -407,17 +511,56 @@ function initTheme() {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO GERAL
+// SERVICE WORKER REGISTRATION (se suportado)
 // ====================================================================
-window.addEventListener('load', () => {
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        logDebug('Service Worker registrado com escopo:', registration.scope);
+      })
+      .catch(error => {
+        console.error('Falha ao registrar Service Worker:', error);
+      });
+  }
+}
+
+// ====================================================================
+// INICIALIZAÇÃO GERAL COM RECARGA DE INSPETORES NO LOAD, PAGESHOW E VISIBILITY
+// ====================================================================
+async function initializeApp() {
+  // Carrega inspetores primeiro
+  await refreshInspetores();
+  
   initModals();
   initEventListeners();
   initTheme();
-
-  carregarInspetores();
+  registerServiceWorker();
+  
   checkLoginStatus();
   mostrarBannerAviso();
   aplicarBloqueioDeDatas();
+  
+  logDebug("PWA PENSO carregada com sucesso (hash implementado e atualização automática).");
+}
 
-  logDebug("PWA PENSO carregada com sucesso (hash implementado).");
+// Dispara no load
+window.addEventListener('load', initializeApp);
+
+// Dispara quando a página é restaurada do cache (bfcache)
+window.addEventListener('pageshow', async (event) => {
+  if (event.persisted) {
+    await refreshInspetores();
+    checkLoginStatus();
+    logDebug("Inspetores recarregados após pageshow (bfcache).");
+  }
+});
+
+// Dispara quando a visibilidade muda (ex: volta de outra aba)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible') {
+    await refreshInspetores();
+    checkLoginStatus();
+    logDebug("Inspetores recarregados após visibilitychange.");
+  }
 });
