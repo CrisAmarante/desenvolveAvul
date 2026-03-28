@@ -3,28 +3,21 @@
 // ====================================================================
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
 
-let INSPETORES = {}; // estrutura: { apelido: { hash, nome, funcao } }
+let INSPETORES = {};
 
-// Período do banner
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
 const DATA_FIM_BANNER    = new Date('2026-07-21T00:01:00');
 
-// Bloqueio de botões por data
 const disableDates = {
   'btn-osasco': new Date('2026-07-19'),
   'btn-santana': new Date('2026-07-03')
 };
 
-// Perfis autorizados para acessar a inspeção veicular
 const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE', 'FISCAL', 'PLANTONISTA'];
 
-// Variáveis de controle de permissão
 let currentUserRole = '';
 let canCreateInspection = false;
 
-// ====================================================================
-// UTILITÁRIOS
-// ====================================================================
 function logDebug(...args) {
   console.log('[PENSO]', ...args);
 }
@@ -34,7 +27,7 @@ function getEl(id) {
 }
 
 // ====================================================================
-// FUNÇÃO DE HASH (SHA-256) – mesmo algoritmo do servidor
+// HASH
 // ====================================================================
 async function hashPassword(password, salt) {
   const encoder = new TextEncoder();
@@ -45,7 +38,7 @@ async function hashPassword(password, salt) {
 }
 
 // ====================================================================
-// CONTROLE DE MODAIS
+// MODAL
 // ====================================================================
 class ModalController {
   constructor(modalId) {
@@ -92,7 +85,7 @@ class ModalController {
 }
 
 // ====================================================================
-// LOG DE ACESSO
+// LOG
 // ====================================================================
 async function registrarLog(nomeApelido) {
   try {
@@ -107,7 +100,7 @@ async function registrarLog(nomeApelido) {
 }
 
 // ====================================================================
-// CARREGAMENTO DA LISTA DE INSPETORES (com hash) – VERSÃO MELHORADA
+// CARREGAR INSPETORES
 // ====================================================================
 let refreshPromise = null;
 
@@ -157,7 +150,7 @@ async function refreshInspetores() {
 }
 
 // ====================================================================
-// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO – COM VERIFICAÇÃO DE VALIDADE
+// LOGIN/LOGOUT
 // ====================================================================
 async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
@@ -170,13 +163,13 @@ async function checkLoginStatus() {
 
   if (logado === 'true' && nome) {
     if (apelido && INSPETORES[apelido]) {
-      const role = (INSPETORES[apelido].funcao || '').trim().toUpperCase();
+      const role = INSPETORES[apelido].funcao;
       currentUserRole = role;
       canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
 
       localStorage.setItem('inspectorRole', role);
 
-      // Mostrar botão de inspeção para todos exceto MONITOR
+      // Botão visível para todos exceto MONITOR
       if (btnInspecao && role !== 'MONITOR') {
         btnInspecao.style.display = 'flex';
       } else if (btnInspecao) {
@@ -188,10 +181,7 @@ async function checkLoginStatus() {
       showWelcomeToast(nome);
       const logoutBtn = insp.querySelector('.logout-btn');
       if (logoutBtn) {
-        logoutBtn.innerHTML = `
-          Sair
-          <small>Inspetor ${nome}</small>
-        `;
+        logoutBtn.innerHTML = `Sair<small>Inspetor ${nome}</small>`;
       }
     } else {
       localStorage.removeItem('inspectorLoggedIn');
@@ -254,22 +244,17 @@ function logoutInspector() {
   checkLoginStatus();
 }
 
-// ====================== TOAST TEMPORÁRIO DE BOAS-VINDAS ======================
 function showWelcomeToast(nome) {
   const toast = getEl('welcome-toast');
   if (!toast) return;
-  
   getEl('toast-name').textContent = nome;
   toast.classList.add('show');
-
   const autoHide = setTimeout(() => hideWelcomeToast(), 3500);
-
   const clickHandler = () => {
     hideWelcomeToast();
     document.removeEventListener('click', clickHandler);
     clearTimeout(autoHide);
   };
-  
   setTimeout(() => document.addEventListener('click', clickHandler), 300);
 }
 
@@ -278,9 +263,6 @@ function hideWelcomeToast() {
   if (toast) toast.classList.remove('show');
 }
 
-// ====================================================================
-// BLOQUEIO DE BOTÕES POR DATA
-// ====================================================================
 function aplicarBloqueioDeDatas() {
   const now = new Date();
   for (const [id, date] of Object.entries(disableDates)) {
@@ -295,9 +277,6 @@ function aplicarBloqueioDeDatas() {
   }
 }
 
-// ====================================================================
-// BANNER TEMPORÁRIO
-// ====================================================================
 function fecharBanner() {
   const banner = getEl('aviso-temporario');
   if (banner) banner.style.display = 'none';
@@ -311,7 +290,7 @@ function mostrarBannerAviso() {
 }
 
 // ====================================================================
-// INSPEÇÃO VEICULAR DIÁRIA – VERSÃO COM REGISTRO ÚNICO
+// INSPEÇÃO VEICULAR
 // ====================================================================
 class InspecaoVeicular {
   constructor() {
@@ -320,7 +299,7 @@ class InspecaoVeicular {
   }
 
   initEventListeners() {
-    const btnAbrir = document.getElementById('btn-inspecao-veicular');
+    const btnAbrir = getEl('btn-inspecao-veicular');
     if (btnAbrir) {
       btnAbrir.addEventListener('click', (e) => {
         e.preventDefault();
@@ -328,7 +307,7 @@ class InspecaoVeicular {
       });
     }
 
-    // Mutually exclusive checkboxes for each row
+    // Exclusão mútua
     document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
       const cbOk = row.querySelector('.ok');
       const cbDefeito = row.querySelector('.defeito');
@@ -342,7 +321,7 @@ class InspecaoVeicular {
       }
     });
 
-    // Position buttons – allow multiple selections (toggle class active)
+    // Posições (múltiplas)
     document.querySelectorAll('.pos-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -350,14 +329,14 @@ class InspecaoVeicular {
       });
     });
 
-    // Botão ENVIAR
-    const btnEnviar = document.getElementById('btn-enviar-inspecao');
+    // Enviar
+    const btnEnviar = getEl('btn-enviar-inspecao');
     if (btnEnviar) {
       btnEnviar.addEventListener('click', () => this.enviarInspecao());
     }
 
-    // Botão CONFERIR INSPEÇÕES (para fiscais) – será exibido apenas quando estiver no modo formulário
-    const btnConferir = document.getElementById('btn-conferir-inspecoes');
+    // Conferir
+    const btnConferir = getEl('btn-conferir-inspecoes');
     if (btnConferir) {
       btnConferir.addEventListener('click', () => this.conferirInspecoes());
     }
@@ -374,9 +353,9 @@ class InspecaoVeicular {
   openForm() {
     this.modal.open();
     this.preencherAutomatico();
-    this.resetForm(); // limpa campos anteriores
-    // Ajustar visibilidade do botão "Conferir" (apenas para fiscal)
-    const btnConferir = document.getElementById('btn-conferir-inspecoes');
+    this.resetarFormulario(); // limpa dados anteriores
+    // Botão "Conferir" só para fiscais
+    const btnConferir = getEl('btn-conferir-inspecoes');
     if (btnConferir) {
       btnConferir.style.display = (currentUserRole === 'FISCAL') ? 'block' : 'none';
     }
@@ -384,37 +363,33 @@ class InspecaoVeicular {
 
   preencherAutomatico() {
     const nome = localStorage.getItem('inspectorName') || 'Inspetor';
-    const fiscalInput = document.getElementById('fiscal');
+    const fiscalInput = getEl('fiscal');
     if (fiscalInput) fiscalInput.value = nome;
 
     const agora = new Date();
-    const dataInput = document.getElementById('data');
-    if (dataInput) {
-      dataInput.value = agora.toLocaleDateString('pt-BR');
-    }
-    const horaInput = document.getElementById('hora');
-    if (horaInput) {
-      horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
+    const dataInput = getEl('data');
+    if (dataInput) dataInput.value = agora.toLocaleDateString('pt-BR');
+    const horaInput = getEl('hora');
+    if (horaInput) horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  resetForm() {
-    // Limpa campo carro
-    const carroInput = document.getElementById('carro');
+  resetarFormulario() {
+    // Limpa carro, mas mantém terminal e campos autopreenchidos (fiscal, data, hora)
+    const carroInput = getEl('carro');
     if (carroInput) carroInput.value = '';
+
     // Limpa checkboxes e observações
     document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false);
     document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
     document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
-    // Mantém terminal, fiscal, data, hora (já estão preenchidos)
   }
 
   coletarDados() {
-    const carro = document.getElementById('carro').value.trim();
-    const terminal = document.getElementById('terminal').value;
-    const fiscal = document.getElementById('fiscal').value;
-    const data = document.getElementById('data').value;
-    const hora = document.getElementById('hora').value;
+    const carro = getEl('carro').value.trim();
+    const terminal = getEl('terminal').value;
+    const fiscal = getEl('fiscal').value;
+    const data = getEl('data').value;
+    const hora = getEl('hora').value;
 
     if (!carro || !terminal) {
       alert('Preencha o campo CARRO e selecione o TERMINAL.');
@@ -428,13 +403,12 @@ class InspecaoVeicular {
       const ok = row.querySelector('.ok').checked;
       const defeito = row.querySelector('.defeito').checked;
       const obs = row.querySelector('.obs-input').value.trim();
-      
+
       itens[item] = {
         status: ok ? 'OK' : (defeito ? 'DEFEITO' : ''),
         obs: obs
       };
 
-      // Para ventilador, capturar posições selecionadas (múltiplas)
       if (item === 'ventilador') {
         const posSelecionadas = Array.from(row.querySelectorAll('.pos-btn.active'))
           .map(btn => btn.dataset.pos);
@@ -446,10 +420,14 @@ class InspecaoVeicular {
   }
 
   async enviarInspecao() {
+    if (!canCreateInspection) {
+      alert('Seu perfil não permite criar inspeções.');
+      return;
+    }
+
     const dados = this.coletarDados();
     if (!dados) return;
 
-    // Reorganiza os dados para o formato esperado pelo Apps Script
     const dadosEnvio = {
       carro: dados.carro,
       terminal: dados.terminal,
@@ -460,10 +438,9 @@ class InspecaoVeicular {
       ventilador: dados.itens.ventilador
     };
 
-    // Gera o resumo para confirmação
+    // Resumo de confirmação
     let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dadosEnvio.carro}\nTerminal: ${dadosEnvio.terminal}\nFiscal: ${dadosEnvio.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
-    const itens = dados.itens;
-    for (const [item, info] of Object.entries(itens)) {
+    for (const [item, info] of Object.entries(dados.itens)) {
       let status = info.status || 'NÃO INFORMADO';
       resumo += `- ${item.toUpperCase()}: ${status}`;
       if (info.obs) resumo += ` (Obs: ${info.obs})`;
@@ -471,8 +448,7 @@ class InspecaoVeicular {
       resumo += '\n';
     }
 
-    const confirmado = confirm(resumo + '\n\nDeseja enviar os dados?');
-    if (!confirmado) return;
+    if (!confirm(resumo + '\n\nDeseja enviar os dados?')) return;
 
     try {
       await fetch(URL_PLANILHA, {
@@ -485,7 +461,9 @@ class InspecaoVeicular {
         })
       });
       alert('✅ Inspeção enviada com sucesso!');
-      this.resetForm(); // limpa apenas os campos preenchidos, mantém o modal aberto
+      // Após envio, reseta o formulário, mas não fecha o modal
+      this.resetarFormulario();
+      // Mantém terminal e campos autopreenchidos
     } catch (err) {
       console.error('Erro ao enviar inspeção:', err);
       alert('❌ Erro ao enviar. Tente novamente.');
@@ -499,12 +477,11 @@ class InspecaoVeicular {
       const fiscalNome = localStorage.getItem('inspectorName');
       url += `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
-    console.log('Consultando:', url); // Debug
 
     try {
       const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const dados = await response.json();
-      console.log('Dados recebidos:', dados); // Debug
       if (dados.length === 0) {
         alert('Nenhuma inspeção encontrada para hoje.');
         return;
@@ -512,25 +489,23 @@ class InspecaoVeicular {
       mostrarModalConferir(dados, currentUserRole);
     } catch (err) {
       console.error('Erro ao consultar inspeções:', err);
-      alert('Erro ao consultar. Tente novamente.');
+      alert('Erro ao consultar. Verifique sua conexão ou se o servidor está acessível.');
     }
   }
 }
 
 // ====================================================================
-// FUNÇÕES DE EXIBIÇÃO E EXPORTAÇÃO DA LISTA DE INSPEÇÕES
+// EXIBIÇÃO E EXPORTAÇÃO
 // ====================================================================
 function mostrarModalConferir(inspecoes, role) {
   const modal = getEl('modal-conferir-inspecoes');
   const container = getEl('lista-inspecoes');
   if (!modal || !container) return;
 
-  // Cria botão de exportação
   let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div>';
   html += '<div id="lista-inspecoes-conteudo">';
 
   inspecoes.forEach(ins => {
-    // Construir lista de itens com defeito
     const itensDefeito = [];
     if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
     if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
@@ -541,27 +516,22 @@ function mostrarModalConferir(inspecoes, role) {
       itensDefeito.push(defeito);
     }
 
-    if (itensDefeito.length === 0) return; // não exibe carros sem defeito
+    if (itensDefeito.length === 0) return;
 
     let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
                   <strong>${ins.carro} - ${ins.terminal}</strong><br>`;
-
     if (role !== 'FISCAL') {
       linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
     }
     linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">`;
-    itensDefeito.forEach(item => {
-      linha += `<li>⚠️ ${item}</li>`;
-    });
+    itensDefeito.forEach(item => linha += `<li>⚠️ ${item}</li>`);
     linha += `</ul></div>`;
-
     html += linha;
   });
 
   html += '</div>';
   container.innerHTML = html;
 
-  // Adicionar evento de exportação
   const btnExport = document.getElementById('exportar-lista');
   if (btnExport) {
     btnExport.onclick = () => {
@@ -649,7 +619,7 @@ function initEventListeners() {
 }
 
 // ====================================================================
-// TEMA CLARO / ESCURO
+// TEMA
 // ====================================================================
 function applyTheme(theme) {
   if (theme === "dark") {
@@ -674,22 +644,18 @@ function initTheme() {
 }
 
 // ====================================================================
-// REGISTRO DO SERVICE WORKER
+// SERVICE WORKER
 // ====================================================================
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('Service Worker registrado com sucesso:', registration.scope);
-      })
-      .catch(error => {
-        console.error('Falha ao registrar Service Worker:', error);
-      });
+      .then(registration => console.log('SW registrado:', registration.scope))
+      .catch(error => console.error('Falha no SW:', error));
   }
 }
 
 // ====================================================================
-// INICIALIZAÇÃO GERAL COM ATUALIZAÇÃO DINÂMICA
+// INICIALIZAÇÃO
 // ====================================================================
 async function inicializar() {
   initModals();
@@ -716,7 +682,7 @@ async function inicializar() {
     }
   });
 
-  logDebug("PWA PENSO carregada com sucesso (atualização dinâmica de inspetores).");
+  logDebug("PWA PENSO carregada.");
 }
 
 window.addEventListener('load', inicializar);
