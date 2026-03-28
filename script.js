@@ -471,9 +471,11 @@ class InspecaoVeicular {
       const fiscalNome = localStorage.getItem('inspectorName');
       fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
-
+console.log('Consultando inspeções para data:', hoje, 'fiscalParam:', fiscalParam);
+    
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
+      console.log('Callback name:', callbackName);
       window[callbackName] = (dados) => {
         if (dados.length === 0) {
           alert('Nenhuma inspeção encontrada para hoje.');
@@ -485,13 +487,15 @@ class InspecaoVeicular {
       };
 
       const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
+       console.log('URL gerada:', url);
       const script = document.createElement('script');
       script.src = url;
-      script.onerror = () => {
+     script.onerror = (err) => {
+      console.error('Erro no carregamento do script:', err);
         delete window[callbackName];
         alert('Erro ao consultar. Verifique sua conexão.');
-        reject();
-      };
+        reject(new Error('Script load failed'));  // agora com erro explícito
+    };
       document.body.appendChild(script);
     });
   }
