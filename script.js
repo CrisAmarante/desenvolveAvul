@@ -18,6 +18,10 @@ const disableDates = {
 // Perfis autorizados para acessar a inspeção veicular
 const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE', 'FISCAL', 'PLANTONISTA'];
 
+// Variáveis de controle de permissão
+let currentUserRole = '';
+let canCreateInspection = false;
+
 // ====================================================================
 // UTILITÁRIOS
 // ====================================================================
@@ -167,9 +171,13 @@ async function checkLoginStatus() {
   if (logado === 'true' && nome) {
     if (apelido && INSPETORES[apelido]) {
       const role = INSPETORES[apelido].funcao;
+      currentUserRole = role;
+      canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
+
       localStorage.setItem('inspectorRole', role);
 
-      if (btnInspecao && ROLES_ALLOWED_INSPECTION.includes(role)) {
+      // Mostrar botão de inspeção para todos exceto MONITOR
+      if (btnInspecao && role !== 'MONITOR') {
         btnInspecao.style.display = 'flex';
       } else if (btnInspecao) {
         btnInspecao.style.display = 'none';
@@ -348,14 +356,22 @@ class InspecaoVeicular {
       btnEnviar.addEventListener('click', () => this.enviarInspecao());
     }
 
-    // Botão CONFERIR INSPEÇÕES (para fiscais)
+    // Botão CONFERIR INSPEÇÕES (para fiscais) – será exibido apenas quando estiver no modo formulário
     const btnConferir = document.getElementById('btn-conferir-inspecoes');
     if (btnConferir) {
       btnConferir.addEventListener('click', () => this.conferirInspecoes());
     }
   }
 
-  open() {
+  async open() {
+    if (canCreateInspection) {
+      this.openForm();
+    } else {
+      await this.conferirInspecoes();
+    }
+  }
+
+  openForm() {
     this.modal.open();
     this.preencherAutomatico();
     // Reset any previous selections
@@ -363,10 +379,10 @@ class InspecaoVeicular {
     document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
 
-    const role = localStorage.getItem('inspectorRole');
+    // Ajustar visibilidade do botão "Conferir" (apenas para fiscal)
     const btnConferir = document.getElementById('btn-conferir-inspecoes');
     if (btnConferir) {
-      btnConferir.style.display = (role === 'FISCAL') ? 'block' : 'none';
+      btnConferir.style.display = (currentUserRole === 'FISCAL') ? 'block' : 'none';
     }
   }
 
@@ -470,17 +486,23 @@ class InspecaoVeicular {
   }
 
   async conferirInspecoes() {
-    const fiscalNome = localStorage.getItem('inspectorName');
     const hoje = new Date().toLocaleDateString('pt-BR');
+    let url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}`;
+    if (currentUserRole === 'FISCAL') {
+      // Fiscal vê apenas suas próprias inspeções
+      const fiscalNome = localStorage.getItem('inspectorName');
+      url += `&fiscal=${encodeURIComponent(fiscalNome)}`;
+    }
+    // Para os demais perfis (exceto MONITOR, que não tem acesso), retorna todas
 
     try {
-      const response = await fetch(`${URL_PLANILHA}?acao=consultar_inspecoes&fiscal=${encodeURIComponent(fiscalNome)}&data=${encodeURIComponent(hoje)}`);
+      const response = await fetch(url);
       const dados = await response.json();
       if (dados.length === 0) {
         alert('Nenhuma inspeção encontrada para hoje.');
-      } else {
-        mostrarModalConferir(dados);
+        return;
       }
+      mostrarModalConferir(dados, currentUserRole);
     } catch (err) {
       console.error('Erro ao consultar inspeções:', err);
       alert('Erro ao consultar. Tente novamente.');
@@ -488,27 +510,85 @@ class InspecaoVeicular {
   }
 }
 
-// Função auxiliar para exibir modal de conferência (adaptada para o novo formato)
-function mostrarModalConferir(inspecoes) {
+// ====================================================================
+// FUNÇÕES DE EXIBIÇÃO E EXPORTAÇÃO DA LISTA DE INSPEÇÕES
+// ====================================================================
+function mostrarModalConferir(inspecoes, role) {
   const modal = getEl('modal-conferir-inspecoes');
   const container = getEl('lista-inspecoes');
   if (!modal || !container) return;
-  
-  let html = '';
+
+  // Cria botão de exportação
+  let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div>';
+  html += '<div id="lista-inspecoes-conteudo">';
+
   inspecoes.forEach(ins => {
-    html += `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
-              <strong>${ins.carro} - ${ins.terminal}</strong><br>
-              <small>${ins.dataHora}</small><br>
-              <ul style="margin-top: 8px; list-style: none; padding-left: 0;">
-                <li>THOREB: ${ins.thoreb.status || 'N/I'} ${ins.thoreb.obs ? `(Obs: ${ins.thoreb.obs})` : ''}</li>
-                <li>ELEVADOR: ${ins.elevador.status || 'N/I'} ${ins.elevador.obs ? `(Obs: ${ins.elevador.obs})` : ''}</li>
-                <li>USB: ${ins.usb.status || 'N/I'} ${ins.usb.obs ? `(Obs: ${ins.usb.obs})` : ''}</li>
-                <li>VENTILADOR: ${ins.ventilador.status || 'N/I'} ${ins.ventilador.obs ? `(Obs: ${ins.ventilador.obs})` : ''} ${ins.ventilador.posicao ? `(Pos: ${ins.ventilador.posicao})` : ''}</li>
-              </ul>
-            </div>`;
+    // Construir lista de itens com defeito
+    const itensDefeito = [];
+    if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
+    if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
+    if (ins.usb.status === 'DEFEITO') itensDefeito.push(`USB: ${ins.usb.obs || 'sem obs'}`);
+    if (ins.ventilador.status === 'DEFEITO') {
+      let defeito = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`;
+      if (ins.ventilador.posicao) defeito += ` (Pos: ${ins.ventilador.posicao})`;
+      itensDefeito.push(defeito);
+    }
+
+    if (itensDefeito.length === 0) return; // não exibe carros sem defeito
+
+    let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
+                  <strong>${ins.carro} - ${ins.terminal}</strong><br>`;
+
+    if (role !== 'FISCAL') {
+      linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
+    }
+    linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">`;
+    itensDefeito.forEach(item => {
+      linha += `<li>⚠️ ${item}</li>`;
+    });
+    linha += `</ul></div>`;
+
+    html += linha;
   });
+
+  html += '</div>';
   container.innerHTML = html;
+
+  // Adicionar evento de exportação
+  const btnExport = document.getElementById('exportar-lista');
+  if (btnExport) {
+    btnExport.onclick = () => {
+      const texto = gerarTextoExportacao(inspecoes, role);
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('Lista copiada para a área de transferência!');
+      }).catch(() => {
+        alert('Erro ao copiar. Tente selecionar e copiar manualmente.');
+      });
+    };
+  }
+
   modal.classList.add('is-open');
+}
+
+function gerarTextoExportacao(inspecoes, role) {
+  let texto = `=== INSPEÇÕES DO DIA ${new Date().toLocaleDateString('pt-BR')} ===\n\n`;
+  inspecoes.forEach(ins => {
+    const itensDefeito = [];
+    if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
+    if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
+    if (ins.usb.status === 'DEFEITO') itensDefeito.push(`USB: ${ins.usb.obs || 'sem obs'}`);
+    if (ins.ventilador.status === 'DEFEITO') {
+      let defeito = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`;
+      if (ins.ventilador.posicao) defeito += ` (Pos: ${ins.ventilador.posicao})`;
+      itensDefeito.push(defeito);
+    }
+    if (itensDefeito.length === 0) return;
+
+    texto += `CARRO: ${ins.carro} (${ins.terminal})\n`;
+    if (role !== 'FISCAL') texto += `Responsável: ${ins.fiscal}\n`;
+    texto += `Defeitos:\n${itensDefeito.map(d => `- ${d}`).join('\n')}\n\n`;
+  });
+  return texto;
 }
 
 function fecharModalConferir() {
