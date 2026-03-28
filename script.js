@@ -426,9 +426,21 @@ class InspecaoVeicular {
     const dados = this.coletarDados();
     if (!dados) return;
 
-    // Gerar resumo para confirmação
-    let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dados.carro}\nTerminal: ${dados.terminal}\nFiscal: ${dados.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
-    for (const [item, info] of Object.entries(dados.itens)) {
+    // Reorganiza os dados para o formato esperado pelo Apps Script
+    const dadosEnvio = {
+      carro: dados.carro,
+      terminal: dados.terminal,
+      fiscal: dados.fiscal,
+      thoreb: dados.itens.thoreb,
+      elevador: dados.itens.elevador,
+      usb: dados.itens.usb,
+      ventilador: dados.itens.ventilador
+    };
+
+    // Gera o resumo para confirmação (usando dadosEnvio)
+    let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dadosEnvio.carro}\nTerminal: ${dadosEnvio.terminal}\nFiscal: ${dadosEnvio.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
+    const itens = dados.itens;
+    for (const [item, info] of Object.entries(itens)) {
       let status = info.status || 'NÃO INFORMADO';
       resumo += `- ${item.toUpperCase()}: ${status}`;
       if (info.obs) resumo += ` (Obs: ${info.obs})`;
@@ -440,13 +452,13 @@ class InspecaoVeicular {
     if (!confirmado) return;
 
     try {
-      const response = await fetch(URL_PLANILHA, {
+      await fetch(URL_PLANILHA, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           acao: 'inspecao_veicular',
-          dados: JSON.stringify(dados)
+          dados: JSON.stringify(dadosEnvio)
         })
       });
       alert('✅ Inspeção enviada com sucesso!');
@@ -476,20 +488,25 @@ class InspecaoVeicular {
   }
 }
 
-// Função auxiliar para exibir modal de conferência
+// Função auxiliar para exibir modal de conferência (adaptada para o novo formato)
 function mostrarModalConferir(inspecoes) {
   const modal = getEl('modal-conferir-inspecoes');
   const container = getEl('lista-inspecoes');
   if (!modal || !container) return;
   
-  let html = '<ul style="list-style: none; padding: 0;">';
+  let html = '';
   inspecoes.forEach(ins => {
-    html += `<li><strong>${ins.item.toUpperCase()}</strong>: ${ins.ok === 'SIM' ? '✅ OK' : '⚠️ DEFEITO'} `;
-    if (ins.obs) html += `(Obs: ${ins.obs}) `;
-    if (ins.posicao) html += `(Pos: ${ins.posicao}) `;
-    html += `- ${ins.carro} / ${ins.terminal} - ${ins.dataHora}</li>`;
+    html += `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
+              <strong>${ins.carro} - ${ins.terminal}</strong><br>
+              <small>${ins.dataHora}</small><br>
+              <ul style="margin-top: 8px; list-style: none; padding-left: 0;">
+                <li>THOREB: ${ins.thoreb.status || 'N/I'} ${ins.thoreb.obs ? `(Obs: ${ins.thoreb.obs})` : ''}</li>
+                <li>ELEVADOR: ${ins.elevador.status || 'N/I'} ${ins.elevador.obs ? `(Obs: ${ins.elevador.obs})` : ''}</li>
+                <li>USB: ${ins.usb.status || 'N/I'} ${ins.usb.obs ? `(Obs: ${ins.usb.obs})` : ''}</li>
+                <li>VENTILADOR: ${ins.ventilador.status || 'N/I'} ${ins.ventilador.obs ? `(Obs: ${ins.ventilador.obs})` : ''} ${ins.ventilador.posicao ? `(Pos: ${ins.ventilador.posicao})` : ''}</li>
+              </ul>
+            </div>`;
   });
-  html += '</ul>';
   container.innerHTML = html;
   modal.classList.add('is-open');
 }
