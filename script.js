@@ -100,13 +100,12 @@ async function registrarLog(nomeApelido) {
 }
 
 // ====================================================================
-// CARREGAMENTO DA LISTA DE INSPETORES (com hash) – ATUALIZADO COM CACHE BUSTING E CALLBACK ÚNICO
+// CARREGAMENTO DA LISTA DE INSPETORES (com hash) – VERSÃO MELHORADA
 // ====================================================================
 let refreshPromise = null;
 
 function processarDadosPlanilha(dados) {
   // Espera-se que 'dados' seja um objeto com chave = apelido e valor = { hash, nome, funcao }
-  // Se a planilha retornar um array (caso o doGet ainda não esteja ajustado), converta:
   if (Array.isArray(dados)) {
     const novoObjeto = {};
     dados.forEach(row => {
@@ -120,7 +119,6 @@ function processarDadosPlanilha(dados) {
     });
     INSPETORES = novoObjeto;
   } else {
-    // Já é objeto no formato esperado
     INSPETORES = dados || {};
   }
   logDebug("Inspetores carregados com hash.");
@@ -130,11 +128,7 @@ async function refreshInspetores() {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = new Promise((resolve, reject) => {
-    // Remove qualquer script antigo com o atributo específico
-    const oldScript = document.querySelector('script[data-inspetores-callback]');
-    if (oldScript) oldScript.remove();
-
-    const callbackName = 'processarDadosPlanilha_' + Date.now();
+    const callbackName = 'processarDadosPlanilha_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
     window[callbackName] = function(dados) {
       processarDadosPlanilha(dados);
       delete window[callbackName];
@@ -143,14 +137,12 @@ async function refreshInspetores() {
     };
 
     const script = document.createElement('script');
-    script.setAttribute('data-inspetores-callback', 'true');
-    // Adiciona cache busting com timestamp
     script.src = `${URL_PLANILHA}?callback=${callbackName}&_=${Date.now()}`;
-    script.onerror = (err) => {
-      console.error('Erro ao carregar inspetores', err);
+    script.onerror = () => {
+      console.error('Erro ao carregar inspetores');
       delete window[callbackName];
       refreshPromise = null;
-      reject(err);
+      reject(new Error('Falha no carregamento dos inspetores'));
     };
     document.body.appendChild(script);
   });
@@ -158,13 +150,8 @@ async function refreshInspetores() {
   return refreshPromise;
 }
 
-// Mantém uma função para compatibilidade
-function carregarInspetores() {
-  return refreshInspetores();
-}
-
 // ====================================================================
-// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO – COM VERIFICAÇÃO DE SESSÃO APÓS RECARGA
+// LOGIN / LOGOUT + TOAST + NOME NO BOTÃO – COM VERIFICAÇÃO DE VALIDADE
 // ====================================================================
 async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
@@ -175,7 +162,7 @@ async function checkLoginStatus() {
   const insp = getEl('inspector-screen');
 
   if (logado === 'true' && nome) {
-    // Verifica se o inspetor ainda está na lista atualizada
+    // Verifica se o inspetor ainda existe na lista atual
     if (apelido && INSPETORES[apelido]) {
       main.style.display = 'none';
       insp.style.display = 'flex';
@@ -188,14 +175,19 @@ async function checkLoginStatus() {
         `;
       }
     } else {
-      // Inspetor não existe mais ou foi desativado: desloga automaticamente
+      // Inspetor não está mais autorizado – desloga automaticamente
       localStorage.removeItem('inspectorLoggedIn');
       localStorage.removeItem('inspectorName');
       localStorage.removeItem('inspectorApelido');
       main.style.display = 'flex';
       insp.style.display = 'none';
-      // Opcional: mostrar mensagem de sessão expirada (usar toast)
-      showToastMessage('Sessão expirada. Faça login novamente.', 3000);
+      // Opcional: mostrar mensagem de sessão expirada
+      const toast = getEl('welcome-toast');
+      if (toast) {
+        getEl('toast-name').textContent = 'Sessão expirada';
+        toast.classList.add('show');
+        setTimeout(() => hideWelcomeToast(), 3000);
+      }
     }
   } else {
     main.style.display = 'flex';
@@ -209,12 +201,10 @@ async function login(e) {
   const errorMsg = getEl('login-error');
   const senha = senhaInput.value.trim();
 
-  // Garante que os inspetores estejam carregados antes de tentar autenticar
-  await refreshInspetores();
-
   let nomeEncontrado = null;
   let apelidoEncontrado = null;
 
+  // Itera sobre todos os apelidos (salt) e testa o hash
   for (const [apelido, info] of Object.entries(INSPETORES)) {
     const hashCalculado = await hashPassword(senha, apelido);
     if (hashCalculado === info.hash) {
@@ -228,7 +218,7 @@ async function login(e) {
     localStorage.setItem('inspectorLoggedIn', 'true');
     localStorage.setItem('inspectorName', nomeEncontrado);
     localStorage.setItem('inspectorApelido', apelidoEncontrado);
-    registrarLog(apelidoEncontrado); // envia o apelido para o log
+    registrarLog(apelidoEncontrado);
     window.modals.login.close();
     checkLoginStatus();
   } else {
@@ -267,34 +257,6 @@ function showWelcomeToast(nome) {
 function hideWelcomeToast() {
   const toast = getEl('welcome-toast');
   if (toast) toast.classList.remove('show');
-}
-
-// Toast genérico para mensagens (opcional)
-function showToastMessage(message, duration = 3000) {
-  let toast = getEl('message-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'message-toast';
-    toast.className = 'toast-message';
-    document.body.appendChild(toast);
-    // Adicionar estilos inline simples ou usar CSS
-    toast.style.position = 'fixed';
-    toast.style.bottom = '20px';
-    toast.style.left = '50%';
-    toast.style.transform = 'translateX(-50%)';
-    toast.style.backgroundColor = 'rgba(0,0,0,0.8)';
-    toast.style.color = '#fff';
-    toast.style.padding = '8px 16px';
-    toast.style.borderRadius = '8px';
-    toast.style.zIndex = '11000';
-    toast.style.fontSize = '0.9rem';
-    toast.style.display = 'none';
-  }
-  toast.textContent = message;
-  toast.style.display = 'block';
-  setTimeout(() => {
-    toast.style.display = 'none';
-  }, duration);
 }
 
 // ====================================================================
@@ -367,16 +329,6 @@ class InspecaoVeicular {
     if (btnEnviar) {
       btnEnviar.addEventListener('click', () => this.enviarInspecao());
     }
-
-    // Botões EDITAR e APAGAR (implementação básica)
-    const btnEditar = document.getElementById('btn-editar-inspecao');
-    if (btnEditar) {
-      btnEditar.addEventListener('click', () => this.editarInspecao());
-    }
-    const btnApagar = document.getElementById('btn-apagar-inspecao');
-    if (btnApagar) {
-      btnApagar.addEventListener('click', () => this.apagarInspecao());
-    }
   }
 
   open() {
@@ -407,7 +359,6 @@ class InspecaoVeicular {
     const obs = row.querySelector('.obs-input').value.trim();
 
     console.log(`✅ Salvo: ${item} | OK: ${ok} | Defeito: ${defeito} | Obs: ${obs}`);
-    // Aqui você pode armazenar localmente, por exemplo em um objeto ou localStorage
     alert(`✅ Item ${item.toUpperCase()} salvo com sucesso!`);
   }
 
@@ -416,26 +367,6 @@ class InspecaoVeicular {
       console.log('📤 Inspeção enviada para o Google Sheets (futuro)');
       alert('✅ Inspeção enviada com sucesso!');
       this.modal.close();
-    }
-  }
-
-  editarInspecao() {
-    // Exemplo: reabrir para edição
-    console.log('Editar inspeção');
-    alert('Funcionalidade de edição em desenvolvimento.');
-  }
-
-  apagarInspecao() {
-    if (confirm('Tem certeza que deseja apagar todos os dados da inspeção atual?')) {
-      // Limpar campos
-      document.getElementById('carro').value = '';
-      document.getElementById('linha').value = '';
-      document.getElementById('terminal').value = '';
-      // Resetar checkboxes e observações
-      document.querySelectorAll('#tabela-inspecao .ok, #tabela-inspecao .defeito').forEach(cb => cb.checked = false);
-      document.querySelectorAll('#tabela-inspecao .obs-input').forEach(inp => inp.value = '');
-      document.querySelectorAll('.pos-btn.active').forEach(btn => btn.classList.remove('active'));
-      alert('Dados da inspeção apagados.');
     }
   }
 }
@@ -511,13 +442,13 @@ function initTheme() {
 }
 
 // ====================================================================
-// SERVICE WORKER REGISTRATION (se suportado)
+// REGISTRO DO SERVICE WORKER
 // ====================================================================
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register('/sw.js')
       .then(registration => {
-        logDebug('Service Worker registrado com escopo:', registration.scope);
+        console.log('Service Worker registrado com sucesso:', registration.scope);
       })
       .catch(error => {
         console.error('Falha ao registrar Service Worker:', error);
@@ -526,41 +457,37 @@ function registerServiceWorker() {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO GERAL COM RECARGA DE INSPETORES NO LOAD, PAGESHOW E VISIBILITY
+// INICIALIZAÇÃO GERAL COM ATUALIZAÇÃO DINÂMICA
 // ====================================================================
-async function initializeApp() {
-  // Carrega inspetores primeiro
-  await refreshInspetores();
-  
+async function inicializar() {
   initModals();
   initEventListeners();
   initTheme();
   registerServiceWorker();
-  
+
+  // Carrega os inspetores antes de verificar status de login
+  await refreshInspetores();
+
   checkLoginStatus();
   mostrarBannerAviso();
   aplicarBloqueioDeDatas();
-  
-  logDebug("PWA PENSO carregada com sucesso (hash implementado e atualização automática).");
+
+  // Eventos para atualizar inspetores quando a PWA for reativada
+  window.addEventListener('pageshow', async (event) => {
+    if (event.persisted) {
+      await refreshInspetores();
+      checkLoginStatus();
+    }
+  });
+
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible') {
+      await refreshInspetores();
+      checkLoginStatus();
+    }
+  });
+
+  logDebug("PWA PENSO carregada com sucesso (atualização dinâmica de inspetores).");
 }
 
-// Dispara no load
-window.addEventListener('load', initializeApp);
-
-// Dispara quando a página é restaurada do cache (bfcache)
-window.addEventListener('pageshow', async (event) => {
-  if (event.persisted) {
-    await refreshInspetores();
-    checkLoginStatus();
-    logDebug("Inspetores recarregados após pageshow (bfcache).");
-  }
-});
-
-// Dispara quando a visibilidade muda (ex: volta de outra aba)
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible') {
-    await refreshInspetores();
-    checkLoginStatus();
-    logDebug("Inspetores recarregados após visibilitychange.");
-  }
-});
+window.addEventListener('load', inicializar);
