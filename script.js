@@ -346,6 +346,7 @@ class InspecaoVeicular {
     if (canCreateInspection) {
       this.openForm();
     } else {
+      // Para perfis que não criam, abrir diretamente a consulta
       await this.conferirInspecoes();
     }
   }
@@ -353,8 +354,7 @@ class InspecaoVeicular {
   openForm() {
     this.modal.open();
     this.preencherAutomatico();
-    this.resetarFormulario(); // limpa dados anteriores
-    // Botão "Conferir" só para fiscais
+    this.resetarFormulario();
     const btnConferir = getEl('btn-conferir-inspecoes');
     if (btnConferir) {
       btnConferir.style.display = (currentUserRole === 'FISCAL') ? 'block' : 'none';
@@ -374,11 +374,9 @@ class InspecaoVeicular {
   }
 
   resetarFormulario() {
-    // Limpa carro, mas mantém terminal e campos autopreenchidos (fiscal, data, hora)
     const carroInput = getEl('carro');
     if (carroInput) carroInput.value = '';
 
-    // Limpa checkboxes e observações
     document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false);
     document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
     document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
@@ -438,7 +436,6 @@ class InspecaoVeicular {
       ventilador: dados.itens.ventilador
     };
 
-    // Resumo de confirmação
     let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dadosEnvio.carro}\nTerminal: ${dadosEnvio.terminal}\nFiscal: ${dadosEnvio.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
     for (const [item, info] of Object.entries(dados.itens)) {
       let status = info.status || 'NÃO INFORMADO';
@@ -461,7 +458,7 @@ class InspecaoVeicular {
         })
       });
       alert('✅ Inspeção enviada com sucesso!');
-      this.resetarFormulario();
+      this.resetarFormulario(); // Limpa apenas os campos do formulário, mantém terminal e autopreenchidos
     } catch (err) {
       console.error('Erro ao enviar inspeção:', err);
       alert('❌ Erro ao enviar. Tente novamente.');
@@ -476,14 +473,14 @@ class InspecaoVeicular {
       url += `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
 
-    logDebug('Consultando inspeções:', url);
+    console.log('Consultando inspeções via:', url); // Diagnóstico
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const dados = await response.json();
-      logDebug('Dados recebidos:', dados);
       if (dados.length === 0) {
         alert('Nenhuma inspeção encontrada para hoje.');
         return;
@@ -491,7 +488,14 @@ class InspecaoVeicular {
       mostrarModalConferir(dados, currentUserRole);
     } catch (err) {
       console.error('Erro ao consultar inspeções:', err);
-      alert('Erro ao consultar. Verifique sua conexão ou se o servidor está acessível.');
+      // Mensagem mais descritiva
+      let msg = 'Erro ao consultar. ';
+      if (err.message.includes('Failed to fetch')) {
+        msg += 'Verifique se o servidor está acessível e se as permissões CORS estão configuradas.';
+      } else {
+        msg += err.message;
+      }
+      alert(msg);
     }
   }
 }
