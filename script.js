@@ -167,10 +167,8 @@ async function checkLoginStatus() {
   if (logado === 'true' && nome) {
     if (apelido && INSPETORES[apelido]) {
       const role = INSPETORES[apelido].funcao;
-      // Armazena o perfil para uso posterior
       localStorage.setItem('inspectorRole', role);
 
-      // Mostra botão de inspeção apenas se o perfil estiver autorizado
       if (btnInspecao && ROLES_ALLOWED_INSPECTION.includes(role)) {
         btnInspecao.style.display = 'flex';
       } else if (btnInspecao) {
@@ -188,7 +186,6 @@ async function checkLoginStatus() {
         `;
       }
     } else {
-      // Inspetor não está mais autorizado – desloga automaticamente
       localStorage.removeItem('inspectorLoggedIn');
       localStorage.removeItem('inspectorName');
       localStorage.removeItem('inspectorApelido');
@@ -306,7 +303,7 @@ function mostrarBannerAviso() {
 }
 
 // ====================================================================
-// INSPEÇÃO VEICULAR DIÁRIA – COM TODAS AS NOVAS FUNCIONALIDADES
+// INSPEÇÃO VEICULAR DIÁRIA – VERSÃO COM REGISTRO ÚNICO
 // ====================================================================
 class InspecaoVeicular {
   constructor() {
@@ -329,33 +326,19 @@ class InspecaoVeicular {
       const cbDefeito = row.querySelector('.defeito');
       if (cbOk && cbDefeito) {
         cbOk.addEventListener('change', () => {
-          if (cbOk.checked) {
-            cbDefeito.checked = false;
-            this.updateStatusIcon(row);
-          }
+          if (cbOk.checked) cbDefeito.checked = false;
         });
         cbDefeito.addEventListener('change', () => {
-          if (cbDefeito.checked) {
-            cbOk.checked = false;
-            this.updateStatusIcon(row);
-          }
+          if (cbDefeito.checked) cbOk.checked = false;
         });
-        // Also update icon on initial load (if any)
-        this.updateStatusIcon(row);
       }
     });
 
-    // Posição F/M/T – only for ventilador row, but we'll keep generic
+    // Position buttons – allow multiple selections (toggle class active)
     document.querySelectorAll('.pos-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         btn.classList.toggle('active');
-        // Ensure only one active per row (optional)
-        const container = btn.closest('.posicao-buttons');
-        if (container) {
-          container.querySelectorAll('.pos-btn').forEach(b => {
-            if (b !== btn) b.classList.remove('active');
-          });
-        }
       });
     });
 
@@ -375,11 +358,11 @@ class InspecaoVeicular {
   open() {
     this.modal.open();
     this.preencherAutomatico();
-    // Reset status icons
-    document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
-      this.updateStatusIcon(row);
-    });
-    // Show conferir button only if role is FISCAL
+    // Reset any previous selections
+    document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
+
     const role = localStorage.getItem('inspectorRole');
     const btnConferir = document.getElementById('btn-conferir-inspecoes');
     if (btnConferir) {
@@ -403,21 +386,6 @@ class InspecaoVeicular {
     }
   }
 
-  updateStatusIcon(row) {
-    const statusSpan = row.querySelector('.status-icon');
-    const cbOk = row.querySelector('.ok');
-    const cbDefeito = row.querySelector('.defeito');
-    if (!statusSpan) return;
-
-    if (cbOk && cbOk.checked) {
-      statusSpan.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981; font-size: 1.5rem;"></i>';
-    } else if (cbDefeito && cbDefeito.checked) {
-      statusSpan.innerHTML = '<i class="fas fa-times-circle" style="color: #ef4444; font-size: 1.5rem;"></i>';
-    } else {
-      statusSpan.innerHTML = '';
-    }
-  }
-
   coletarDados() {
     const carro = document.getElementById('carro').value.trim();
     const terminal = document.getElementById('terminal').value;
@@ -430,19 +398,25 @@ class InspecaoVeicular {
       return null;
     }
 
-    const itens = [];
+    const itens = {};
     const rows = document.querySelectorAll('#tabela-inspecao tbody tr');
     rows.forEach(row => {
       const item = row.dataset.item;
       const ok = row.querySelector('.ok').checked;
       const defeito = row.querySelector('.defeito').checked;
       const obs = row.querySelector('.obs-input').value.trim();
-      let posicao = null;
+      
+      itens[item] = {
+        status: ok ? 'OK' : (defeito ? 'DEFEITO' : ''),
+        obs: obs
+      };
+
+      // Para ventilador, capturar posições selecionadas (múltiplas)
       if (item === 'ventilador') {
-        const activePos = row.querySelector('.pos-btn.active');
-        posicao = activePos ? activePos.dataset.pos : null;
+        const posSelecionadas = Array.from(row.querySelectorAll('.pos-btn.active'))
+          .map(btn => btn.dataset.pos);
+        itens[item].posicao = posSelecionadas.join(',');
       }
-      itens.push({ item, ok, defeito, obs, posicao });
     });
 
     return { carro, terminal, fiscal, data, hora, itens };
@@ -454,32 +428,27 @@ class InspecaoVeicular {
 
     // Gerar resumo para confirmação
     let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dados.carro}\nTerminal: ${dados.terminal}\nFiscal: ${dados.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
-    dados.itens.forEach(item => {
-      let status = '❌';
-      if (item.ok) status = '✅ OK';
-      else if (item.defeito) status = '⚠️ DEFEITO';
-      else status = '⚪ NÃO INFORMADO';
-      resumo += `- ${item.item.toUpperCase()}: ${status}`;
-      if (item.obs) resumo += ` (Obs: ${item.obs})`;
-      if (item.posicao) resumo += ` (Pos: ${item.posicao})`;
+    for (const [item, info] of Object.entries(dados.itens)) {
+      let status = info.status || 'NÃO INFORMADO';
+      resumo += `- ${item.toUpperCase()}: ${status}`;
+      if (info.obs) resumo += ` (Obs: ${info.obs})`;
+      if (info.posicao) resumo += ` (Pos: ${info.posicao})`;
       resumo += '\n';
-    });
+    }
 
     const confirmado = confirm(resumo + '\n\nDeseja enviar os dados?');
-    if (!confirmado) return; // usuário escolheu "Não" – mantém modal aberto
+    if (!confirmado) return;
 
     try {
-      // Envia para o Google Sheets (endpoint POST)
       const response = await fetch(URL_PLANILHA, {
         method: 'POST',
-        mode: 'no-cors', // devido à limitação do Apps Script; mas a resposta não é acessível
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           acao: 'inspecao_veicular',
           dados: JSON.stringify(dados)
         })
       });
-      // Como no-cors não permite ler resposta, assumimos sucesso
       alert('✅ Inspeção enviada com sucesso!');
       this.modal.close();
     } catch (err) {
@@ -492,24 +461,36 @@ class InspecaoVeicular {
     const fiscalNome = localStorage.getItem('inspectorName');
     const hoje = new Date().toLocaleDateString('pt-BR');
 
-    // Simula uma consulta à planilha – aqui você deve implementar a chamada real
-    // Por enquanto, exibe uma mensagem de exemplo
-    alert(`Funcionalidade em desenvolvimento: exibir inspeções de ${fiscalNome} em ${hoje}`);
-    // Exemplo de chamada futura:
-    // try {
-    //   const response = await fetch(`${URL_PLANILHA}?acao=consultar_inspecoes&fiscal=${encodeURIComponent(fiscalNome)}&data=${encodeURIComponent(hoje)}`);
-    //   const dados = await response.json();
-    //   mostrarModalConferir(dados);
-    // } catch (err) { ... }
+    try {
+      const response = await fetch(`${URL_PLANILHA}?acao=consultar_inspecoes&fiscal=${encodeURIComponent(fiscalNome)}&data=${encodeURIComponent(hoje)}`);
+      const dados = await response.json();
+      if (dados.length === 0) {
+        alert('Nenhuma inspeção encontrada para hoje.');
+      } else {
+        mostrarModalConferir(dados);
+      }
+    } catch (err) {
+      console.error('Erro ao consultar inspeções:', err);
+      alert('Erro ao consultar. Tente novamente.');
+    }
   }
 }
 
-// Função auxiliar para exibir modal de conferência (não implementada completamente)
-function mostrarModalConferir(dados) {
+// Função auxiliar para exibir modal de conferência
+function mostrarModalConferir(inspecoes) {
   const modal = getEl('modal-conferir-inspecoes');
   const container = getEl('lista-inspecoes');
   if (!modal || !container) return;
-  container.innerHTML = '<pre>' + JSON.stringify(dados, null, 2) + '</pre>';
+  
+  let html = '<ul style="list-style: none; padding: 0;">';
+  inspecoes.forEach(ins => {
+    html += `<li><strong>${ins.item.toUpperCase()}</strong>: ${ins.ok === 'SIM' ? '✅ OK' : '⚠️ DEFEITO'} `;
+    if (ins.obs) html += `(Obs: ${ins.obs}) `;
+    if (ins.posicao) html += `(Pos: ${ins.posicao}) `;
+    html += `- ${ins.carro} / ${ins.terminal} - ${ins.dataHora}</li>`;
+  });
+  html += '</ul>';
+  container.innerHTML = html;
   modal.classList.add('is-open');
 }
 
