@@ -1,6 +1,6 @@
 /* ============================================================
    PENSO - Prancheta Eletrônica
-   CSS Completo - VERSÃO CORRIGIDA (toast posicionado, botões uniformes)
+   CSS Completo - VERSÃO FINAL (com inspeção veicular atualizada)
 ============================================================ */
 
 :root {
@@ -477,7 +477,7 @@ body.dark::before {
 
 /* ====================== INSPEÇÃO VEICULAR DIÁRIA ====================== */
 .inspecao-modal-content {
-  max-width: 600px !important;
+  max-width: 700px !important;
   width: 95% !important;
   max-height: 85vh;
   overflow-y: auto;
@@ -486,7 +486,7 @@ body.dark::before {
 .top-fields,
 .bottom-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -499,7 +499,8 @@ body.dark::before {
   margin-bottom: 4px;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   padding: 10px 12px;
   border: 2px solid #cbd5e1;
@@ -587,6 +588,11 @@ body.dark::before {
   display: block; 
 }
 
+/* Estilo para checkbox "Com defeito" (vermelho quando marcado) */
+.custom-checkbox input.defeito:checked + .checkmark {
+  background: #ef4444;
+}
+
 .obs-input {
   width: 100%;
   padding: 6px 8px;
@@ -614,13 +620,13 @@ body.dark::before {
 
 .posicao-buttons {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   justify-content: center;
 }
 
 .pos-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: 2px solid #64748b;
   background: var(--card-bg);
   color: var(--accent);
@@ -704,22 +710,28 @@ body.dark::before {
   
   .top-fields,
   .bottom-fields {
+    grid-template-columns: 1fr;
     gap: 8px;
   }
   
-  .field input {
+  .field input,
+  .field select {
     padding: 6px 8px;
     font-size: 0.85rem;
   }
-}
-/* Ícones de status na tabela de inspeção */
-.status-icon {
-  display: inline-block;
-  width: 28px;
-  text-align: center;
+
+  .posicao-buttons {
+    gap: 4px;
+  }
 }
 
-/* Ajuste para o modal de conferir inspeções */
+/* Estilo para a coluna de posição na tabela (apenas ventilador) */
+.posicao-cell {
+  text-align: center;
+  min-width: 80px;
+}
+
+/* Modal de conferir inspeções */
 #modal-conferir-inspecoes .modal-content {
   max-width: 500px;
 }
@@ -730,7 +742,15 @@ body.dark::before {
   padding: 8px;
 }
 
-/* Para o botão CONFERIR INSPEÇÕES aparecer apenas quando necessário */
-#btn-conferir-inspecoes {
-  display: none;
+#lista-inspecoes ul {
+  list-style: none;
+  padding: 0;
+}
+
+#lista-inspecoes li {
+  background: var(--card-bg);
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
 }
