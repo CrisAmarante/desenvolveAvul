@@ -355,7 +355,7 @@ class InspecaoVeicular {
     this.resetarFormulario();
     const btnConferir = getEl('btn-conferir-inspecoes');
     if (btnConferir) {
-      btnConferir.style.display = (currentUserRole === 'FISCAL') ? 'block' : 'none';
+      btnConferir.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none';
     }
   }
 
