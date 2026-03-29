@@ -1,7 +1,7 @@
 // ====================================================================
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbwDxXaO5YctO81H8fd8SoQzeuK0QVbij2FMr9KVvldKNhMGvikQ4dlWR5d7KANIu3_R/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
 
 let INSPETORES = {};
 
@@ -17,6 +17,7 @@ const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE',
 
 let currentUserRole = '';
 let canCreateInspection = false;
+let terminaisCache = []; // cache dos terminais carregados
 
 function logDebug(...args) {
   console.log('[PENSO]', ...args);
@@ -147,6 +148,64 @@ async function refreshInspetores() {
   });
 
   return refreshPromise;
+}
+
+// ====================================================================
+// CARREGAR TERMINAIS (via JSONP)
+// ====================================================================
+let terminaisPromise = null;
+
+function carregarTerminais(forceRefresh = false) {
+  if (!forceRefresh && terminaisCache.length > 0) {
+    return Promise.resolve(terminaisCache);
+  }
+
+  if (terminaisPromise) return terminaisPromise;
+
+  terminaisPromise = new Promise((resolve, reject) => {
+    const callbackName = 'carregarTerminaisCallback_' + Date.now();
+    window[callbackName] = function(terminais) {
+      terminaisCache = terminais;
+      delete window[callbackName];
+      terminaisPromise = null;
+      resolve(terminais);
+    };
+
+    const script = document.createElement('script');
+    script.src = `${URL_PLANILHA}?acao=terminais&callback=${callbackName}&_=${Date.now()}`;
+    script.onerror = () => {
+      delete window[callbackName];
+      terminaisPromise = null;
+      // Fallback para terminais padrão
+      const fallback = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
+      terminaisCache = fallback;
+      console.warn('Usando terminais padrão devido a erro de carregamento');
+      resolve(fallback);
+    };
+    document.body.appendChild(script);
+  });
+
+  return terminaisPromise;
+}
+
+function preencherSelectTerminais() {
+  const select = getEl('terminal');
+  if (!select) return;
+
+  carregarTerminais().then(terminais => {
+    // Mantém o valor atual selecionado (se houver)
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Selecione...</option>';
+    terminais.forEach(terminal => {
+      const option = document.createElement('option');
+      option.value = terminal;
+      option.textContent = terminal;
+      select.appendChild(option);
+    });
+    if (valorAtual && terminais.includes(valorAtual)) {
+      select.value = valorAtual;
+    }
+  });
 }
 
 // ====================================================================
@@ -343,6 +402,9 @@ class InspecaoVeicular {
 
   async open() {
     if (canCreateInspection) {
+      // Recarrega os terminais antes de abrir o formulário
+      await carregarTerminais(true);
+      preencherSelectTerminais();
       this.openForm();
     } else {
       await this.conferirInspecoes();
@@ -355,7 +417,6 @@ class InspecaoVeicular {
     this.resetarFormulario();
     const btnConferir = getEl('btn-conferir-inspecoes');
     if (btnConferir) {
-      // Exibe o botão para FISCAL e INSPETOR
       btnConferir.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none';
     }
   }
@@ -430,7 +491,6 @@ class InspecaoVeicular {
       return;
     }
 
-    // Atualiza data e hora para o momento do envio
     this.atualizarDataHora();
 
     const dados = this.coletarDados();
@@ -682,10 +742,16 @@ async function inicializar() {
   mostrarBannerAviso();
   aplicarBloqueioDeDatas();
 
+  // Pré-carrega os terminais (fallback se necessário)
+  await carregarTerminais();
+  preencherSelectTerminais();
+
   window.addEventListener('pageshow', async (event) => {
     if (event.persisted) {
       await refreshInspetores();
       checkLoginStatus();
+      await carregarTerminais(true);
+      preencherSelectTerminais();
     }
   });
 
@@ -693,6 +759,8 @@ async function inicializar() {
     if (document.visibilityState === 'visible') {
       await refreshInspetores();
       checkLoginStatus();
+      await carregarTerminais(true);
+      preencherSelectTerminais();
     }
   });
 
