@@ -355,6 +355,7 @@ class InspecaoVeicular {
     this.resetarFormulario();
     const btnConferir = getEl('btn-conferir-inspecoes');
     if (btnConferir) {
+      // Exibe o botão para FISCAL e INSPETOR
       btnConferir.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none';
     }
   }
@@ -368,6 +369,14 @@ class InspecaoVeicular {
     const dataInput = getEl('data');
     if (dataInput) dataInput.value = agora.toLocaleDateString('pt-BR');
     const horaInput = getEl('hora');
+    if (horaInput) horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  atualizarDataHora() {
+    const agora = new Date();
+    const dataInput = getEl('data');
+    const horaInput = getEl('hora');
+    if (dataInput) dataInput.value = agora.toLocaleDateString('pt-BR');
     if (horaInput) horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
@@ -421,6 +430,9 @@ class InspecaoVeicular {
       return;
     }
 
+    // Atualiza data e hora para o momento do envio
+    this.atualizarDataHora();
+
     const dados = this.coletarDados();
     if (!dados) return;
 
@@ -456,14 +468,13 @@ class InspecaoVeicular {
         })
       });
       alert('✅ Inspeção enviada com sucesso!');
-      this.resetarFormulario(); // Limpa apenas os campos do formulário, mantém terminal e autopreenchidos
+      this.resetarFormulario();
     } catch (err) {
       console.error('Erro ao enviar inspeção:', err);
       alert('❌ Erro ao enviar. Tente novamente.');
     }
   }
 
-  // Consulta via JSONP (evita CORS)
   conferirInspecoes() {
     const hoje = new Date().toLocaleDateString('pt-BR');
     let fiscalParam = '';
@@ -471,11 +482,9 @@ class InspecaoVeicular {
       const fiscalNome = localStorage.getItem('inspectorName');
       fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
     }
-console.log('Consultando inspeções para data:', hoje, 'fiscalParam:', fiscalParam);
-    
+
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
-      console.log('Callback name:', callbackName);
       window[callbackName] = (dados) => {
         if (dados.length === 0) {
           alert('Nenhuma inspeção encontrada para hoje.');
@@ -487,15 +496,13 @@ console.log('Consultando inspeções para data:', hoje, 'fiscalParam:', fiscalPa
       };
 
       const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
-       console.log('URL gerada:', url);
       const script = document.createElement('script');
       script.src = url;
-     script.onerror = (err) => {
-      console.error('Erro no carregamento do script:', err);
+      script.onerror = () => {
         delete window[callbackName];
         alert('Erro ao consultar. Verifique sua conexão.');
-        reject(new Error('Script load failed'));  // agora com erro explícito
-    };
+        reject();
+      };
       document.body.appendChild(script);
     });
   }
