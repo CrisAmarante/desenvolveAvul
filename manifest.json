@@ -1,8 +1,8 @@
 {
-  "name": "AMbiente de Testes",
+  "name": "Testes de campo",
   "short_name": "PENSO",
-  "description": "Prancheta eletrônica -Ambiente de testes",
-  "id": "/desenvolveAvul/",
+  "description": "Prancheta eletrônica -Testes de campo",
+  "id": "/testesavul/",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#d11a2d",

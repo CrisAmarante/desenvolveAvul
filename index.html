@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PENSO - Prancheta Eletrônica</title>
+    <link rel="icon" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=20260328-2">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+
+<button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
+
+<div id="aviso-temporario" class="banner">
+    <div>
+        <strong>ATENÇÃO</strong><br>
+        Período de inspeções 5S da frota Osasco iniciado.
+    </div>
+    <button id="btn-fechar-banner" class="banner-close">×</button>
+</div>
+
+<h1 class="titulo"><i class="fas fa-clipboard-list"></i> PENSO - Prancheta Eletrônica</h1>
+
+<!-- ====================== TELA INICIAL (NÃO LOGADA) ====================== -->
+<div id="main-screen" class="screen-container">
+    <div class="grid-panel">
+        <div class="cards-grid">
+            <a href="https://gruponso-my.sharepoint.com/personal/cristiano_santos_urubupunga_com_br/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fcristiano%5Fsantos%5Furubupunga%5Fcom%5Fbr%2FDocuments%2FRelat%C3%B3rios%20de%20ponto%5Fexcel%2FREL%5FFISCAIS%5FAVUL%28EM%20USO%29&ga=1" 
+               class="card card-relatorio" id="btn-relatorio-fiscais">
+                <div class="card-icon"><i class="fas fa-file-excel"></i></div>
+                Relatórios de Fiscal
+            </a>
+
+            <a href="https://forms.office.com/r/DFBt9eC2pX" class="card">
+                <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+                Usina de Ideias
+            </a>
+
+            <a href="https://forms.office.com/r/Vr3tWmLyv2" class="card" id="btn-telefones">
+                <div class="card-icon"><i class="fas fa-phone"></i></div>
+                Telefones
+            </a>
+
+            <a href="#" id="btn-clandestinos-rto" class="card">
+                <div class="card-icon"><i class="fas fa-ban"></i></div>
+                Clandestinos
+            </a>
+
+            <a href="#" id="btn-inspecoes-5s" class="card">
+                <div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                Inspeções 5S
+            </a>
+
+            <a href="#" id="btn-levantamentos" class="card">
+                <div class="card-icon"><i class="fa-solid fa-list-ul"></i></div>
+                Levantamentos
+            </a>
+
+            <a href="#" id="btn-segunda-tela" class="card card-inspetores">
+                <div class="card-icon"><i class="fa-solid fa-key"></i></div>
+                Inspetores
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ====================== TELA DE INSPETORES (LOGADA) ====================== -->
+<div id="inspector-screen" class="screen-container" style="display: none;">
+    <div class="grid-panel">
+        <div class="cards-grid">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>
+                Relatório Diário
+            </a>
+
+            <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
+                Consulta Placas
+            </a>
+
+            <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card">
+                <div class="card-icon"><i class="fas fa-clipboard-check"></i></div>
+                5S - Guaritas
+            </a>
+
+            <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card">
+                <div class="card-icon"><i class="fa-solid fa-video"></i></div>
+                Solicitação Imagem
+            </a>
+
+            <a href="#" id="btn-inspecao-veicular" class="inspector-card" style="display: none;">
+                <div class="card-icon"><i class="fa-solid fa-bus"></i></div>
+                Inspeção Veicular<br>Diária
+            </a>
+        </div>
+    </div>
+    <button onclick="logoutInspector()" class="logout-btn">Sair</button>
+</div>
+
+<!-- ====================== TOAST DE BOAS-VINDAS ====================== -->
+<div id="welcome-toast">
+    <div>Bem-vindo, <span id="toast-name" class="toast-name"></span>!</div>
+    <button class="toast-close" onclick="hideWelcomeToast()">×</button>
+</div>
+
+<!-- ====================== MODAIS ====================== -->
+<div id="modal-clandestinos-rto" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Clandestinos</h2>
+            <button class="modal-close" onclick="window.modals.clandestinosRto.close()">×</button>
+        </div>
+        <a class="modal-btn" href="https://forms.office.com/r/v4BMhNHbSR">Rua Melvin Jones</a>
+        <a class="modal-btn" href="https://forms.office.com/r/JF8tPFysX6">Cajamar</a>
+    </div>
+</div>
+
+<div id="modal-levantamentos" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Levantamentos</h2>
+            <button class="modal-close" onclick="window.modals.levantamentos.close()">×</button>
+        </div>
+        <a class="modal-btn" href="https://forms.office.com/r/YBvvJgHNx4">Levantamento ETEC Fazendinha</a>
+    </div>
+</div>
+
+<div id="modal-inspecoes-5s" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Inspeções 5S</h2>
+            <button class="modal-close" onclick="window.modals.inspecoes5s.close()">×</button>
+        </div>
+        <a class="modal-btn" id="btn-osasco" href="https://forms.office.com/r/bkeF1EwmNC">Frota Osasco</a>
+        <a class="modal-btn" id="btn-santana" href="https://forms.office.com/r/dhibquxks5">Frota Santana</a>
+    </div>
+</div>
+
+<div id="modal-login" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🔐 Acesso Inspetores</h2>
+            <button class="modal-close" onclick="window.modals.login.close()">×</button>
+        </div>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="Digite sua senha exclusiva" required>
+            <div id="login-error" style="color:#ff4d4d; text-align:center; margin:10px 0; display:none;">Senha incorreta!</div>
+            <button type="submit" class="button">Entrar</button>
+        </form>
+    </div>
+</div>
+
+<!-- ====================== MODAL INSPEÇÃO VEICULAR DIÁRIA ====================== -->
+<div id="modal-inspecao-veicular" class="modal">
+  <div class="modal-content inspecao-modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">🚍 INSPEÇÃO VEICULAR DIÁRIA</h2>
+      <button class="modal-close" onclick="window.modals.inspecaoVeicular.close()">×</button>
+    </div>
+
+    <div id="inspecao-veicular-container">
+      <div class="top-fields">
+        <div class="field"><label>CARRO</label><input type="text" id="carro" placeholder="Placa/Identificação" maxlength="10" required></div>
+        <div class="field"><label>TERMINAL</label>
+          <select id="terminal" required>
+            <option value="">Selecione...</option>
+            <option value="Terminal A">Terminal A</option>
+            <option value="Terminal B">Terminal B</option>
+            <option value="Terminal C">Terminal C</option>
+            <option value="Terminal D">Terminal D</option>
+          </select>
+        </div>
+      </div>
+
+      <table class="inspection-table" id="tabela-inspecao">
+        <thead>
+          <tr><th>ITEM</th><th>OK</th><th>COM DEFEITO</th><th>OBS.</th><th>POSIÇÃO (Ventilador)</th> </tr>
+        </thead>
+        <tbody>
+          <tr data-item="elevador">
+            <td class="item-name">ELEVADOR</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="posicao-cell"></td>
+          </tr>
+          <tr data-item="thoreb">
+            <td class="item-name">THOREB</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="posicao-cell"></td>
+          </tr>
+          <tr data-item="usb">
+            <td class="item-name">USB</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="posicao-cell"></td>
+          </tr>
+          <tr data-item="ventilador">
+            <td class="item-name">VENTILADOR</td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td>
+            <td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td>
+            <td><input type="text" class="obs-input" placeholder="Observação"></td>
+            <td class="posicao-cell">
+              <div class="posicao-container">
+                <div class="posicao-buttons">
+                  <button type="button" class="pos-btn" data-pos="F">F</button>
+                  <button type="button" class="pos-btn" data-pos="M">M</button>
+                  <button type="button" class="pos-btn" data-pos="T">T</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="bottom-fields">
+        <div class="field"><label>FISCAL</label><input type="text" id="fiscal" readonly></div>
+        <div class="field"><label>DATA</label><input type="text" id="data" readonly></div>
+        <div class="field"><label>HORA</label><input type="text" id="hora" readonly></div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="btn-conferir-inspecoes" class="btn-secundario" style="display: none;">CONFERIR INSPEÇÕES</button>
+        <button id="btn-enviar-inspecao" class="btn-principal">ENVIAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para exibição das inspeções do fiscal -->
+<div id="modal-conferir-inspecoes" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">📋 Minhas Inspeções - Hoje</h2>
+      <button class="modal-close" onclick="fecharModalConferir()">×</button>
+    </div>
+    <div id="lista-inspecoes"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
