@@ -1,7 +1,7 @@
 // ====================================================================
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbwDxXaO5YctO81H8fd8SoQzeuK0QVbij2FMr9KVvldKNhMGvikQ4dlWR5d7KANIu3_R/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxlo0yjd020iNdfE0zaPawlRcR3dAZtPjdIVLsLZ7eBjwjIJ10gXYlewxvvZpyNKaM/exec";
 
 let INSPETORES = {};
 
