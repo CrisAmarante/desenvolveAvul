@@ -1,7 +1,7 @@
 // ====================================================================
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbwDxXaO5YctO81H8fd8SoQzeuK0QVbij2FMr9KVvldKNhMGvikQ4dlWR5d7KANIu3_R/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
 
 let INSPETORES = {};
 
@@ -17,15 +17,10 @@ const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE',
 
 let currentUserRole = '';
 let canCreateInspection = false;
-let terminaisCache = []; // cache dos terminais carregados
+let terminaisCache = [];
 
-function logDebug(...args) {
-  console.log('[PENSO]', ...args);
-}
-
-function getEl(id) {
-  return document.getElementById(id);
-}
+function logDebug(...args) { console.log('[PENSO]', ...args); }
+function getEl(id) { return document.getElementById(id); }
 
 // ====================================================================
 // HASH
@@ -50,7 +45,6 @@ class ModalController {
     this.handleBackgroundClick = this.handleBackgroundClick.bind(this);
     this.handleEsc = this.handleEsc.bind(this);
   }
-
   open() {
     if (!this.modal || this.isOpen) return;
     this.modal.classList.add('is-open');
@@ -60,9 +54,7 @@ class ModalController {
     document.addEventListener('keydown', this.handleEsc);
     const firstFocusable = this.modal.querySelector('input, button, a, select, textarea');
     if (firstFocusable) firstFocusable.focus();
-    logDebug(`Modal "${this.modal.id}" aberto.`);
   }
-
   close() {
     if (!this.modal || !this.isOpen) return;
     this.modal.classList.add('is-closing');
@@ -72,17 +64,10 @@ class ModalController {
       this.isOpen = false;
       this.modal.removeEventListener('click', this.handleBackgroundClick);
       document.removeEventListener('keydown', this.handleEsc);
-      logDebug(`Modal "${this.modal.id}" fechado.`);
     }, 220);
   }
-
-  handleBackgroundClick(e) {
-    if (e.target === this.modal) this.close();
-  }
-
-  handleEsc(e) {
-    if (e.key === 'Escape') this.close();
-  }
+  handleBackgroundClick(e) { if (e.target === this.modal) this.close(); }
+  handleEsc(e) { if (e.key === 'Escape') this.close(); }
 }
 
 // ====================================================================
@@ -94,39 +79,26 @@ async function registrarLog(nomeApelido) {
     formData.append("nome", nomeApelido);
     formData.append("acao", "Login bem-sucedido");
     await fetch(URL_PLANILHA, { method: "POST", body: formData, mode: "no-cors" });
-    logDebug("Log enviado:", nomeApelido);
-  } catch (err) {
-    console.warn("Falha ao registrar log:", err);
-  }
+  } catch (err) { console.warn("Falha ao registrar log:", err); }
 }
 
 // ====================================================================
 // CARREGAR INSPETORES
 // ====================================================================
 let refreshPromise = null;
-
 function processarDadosPlanilha(dados) {
   if (Array.isArray(dados)) {
     const novoObjeto = {};
     dados.forEach(row => {
       if (row.apelido && row.hash && row.ativo === "SIM") {
-        novoObjeto[row.apelido] = {
-          hash: row.hash,
-          nome: row.nome,
-          funcao: row.funcao
-        };
+        novoObjeto[row.apelido] = { hash: row.hash, nome: row.nome, funcao: row.funcao };
       }
     });
     INSPETORES = novoObjeto;
-  } else {
-    INSPETORES = dados || {};
-  }
-  logDebug("Inspetores carregados com hash.");
+  } else { INSPETORES = dados || {}; }
 }
-
 async function refreshInspetores() {
   if (refreshPromise) return refreshPromise;
-
   refreshPromise = new Promise((resolve, reject) => {
     const callbackName = 'processarDadosPlanilha_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
     window[callbackName] = function(dados) {
@@ -135,34 +107,22 @@ async function refreshInspetores() {
       refreshPromise = null;
       resolve();
     };
-
     const script = document.createElement('script');
     script.src = `${URL_PLANILHA}?callback=${callbackName}&_=${Date.now()}`;
-    script.onerror = () => {
-      console.error('Erro ao carregar inspetores');
-      delete window[callbackName];
-      refreshPromise = null;
-      reject(new Error('Falha no carregamento dos inspetores'));
-    };
+    script.onerror = () => { delete window[callbackName]; refreshPromise = null; reject(); };
     document.body.appendChild(script);
   });
-
   return refreshPromise;
 }
 
 // ====================================================================
-// CARREGAR TERMINAIS (via JSONP)
+// TERMINAIS
 // ====================================================================
 let terminaisPromise = null;
-
 function carregarTerminais(forceRefresh = false) {
-  if (!forceRefresh && terminaisCache.length > 0) {
-    return Promise.resolve(terminaisCache);
-  }
-
+  if (!forceRefresh && terminaisCache.length > 0) return Promise.resolve(terminaisCache);
   if (terminaisPromise) return terminaisPromise;
-
-  terminaisPromise = new Promise((resolve, reject) => {
+  terminaisPromise = new Promise((resolve) => {
     const callbackName = 'carregarTerminaisCallback_' + Date.now();
     window[callbackName] = function(terminais) {
       terminaisCache = terminais;
@@ -170,41 +130,26 @@ function carregarTerminais(forceRefresh = false) {
       terminaisPromise = null;
       resolve(terminais);
     };
-
     const script = document.createElement('script');
     script.src = `${URL_PLANILHA}?acao=terminais&callback=${callbackName}&_=${Date.now()}`;
     script.onerror = () => {
       delete window[callbackName];
       terminaisPromise = null;
-      // Fallback para terminais padrão
-      const fallback = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
-      terminaisCache = fallback;
-      console.warn('Usando terminais padrão devido a erro de carregamento');
-      resolve(fallback);
+      terminaisCache = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
+      resolve(terminaisCache);
     };
     document.body.appendChild(script);
   });
-
   return terminaisPromise;
 }
-
 function preencherSelectTerminais() {
   const select = getEl('terminal');
   if (!select) return;
-
   carregarTerminais().then(terminais => {
-    // Mantém o valor atual selecionado (se houver)
     const valorAtual = select.value;
     select.innerHTML = '<option value="">Selecione...</option>';
-    terminais.forEach(terminal => {
-      const option = document.createElement('option');
-      option.value = terminal;
-      option.textContent = terminal;
-      select.appendChild(option);
-    });
-    if (valorAtual && terminais.includes(valorAtual)) {
-      select.value = valorAtual;
-    }
+    terminais.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
+    if (valorAtual && terminais.includes(valorAtual)) select.value = valorAtual;
   });
 }
 
@@ -215,70 +160,45 @@ async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
   const nome = localStorage.getItem('inspectorName');
   const apelido = localStorage.getItem('inspectorApelido');
-
   const main = getEl('main-screen');
   const insp = getEl('inspector-screen');
   const btnInspecao = getEl('btn-inspecao-veicular');
-
-  if (logado === 'true' && nome) {
-    if (apelido && INSPETORES[apelido]) {
-      const role = INSPETORES[apelido].funcao;
-      currentUserRole = role;
-      canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
-
-      localStorage.setItem('inspectorRole', role);
-
-      if (btnInspecao && role !== 'MONITOR') {
-        btnInspecao.style.display = 'flex';
-      } else if (btnInspecao) {
-        btnInspecao.style.display = 'none';
-      }
-
-      main.style.display = 'none';
-      insp.style.display = 'flex';
-      showWelcomeToast(nome);
-      const logoutBtn = insp.querySelector('.logout-btn');
-      if (logoutBtn) {
-        logoutBtn.innerHTML = `Sair<small>Inspetor ${nome}</small>`;
-      }
-    } else {
-      localStorage.removeItem('inspectorLoggedIn');
-      localStorage.removeItem('inspectorName');
-      localStorage.removeItem('inspectorApelido');
-      localStorage.removeItem('inspectorRole');
-      main.style.display = 'flex';
-      insp.style.display = 'none';
-      const toast = getEl('welcome-toast');
-      if (toast) {
-        getEl('toast-name').textContent = 'Sessão expirada';
-        toast.classList.add('show');
-        setTimeout(() => hideWelcomeToast(), 3000);
-      }
-    }
+  const btnEnvio = getEl('btn-envio-informacoes');
+  if (logado === 'true' && nome && apelido && INSPETORES[apelido]) {
+    const role = INSPETORES[apelido].funcao;
+    currentUserRole = role;
+    canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
+    localStorage.setItem('inspectorRole', role);
+    if (btnInspecao && role !== 'MONITOR') btnInspecao.style.display = 'flex';
+    else if (btnInspecao) btnInspecao.style.display = 'none';
+    if (btnEnvio && role !== 'MONITOR') btnEnvio.style.display = 'flex';
+    else if (btnEnvio) btnEnvio.style.display = 'none';
+    main.style.display = 'none';
+    insp.style.display = 'flex';
+    showWelcomeToast(nome);
+    const logoutBtn = insp.querySelector('.logout-btn');
+    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${nome}</small>`;
   } else {
+    localStorage.removeItem('inspectorLoggedIn');
+    localStorage.removeItem('inspectorName');
+    localStorage.removeItem('inspectorApelido');
+    localStorage.removeItem('inspectorRole');
     main.style.display = 'flex';
     insp.style.display = 'none';
   }
 }
-
 async function login(e) {
   e.preventDefault();
-  const senhaInput = getEl('password');
+  const senha = getEl('password').value.trim();
   const errorMsg = getEl('login-error');
-  const senha = senhaInput.value.trim();
-
-  let nomeEncontrado = null;
-  let apelidoEncontrado = null;
-
+  let nomeEncontrado = null, apelidoEncontrado = null;
   for (const [apelido, info] of Object.entries(INSPETORES)) {
-    const hashCalculado = await hashPassword(senha, apelido);
-    if (hashCalculado === info.hash) {
+    if (await hashPassword(senha, apelido) === info.hash) {
       nomeEncontrado = info.nome;
       apelidoEncontrado = apelido;
       break;
     }
   }
-
   if (nomeEncontrado) {
     localStorage.setItem('inspectorLoggedIn', 'true');
     localStorage.setItem('inspectorName', nomeEncontrado);
@@ -289,11 +209,10 @@ async function login(e) {
     checkLoginStatus();
   } else {
     errorMsg.style.display = 'block';
-    senhaInput.value = '';
-    senhaInput.focus();
+    getEl('password').value = '';
+    getEl('password').focus();
   }
 }
-
 function logoutInspector() {
   localStorage.removeItem('inspectorLoggedIn');
   localStorage.removeItem('inspectorName');
@@ -301,326 +220,124 @@ function logoutInspector() {
   localStorage.removeItem('inspectorRole');
   checkLoginStatus();
 }
-
 function showWelcomeToast(nome) {
   const toast = getEl('welcome-toast');
   if (!toast) return;
   getEl('toast-name').textContent = nome;
   toast.classList.add('show');
-  const autoHide = setTimeout(() => hideWelcomeToast(), 3500);
-  const clickHandler = () => {
-    hideWelcomeToast();
-    document.removeEventListener('click', clickHandler);
-    clearTimeout(autoHide);
-  };
+  setTimeout(() => hideWelcomeToast(), 3500);
+  const clickHandler = () => { hideWelcomeToast(); document.removeEventListener('click', clickHandler); };
   setTimeout(() => document.addEventListener('click', clickHandler), 300);
 }
-
-function hideWelcomeToast() {
-  const toast = getEl('welcome-toast');
-  if (toast) toast.classList.remove('show');
-}
-
+function hideWelcomeToast() { const t = getEl('welcome-toast'); if (t) t.classList.remove('show'); }
 function aplicarBloqueioDeDatas() {
   const now = new Date();
   for (const [id, date] of Object.entries(disableDates)) {
     const btn = getEl(id);
-    if (btn && now < date) {
-      btn.classList.add('disabled');
-      btn.setAttribute('href', '#');
-      btn.title = `Disponível a partir de ${date.toLocaleDateString('pt-BR')}`;
-      btn.style.pointerEvents = 'none';
-      btn.style.opacity = '0.45';
-    }
+    if (btn && now < date) { btn.classList.add('disabled'); btn.setAttribute('href', '#'); btn.title = `Disponível a partir de ${date.toLocaleDateString('pt-BR')}`; btn.style.pointerEvents = 'none'; btn.style.opacity = '0.45'; }
   }
 }
-
-function fecharBanner() {
-  const banner = getEl('aviso-temporario');
-  if (banner) banner.style.display = 'none';
-}
-
+function fecharBanner() { const b = getEl('aviso-temporario'); if (b) b.style.display = 'none'; }
 function mostrarBannerAviso() {
   const agora = new Date();
   const banner = getEl('aviso-temporario');
-  if (!banner) return;
-  banner.style.display = (agora >= DATA_INICIO_BANNER && agora < DATA_FIM_BANNER) ? 'flex' : 'none';
+  if (banner) banner.style.display = (agora >= DATA_INICIO_BANNER && agora < DATA_FIM_BANNER) ? 'flex' : 'none';
 }
 
 // ====================================================================
 // INSPEÇÃO VEICULAR
 // ====================================================================
 class InspecaoVeicular {
-  constructor() {
-    this.modal = new ModalController('modal-inspecao-veicular');
-    this.initEventListeners();
-  }
-
+  constructor() { this.modal = new ModalController('modal-inspecao-veicular'); this.initEventListeners(); }
   initEventListeners() {
-    const btnAbrir = getEl('btn-inspecao-veicular');
-    if (btnAbrir) {
-      btnAbrir.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.open();
-      });
-    }
-
-    // Exclusão mútua
+    getEl('btn-inspecao-veicular')?.addEventListener('click', (e) => { e.preventDefault(); this.open(); });
     document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
-      const cbOk = row.querySelector('.ok');
-      const cbDefeito = row.querySelector('.defeito');
-      if (cbOk && cbDefeito) {
-        cbOk.addEventListener('change', () => {
-          if (cbOk.checked) cbDefeito.checked = false;
-        });
-        cbDefeito.addEventListener('change', () => {
-          if (cbDefeito.checked) cbOk.checked = false;
-        });
+      const cbOk = row.querySelector('.ok'), cbDef = row.querySelector('.defeito');
+      if (cbOk && cbDef) {
+        cbOk.addEventListener('change', () => { if (cbOk.checked) cbDef.checked = false; });
+        cbDef.addEventListener('change', () => { if (cbDef.checked) cbOk.checked = false; });
       }
     });
-
-    // Posições (múltiplas)
-    document.querySelectorAll('.pos-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        btn.classList.toggle('active');
-      });
-    });
-
-    // Enviar
-    const btnEnviar = getEl('btn-enviar-inspecao');
-    if (btnEnviar) {
-      btnEnviar.addEventListener('click', () => this.enviarInspecao());
-    }
-
-    // Conferir
-    const btnConferir = getEl('btn-conferir-inspecoes');
-    if (btnConferir) {
-      btnConferir.addEventListener('click', () => this.conferirInspecoes());
-    }
+    document.querySelectorAll('.pos-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); btn.classList.toggle('active'); }));
+    getEl('btn-enviar-inspecao')?.addEventListener('click', () => this.enviarInspecao());
+    getEl('btn-conferir-inspecoes')?.addEventListener('click', () => this.conferirInspecoes());
   }
-
-  async open() {
-    if (canCreateInspection) {
-      // Recarrega os terminais antes de abrir o formulário
-      await carregarTerminais(true);
-      preencherSelectTerminais();
-      this.openForm();
-    } else {
-      await this.conferirInspecoes();
-    }
-  }
-
-  openForm() {
-    this.modal.open();
-    this.preencherAutomatico();
-    this.resetarFormulario();
-    const btnConferir = getEl('btn-conferir-inspecoes');
-    if (btnConferir) {
-      btnConferir.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none';
-    }
-  }
-
+  async open() { if (canCreateInspection) { await carregarTerminais(true); preencherSelectTerminais(); this.openForm(); } else await this.conferirInspecoes(); }
+  openForm() { this.modal.open(); this.preencherAutomatico(); this.resetarFormulario(); const btn = getEl('btn-conferir-inspecoes'); if (btn) btn.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none'; }
   preencherAutomatico() {
     const nome = localStorage.getItem('inspectorName') || 'Inspetor';
-    const fiscalInput = getEl('fiscal');
-    if (fiscalInput) fiscalInput.value = nome;
-
+    if (getEl('fiscal')) getEl('fiscal').value = nome;
     const agora = new Date();
-    const dataInput = getEl('data');
-    if (dataInput) dataInput.value = agora.toLocaleDateString('pt-BR');
-    const horaInput = getEl('hora');
-    if (horaInput) horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (getEl('data')) getEl('data').value = agora.toLocaleDateString('pt-BR');
+    if (getEl('hora')) getEl('hora').value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
-
   atualizarDataHora() {
     const agora = new Date();
-    const dataInput = getEl('data');
-    const horaInput = getEl('hora');
-    if (dataInput) dataInput.value = agora.toLocaleDateString('pt-BR');
-    if (horaInput) horaInput.value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (getEl('data')) getEl('data').value = agora.toLocaleDateString('pt-BR');
+    if (getEl('hora')) getEl('hora').value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
-
-  resetarFormulario() {
-    const carroInput = getEl('carro');
-    if (carroInput) carroInput.value = '';
-
-    document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false);
-    document.querySelectorAll('.obs-input').forEach(inp => inp.value = '');
-    document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active'));
-  }
-
+  resetarFormulario() { if (getEl('carro')) getEl('carro').value = ''; document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false); document.querySelectorAll('.obs-input').forEach(inp => inp.value = ''); document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active')); }
   coletarDados() {
-    const carro = getEl('carro').value.trim();
-    const terminal = getEl('terminal').value;
-    const fiscal = getEl('fiscal').value;
-    const data = getEl('data').value;
-    const hora = getEl('hora').value;
-
-    if (!carro || !terminal) {
-      alert('Preencha o campo CARRO e selecione o TERMINAL.');
-      return null;
-    }
-
+    const carro = getEl('carro').value.trim(), terminal = getEl('terminal').value, fiscal = getEl('fiscal').value, data = getEl('data').value, hora = getEl('hora').value;
+    if (!carro || !terminal) { alert('Preencha o campo CARRO e selecione o TERMINAL.'); return null; }
     const itens = {};
-    const rows = document.querySelectorAll('#tabela-inspecao tbody tr');
-    rows.forEach(row => {
-      const item = row.dataset.item;
-      const ok = row.querySelector('.ok').checked;
-      const defeito = row.querySelector('.defeito').checked;
-      const obs = row.querySelector('.obs-input').value.trim();
-
-      itens[item] = {
-        status: ok ? 'OK' : (defeito ? 'DEFEITO' : ''),
-        obs: obs
-      };
-
-      if (item === 'ventilador') {
-        const posSelecionadas = Array.from(row.querySelectorAll('.pos-btn.active'))
-          .map(btn => btn.dataset.pos);
-        itens[item].posicao = posSelecionadas.join(',');
-      }
+    document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
+      const item = row.dataset.item, ok = row.querySelector('.ok').checked, defeito = row.querySelector('.defeito').checked, obs = row.querySelector('.obs-input').value.trim();
+      itens[item] = { status: ok ? 'OK' : (defeito ? 'DEFEITO' : ''), obs: obs };
+      if (item === 'ventilador') itens[item].posicao = Array.from(row.querySelectorAll('.pos-btn.active')).map(btn => btn.dataset.pos).join(',');
     });
-
     return { carro, terminal, fiscal, data, hora, itens };
   }
-
   async enviarInspecao() {
-    if (!canCreateInspection) {
-      alert('Seu perfil não permite criar inspeções.');
-      return;
-    }
-
+    if (!canCreateInspection) { alert('Seu perfil não permite criar inspeções.'); return; }
     this.atualizarDataHora();
-
     const dados = this.coletarDados();
     if (!dados) return;
-
-    const dadosEnvio = {
-      carro: dados.carro,
-      terminal: dados.terminal,
-      fiscal: dados.fiscal,
-      thoreb: dados.itens.thoreb,
-      elevador: dados.itens.elevador,
-      usb: dados.itens.usb,
-      ventilador: dados.itens.ventilador
-    };
-
+    const dadosEnvio = { carro: dados.carro, terminal: dados.terminal, fiscal: dados.fiscal, thoreb: dados.itens.thoreb, elevador: dados.itens.elevador, usb: dados.itens.usb, ventilador: dados.itens.ventilador };
     let resumo = `CONFIRMAR ENVIO?\n\nCarro: ${dadosEnvio.carro}\nTerminal: ${dadosEnvio.terminal}\nFiscal: ${dadosEnvio.fiscal}\nData/Hora: ${dados.data} ${dados.hora}\n\nItens:\n`;
-    for (const [item, info] of Object.entries(dados.itens)) {
-      let status = info.status || 'NÃO INFORMADO';
-      resumo += `- ${item.toUpperCase()}: ${status}`;
-      if (info.obs) resumo += ` (Obs: ${info.obs})`;
-      if (info.posicao) resumo += ` (Pos: ${info.posicao})`;
-      resumo += '\n';
-    }
-
+    for (const [item, info] of Object.entries(dados.itens)) { let status = info.status || 'NÃO INFORMADO'; resumo += `- ${item.toUpperCase()}: ${status}`; if (info.obs) resumo += ` (Obs: ${info.obs})`; if (info.posicao) resumo += ` (Pos: ${info.posicao})`; resumo += '\n'; }
     if (!confirm(resumo + '\n\nDeseja enviar os dados?')) return;
-
     try {
-      await fetch(URL_PLANILHA, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          acao: 'inspecao_veicular',
-          dados: JSON.stringify(dadosEnvio)
-        })
-      });
+      await fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ acao: 'inspecao_veicular', dados: JSON.stringify(dadosEnvio) }) });
       alert('✅ Inspeção enviada com sucesso!');
       this.resetarFormulario();
-    } catch (err) {
-      console.error('Erro ao enviar inspeção:', err);
-      alert('❌ Erro ao enviar. Tente novamente.');
-    }
+    } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
-
   conferirInspecoes() {
     const hoje = new Date().toLocaleDateString('pt-BR');
     let fiscalParam = '';
-    if (currentUserRole === 'FISCAL') {
-      const fiscalNome = localStorage.getItem('inspectorName');
-      fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
-    }
-
+    if (currentUserRole === 'FISCAL') fiscalParam = `&fiscal=${encodeURIComponent(localStorage.getItem('inspectorName'))}`;
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
-      window[callbackName] = (dados) => {
-        if (dados.length === 0) {
-          alert('Nenhuma inspeção encontrada para hoje.');
-        } else {
-          mostrarModalConferir(dados, currentUserRole);
-        }
-        delete window[callbackName];
-        resolve();
-      };
-
-      const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
+      window[callbackName] = (dados) => { if (dados.length === 0) alert('Nenhuma inspeção encontrada para hoje.'); else mostrarModalConferir(dados, currentUserRole); delete window[callbackName]; resolve(); };
       const script = document.createElement('script');
-      script.src = url;
-      script.onerror = () => {
-        delete window[callbackName];
-        alert('Erro ao consultar. Verifique sua conexão.');
-        reject();
-      };
+      script.src = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
+      script.onerror = () => { delete window[callbackName]; alert('Erro ao consultar.'); reject(); };
       document.body.appendChild(script);
     });
   }
 }
-
-// ====================================================================
-// EXIBIÇÃO E EXPORTAÇÃO
-// ====================================================================
 function mostrarModalConferir(inspecoes, role) {
-  const modal = getEl('modal-conferir-inspecoes');
-  const container = getEl('lista-inspecoes');
+  const modal = getEl('modal-conferir-inspecoes'), container = getEl('lista-inspecoes');
   if (!modal || !container) return;
-
-  let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div>';
-  html += '<div id="lista-inspecoes-conteudo">';
-
+  let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div><div id="lista-inspecoes-conteudo">';
   inspecoes.forEach(ins => {
     const itensDefeito = [];
     if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
     if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
     if (ins.usb.status === 'DEFEITO') itensDefeito.push(`USB: ${ins.usb.obs || 'sem obs'}`);
-    if (ins.ventilador.status === 'DEFEITO') {
-      let defeito = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`;
-      if (ins.ventilador.posicao) defeito += ` (Pos: ${ins.ventilador.posicao})`;
-      itensDefeito.push(defeito);
-    }
-
+    if (ins.ventilador.status === 'DEFEITO') { let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`; if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`; itensDefeito.push(d); }
     if (itensDefeito.length === 0) return;
-
-    let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">
-                  <strong>${ins.carro} - ${ins.terminal}</strong><br>`;
-    if (role !== 'FISCAL') {
-      linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
-    }
-    linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">`;
-    itensDefeito.forEach(item => linha += `<li>⚠️ ${item}</li>`);
-    linha += `</ul></div>`;
+    let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);"><strong>${ins.carro} - ${ins.terminal}</strong><br>`;
+    if (role !== 'FISCAL') linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
+    linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">${itensDefeito.map(i => `<li>⚠️ ${i}</li>`).join('')}</ul></div>`;
     html += linha;
   });
-
   html += '</div>';
   container.innerHTML = html;
-
-  const btnExport = document.getElementById('exportar-lista');
-  if (btnExport) {
-    btnExport.onclick = () => {
-      const texto = gerarTextoExportacao(inspecoes, role);
-      navigator.clipboard.writeText(texto).then(() => {
-        alert('Lista copiada para a área de transferência!');
-      }).catch(() => {
-        alert('Erro ao copiar. Tente selecionar e copiar manualmente.');
-      });
-    };
-  }
-
+  document.getElementById('exportar-lista')?.addEventListener('click', () => { const texto = gerarTextoExportacao(inspecoes, role); navigator.clipboard.writeText(texto).then(() => alert('Lista copiada!')).catch(() => alert('Erro ao copiar.')); });
   modal.classList.add('is-open');
 }
-
 function gerarTextoExportacao(inspecoes, role) {
   let texto = `=== INSPEÇÕES DO DIA ${new Date().toLocaleDateString('pt-BR')} ===\n\n`;
   inspecoes.forEach(ins => {
@@ -628,24 +345,111 @@ function gerarTextoExportacao(inspecoes, role) {
     if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
     if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
     if (ins.usb.status === 'DEFEITO') itensDefeito.push(`USB: ${ins.usb.obs || 'sem obs'}`);
-    if (ins.ventilador.status === 'DEFEITO') {
-      let defeito = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`;
-      if (ins.ventilador.posicao) defeito += ` (Pos: ${ins.ventilador.posicao})`;
-      itensDefeito.push(defeito);
-    }
+    if (ins.ventilador.status === 'DEFEITO') { let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`; if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`; itensDefeito.push(d); }
     if (itensDefeito.length === 0) return;
-
-    texto += `CARRO: ${ins.carro} (${ins.terminal})\n`;
-    if (role !== 'FISCAL') texto += `Responsável: ${ins.fiscal}\n`;
-    texto += `Defeitos:\n${itensDefeito.map(d => `- ${d}`).join('\n')}\n\n`;
+    texto += `CARRO: ${ins.carro} (${ins.terminal})\n` + (role !== 'FISCAL' ? `Responsável: ${ins.fiscal}\n` : '') + `Defeitos:\n${itensDefeito.map(d => `- ${d}`).join('\n')}\n\n`;
   });
   return texto;
 }
+function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if (m) m.classList.remove('is-open'); }
 
-function fecharModalConferir() {
-  const modal = getEl('modal-conferir-inspecoes');
-  if (modal) modal.classList.remove('is-open');
+// ====================================================================
+// ENVIO DE INFORMAÇÕES
+// ====================================================================
+let rascunhoAtualId = null;
+function abrirModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.add('is-open'); preencherDataAtual(); carregarRascunho(); }
+function fecharModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.remove('is-open'); }
+function preencherDataAtual() { const d = getEl('envio-data'); if (d && !d.value) d.value = new Date().toISOString().split('T')[0]; }
+function salvarRascunho() {
+  const dados = {
+    id: rascunhoAtualId || Date.now().toString(),
+    areaDestino: document.querySelector('input[name="areaDestino"]:checked')?.value || '',
+    motivo: document.querySelector('input[name="motivo"]:checked')?.value || '',
+    carro: getEl('envio-carro').value,
+    linha: getEl('envio-linha').value,
+    motorista: getEl('envio-motorista').value,
+    cobrador: getEl('envio-cobrador').value,
+    hora: getEl('envio-hora').value,
+    sentido: getEl('envio-sentido').value,
+    historico: getEl('envio-historico').value,
+    local: getEl('envio-local').value,
+    data: getEl('envio-data').value,
+    anexo: localStorage.getItem('anexoAtual') || ''
+  };
+  localStorage.setItem(`rascunho_${dados.id}`, JSON.stringify(dados));
+  rascunhoAtualId = dados.id;
+  alert('Rascunho salvo!');
 }
+function carregarRascunho() {
+  if (!rascunhoAtualId) {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('rascunho_'));
+    if (keys.length) rascunhoAtualId = keys[0].replace('rascunho_', '');
+    else { limparFormularioEnvio(); return; }
+  }
+  const dados = JSON.parse(localStorage.getItem(`rascunho_${rascunhoAtualId}`));
+  if (dados) {
+    if (dados.areaDestino) document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`).checked = true;
+    if (dados.motivo) document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
+    getEl('envio-carro').value = dados.carro || '';
+    getEl('envio-linha').value = dados.linha || '';
+    getEl('envio-motorista').value = dados.motorista || '';
+    getEl('envio-cobrador').value = dados.cobrador || '';
+    getEl('envio-hora').value = dados.hora || '';
+    getEl('envio-sentido').value = dados.sentido || '';
+    getEl('envio-historico').value = dados.historico || '';
+    getEl('envio-local').value = dados.local || '';
+    getEl('envio-data').value = dados.data || '';
+  } else limparFormularioEnvio();
+}
+function limparFormularioEnvio() {
+  document.querySelectorAll('input[name="areaDestino"], input[name="motivo"]').forEach(r => r.checked = false);
+  getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
+  getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
+  preencherDataAtual();
+  rascunhoAtualId = null;
+}
+function editarRascunho() { carregarRascunho(); }
+function enviarRelatorio() {
+  const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
+  const carro = getEl('envio-carro').value.trim();
+  const data = getEl('envio-data').value;
+  if (!areaDestino || !motivo || !carro || !data) { alert('Preencha Área, Motivo, Carro e Data.'); return; }
+  const dadosEnvio = {
+    areaDestino, motivo,
+    carro: getEl('envio-carro').value, linha: getEl('envio-linha').value, motorista: getEl('envio-motorista').value,
+    cobrador: getEl('envio-cobrador').value, hora: getEl('envio-hora').value, sentido: getEl('envio-sentido').value,
+    historico: getEl('envio-historico').value, local: getEl('envio-local').value, data: getEl('envio-data').value,
+    anexo: localStorage.getItem('anexoAtual') || '', fiscal: localStorage.getItem('inspectorName')
+  };
+  if (confirm('Enviar relatório? Os dados serão salvos na planilha.')) {
+    fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ acao: 'envio_informacoes', dados: JSON.stringify(dadosEnvio) }) })
+      .then(() => { alert('Relatório enviado!'); if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`); limparFormularioEnvio(); fecharModalEnvio(); })
+      .catch(() => alert('Erro ao enviar.'));
+  }
+}
+function anexarArquivo() { const anexo = prompt('Cole o link do anexo (Google Drive, OneDrive) ou descreva:'); if (anexo) { localStorage.setItem('anexoAtual', anexo); alert('Anexo adicionado!'); } }
+function consultarEnvios() {
+  const fiscal = localStorage.getItem('inspectorName'), hoje = new Date().toLocaleDateString('pt-BR');
+  const callbackName = 'mostrarListaEnvios';
+  window[callbackName] = function(dados) {
+    const container = getEl('lista-envios-container'), modal = getEl('modal-lista-envios');
+    if (!container || !modal) return;
+    if (dados.length === 0) container.innerHTML = '<p>Nenhum envio encontrado para hoje.</p>';
+    else {
+      let html = '';
+      dados.forEach(e => { html += `<div class="envio-item"><strong>${e.carro} - ${e.data}</strong><br>Área: ${e.areaDestino} | Motivo: ${e.motivo}<br>Local: ${e.local || 'N/I'} | Histórico: ${e.historico || 'N/I'}<br>Anexo: ${e.anexo ? `<a href="${e.anexo}" target="_blank">Ver anexo</a>` : 'Nenhum'}</div>`; });
+      container.innerHTML = html;
+    }
+    modal.classList.add('is-open');
+    delete window[callbackName];
+  };
+  const script = document.createElement('script');
+  script.src = `${URL_PLANILHA}?acao=consultar_envios&fiscal=${encodeURIComponent(fiscal)}&data=${encodeURIComponent(hoje)}&callback=${callbackName}`;
+  script.onerror = () => alert('Erro ao consultar envios.');
+  document.body.appendChild(script);
+}
+function fecharModalListaEnvios() { const m = getEl('modal-lista-envios'); if (m) m.classList.remove('is-open'); }
 
 // ====================================================================
 // INICIALIZAÇÃO
@@ -659,112 +463,28 @@ function initModals() {
   };
   window.modals.inspecaoVeicular = new InspecaoVeicular();
 }
-
 function initEventListeners() {
-  getEl('btn-segunda-tela')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    getEl('login-error').style.display = 'none';
-    getEl('password').value = '';
-    window.modals.login.open();
-  });
-
-  const loginForm = getEl('login-form');
-  if (loginForm) {
-    loginForm.removeEventListener('submit', login);
-    loginForm.addEventListener('submit', login);
-  }
-
-  getEl('btn-clandestinos-rto')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.modals.clandestinosRto.open();
-  });
-
-  getEl('btn-levantamentos')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.modals.levantamentos.open();
-  });
-
-  getEl('btn-inspecoes-5s')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.modals.inspecoes5s.open();
-  });
-
+  getEl('btn-segunda-tela')?.addEventListener('click', (e) => { e.preventDefault(); getEl('login-error').style.display = 'none'; getEl('password').value = ''; window.modals.login.open(); });
+  const loginForm = getEl('login-form'); if (loginForm) { loginForm.removeEventListener('submit', login); loginForm.addEventListener('submit', login); }
+  getEl('btn-clandestinos-rto')?.addEventListener('click', (e) => { e.preventDefault(); window.modals.clandestinosRto.open(); });
+  getEl('btn-levantamentos')?.addEventListener('click', (e) => { e.preventDefault(); window.modals.levantamentos.open(); });
+  getEl('btn-inspecoes-5s')?.addEventListener('click', (e) => { e.preventDefault(); window.modals.inspecoes5s.open(); });
   getEl('btn-fechar-banner')?.addEventListener('click', fecharBanner);
+  getEl('btn-envio-informacoes')?.addEventListener('click', (e) => { e.preventDefault(); abrirModalEnvio(); });
+  getEl('btn-salvar-rascunho')?.addEventListener('click', salvarRascunho);
+  getEl('btn-editar-rascunho')?.addEventListener('click', editarRascunho);
+  getEl('btn-enviar-relatorio')?.addEventListener('click', enviarRelatorio);
+  getEl('btn-anexar')?.addEventListener('click', anexarArquivo);
+  getEl('btn-consultar-envios')?.addEventListener('click', consultarEnvios);
 }
-
-// ====================================================================
-// TEMA
-// ====================================================================
-function applyTheme(theme) {
-  if (theme === "dark") {
-    document.body.classList.add("dark");
-    getEl('theme-toggle').innerHTML = "☀️";
-  } else {
-    document.body.classList.remove("dark");
-    getEl('theme-toggle').innerHTML = "🌙";
-  }
-}
-
-function initTheme() {
-  const themeToggle = getEl('theme-toggle');
-  if (!themeToggle) return;
-  const savedTheme = localStorage.getItem("theme") || "light";
-  applyTheme(savedTheme);
-  themeToggle.addEventListener("click", () => {
-    const current = localStorage.getItem("theme") === "dark" ? "light" : "dark";
-    localStorage.setItem("theme", current);
-    applyTheme(current);
-  });
-}
-
-// ====================================================================
-// SERVICE WORKER
-// ====================================================================
-function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => console.log('SW registrado:', registration.scope))
-      .catch(error => console.error('Falha no SW:', error));
-  }
-}
-
-// ====================================================================
-// INICIALIZAÇÃO
-// ====================================================================
+function applyTheme(theme) { if (theme === "dark") { document.body.classList.add("dark"); getEl('theme-toggle').innerHTML = "☀️"; } else { document.body.classList.remove("dark"); getEl('theme-toggle').innerHTML = "🌙"; } }
+function initTheme() { const tt = getEl('theme-toggle'); if (!tt) return; const saved = localStorage.getItem("theme") || "light"; applyTheme(saved); tt.addEventListener("click", () => { const cur = localStorage.getItem("theme") === "dark" ? "light" : "dark"; localStorage.setItem("theme", cur); applyTheme(cur); }); }
+function registerServiceWorker() { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').then(r => console.log('SW registrado:', r.scope)).catch(e => console.error('Falha no SW:', e)); }
 async function inicializar() {
-  initModals();
-  initEventListeners();
-  initTheme();
-  registerServiceWorker();
-
-  await refreshInspetores();
-  checkLoginStatus();
-  mostrarBannerAviso();
-  aplicarBloqueioDeDatas();
-
-  // Pré-carrega os terminais (fallback se necessário)
-  await carregarTerminais();
-  preencherSelectTerminais();
-
-  window.addEventListener('pageshow', async (event) => {
-    if (event.persisted) {
-      await refreshInspetores();
-      checkLoginStatus();
-      await carregarTerminais(true);
-      preencherSelectTerminais();
-    }
-  });
-
-  document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible') {
-      await refreshInspetores();
-      checkLoginStatus();
-      await carregarTerminais(true);
-      preencherSelectTerminais();
-    }
-  });
-
-  logDebug("PWA PENSO carregada.");
+  initModals(); initEventListeners(); initTheme(); registerServiceWorker();
+  await refreshInspetores(); checkLoginStatus(); mostrarBannerAviso(); aplicarBloqueioDeDatas();
+  await carregarTerminais(); preencherSelectTerminais();
+  window.addEventListener('pageshow', async (e) => { if (e.persisted) { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
+  document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
 }
-
 window.addEventListener('load', inicializar);
