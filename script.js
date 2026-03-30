@@ -1,7 +1,7 @@
 // ====================================================================
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbxlo0yjd020iNdfE0zaPawlRcR3dAZtPjdIVLsLZ7eBjwjIJ10gXYlewxvvZpyNKaM/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
 
 let INSPETORES = {};
 
@@ -303,16 +303,47 @@ class InspecaoVeicular {
       this.resetarFormulario();
     } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
+  // ================== MÉTODO CORRIGIDO ==================
   conferirInspecoes() {
-    const hoje = new Date().toLocaleDateString('pt-BR');
+    const getDataBrasil = () => {
+      const d = new Date();
+      return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    };
+    const hoje = getDataBrasil();
+    console.log('📅 Data consultada (front-end):', hoje);
     let fiscalParam = '';
-    if (currentUserRole === 'FISCAL') fiscalParam = `&fiscal=${encodeURIComponent(localStorage.getItem('inspectorName'))}`;
+    if (currentUserRole === 'FISCAL') {
+      const fiscalNome = localStorage.getItem('inspectorName');
+      if (fiscalNome && fiscalNome !== 'undefined' && fiscalNome !== 'null') {
+        fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
+        console.log('👤 Filtrando por fiscal:', fiscalNome);
+      }
+    }
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
-      window[callbackName] = (dados) => { if (dados.length === 0) alert('Nenhuma inspeção encontrada para hoje.'); else mostrarModalConferir(dados, currentUserRole); delete window[callbackName]; resolve(); };
+      window[callbackName] = (dados) => {
+        console.log('📥 Resposta do servidor:', dados);
+        if (dados && dados.erro) {
+          console.error('Erro do servidor:', dados.erro);
+          alert('Erro ao consultar: ' + dados.erro);
+        } else if (!dados || (Array.isArray(dados) && dados.length === 0)) {
+          alert('Nenhuma inspeção encontrada para hoje.');
+        } else {
+          mostrarModalConferir(dados, currentUserRole);
+        }
+        delete window[callbackName];
+        resolve();
+      };
+      const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
+      console.log('🌐 URL gerada para consulta:', url);
       const script = document.createElement('script');
-      script.src = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
-      script.onerror = () => { delete window[callbackName]; alert('Erro ao consultar.'); reject(); };
+      script.src = url;
+      script.onerror = (err) => {
+        console.error('❌ Erro no carregamento do script:', err);
+        delete window[callbackName];
+        alert('Erro ao consultar. Verifique sua conexão.');
+        reject(err);
+      };
       document.body.appendChild(script);
     });
   }
@@ -354,7 +385,7 @@ function gerarTextoExportacao(inspecoes, role) {
 function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if (m) m.classList.remove('is-open'); }
 
 // ====================================================================
-// ENVIO DE INFORMAÇÕES
+// ENVIO DE INFORMAÇÕES (mantido igual)
 // ====================================================================
 let rascunhoAtualId = null;
 function abrirModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.add('is-open'); preencherDataAtual(); carregarRascunho(); }
