@@ -98,3 +98,7 @@ textarea { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius:
   max-width: 500px;
   width: 90%;
 }
+.envio-detalhe-modal-content {
+  max-width: 500px;
+  width: 90%;
+}
