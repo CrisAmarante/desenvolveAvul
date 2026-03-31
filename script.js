@@ -2,6 +2,7 @@
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzM47z9njqsKW5BT2OiKq9nGKwZrgrrbMI4F4JTi1oJzd2xDAvXtCSvBH-C_4-VlO6K/exec";
+
 let INSPETORES = {};
 
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
@@ -115,7 +116,7 @@ async function refreshInspetores() {
 }
 
 // ====================================================================
-// TERMINAIS
+// TERMINAIS (apenas SIM)
 // ====================================================================
 let terminaisPromise = null;
 function carregarTerminais(forceRefresh = false) {
@@ -287,6 +288,11 @@ function mostrarBannerAviso() {
 // ====================================================================
 class InspecaoVeicular {
   constructor() { this.modal = new ModalController('modal-inspecao-veicular'); this.initEventListeners(); }
+
+  close() {
+    this.modal.close();
+  }
+
   initEventListeners() {
     getEl('btn-inspecao-veicular')?.addEventListener('click', (e) => { e.preventDefault(); this.open(); });
     document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
