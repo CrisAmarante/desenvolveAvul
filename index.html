@@ -152,7 +152,19 @@
 
 <!-- MODAL LISTA DE ENVIOS -->
 <div id="modal-lista-envios" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 ENVIOS REALIZADOS</h2><button class="modal-close" onclick="fecharModalListaEnvios()">×</button></div><div id="lista-envios-container"></div></div></div>
-
+<!-- Modal para exibição detalhada do envio -->
+<div id="modal-detalhe-envio" class="modal">
+  <div class="modal-content envio-detalhe-modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">📄 DETALHES DO RELATÓRIO</h2>
+      <button class="modal-close" onclick="fecharModalDetalheEnvio()">×</button>
+    </div>
+    <div id="detalhe-envio-conteudo"></div>
+    <div class="action-buttons" style="margin-top: 20px;">
+      <button id="btn-exportar-detalhe" class="btn-principal">📋 COPIAR</button>
+    </div>
+  </div>
+</div>
 <script src="script.js"></script>
 </body>
 </html>
