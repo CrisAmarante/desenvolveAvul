@@ -84,18 +84,68 @@
 <!-- MODAL CONSULTA INSPEÇÕES -->
 <div id="modal-conferir-inspecoes" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Minhas Inspeções - Hoje</h2><button class="modal-close" onclick="fecharModalConferir()">×</button></div><div id="lista-inspecoes"></div></div></div>
 
-<!-- MODAL ENVIO DE INFORMAÇÕES -->
 <div id="modal-envio-informacoes" class="modal">
   <div class="modal-content envio-modal-content">
-    <div class="modal-header"><h2 class="modal-title">📋 RELATÓRIO À CHEFIA DO TRÁFEGO</h2><button class="modal-close" onclick="fecharModalEnvio()">×</button></div>
+    <div class="modal-header">
+      <h2 class="modal-title">📋 RELATÓRIO À CHEFIA DO TRÁFEGO</h2>
+      <button class="modal-close" onclick="fecharModalEnvio()">×</button>
+    </div>
     <form id="form-envio">
-      <div class="form-section"><label>ÁREA DE DESTINO:</label><div class="radio-group"><label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label><label><input type="radio" name="areaDestino" value="SAF"> SAF</label><label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label><label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label></div></div>
-      <div class="form-section"><label>MOTIVO:</label><div class="radio-group"><label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label><label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label><label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label><label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label></div></div>
-      <div class="form-row"><div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div><div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div><div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div><div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div></div>
-      <div class="form-row"><div class="field"><label>HORA</label><input type="time" id="envio-hora"></div><div class="field"><label>SENT.</label><select id="envio-sentido"><option value="">Selecione</option><option value="IDA">IDA</option><option value="VOLTA">VOLTA</option></select></div></div>
-      <div class="form-section"><label>HISTÓRICO:</label><textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..."></textarea></div>
-      <div class="form-row"><div class="field"><label>LOCAL:</label><input type="text" id="envio-local" placeholder="Local do ocorrido"></div><div class="field"><label>DATA:</label><input type="date" id="envio-data"></div></div>
-      <div class="action-buttons"><button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button><button type="button" id="btn-editar-rascunho" class="btn-secundario">✏️ EDITAR</button><button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button><button type="button" id="btn-anexar" class="btn-secundario">📎 ANEXAR</button><button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button></div>
+      <div class="form-section">
+        <label>ÁREA DE DESTINO:</label>
+        <div class="radio-group" id="area-destino-group">
+          <label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label>
+          <label><input type="radio" name="areaDestino" value="SAF"> SAF</label>
+          <label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label>
+          <label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label>
+        </div>
+      </div>
+      <div class="form-section">
+        <label>MOTIVO:</label>
+        <div class="radio-group" id="motivo-group">
+          <label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label>
+          <label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label>
+          <label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label>
+          <label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label>
+        </div>
+      </div>
+      <div class="form-row" id="dados-veiculo">
+        <div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div>
+        <div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div>
+        <div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div>
+        <div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div>
+      </div>
+      <div class="form-row" id="dados-hora-sentido">
+        <div class="field"><label>HORA</label><input type="time" id="envio-hora"></div>
+        <div class="field"><label>SENT.</label>
+          <select id="envio-sentido">
+            <option value="">Selecione</option>
+            <option value="IDA">IDA</option>
+            <option value="VOLTA">VOLTA</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-section">
+        <label>HISTÓRICO:</label>
+        <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>LOCAL:</label>
+          <select id="envio-local">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="field"><label>RESPONSÁVEL:</label>
+          <input type="text" id="envio-responsavel" readonly>
+        </div>
+        <div class="field"><label>DATA:</label><input type="date" id="envio-data"></div>
+      </div>
+      <div class="action-buttons">
+        <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
+        <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
+        <button type="button" id="btn-anexar" class="btn-secundario">📎 ANEXAR</button>
+        <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
+      </div>
     </form>
   </div>
 </div>
