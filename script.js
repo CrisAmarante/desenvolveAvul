@@ -18,6 +18,7 @@ const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE',
 let currentUserRole = '';
 let canCreateInspection = false;
 let terminaisCache = [];
+let todosTerminaisCache = [];
 
 function logDebug(...args) { console.log('[PENSO]', ...args); }
 function getEl(id) { return document.getElementById(id); }
@@ -146,6 +147,42 @@ function preencherSelectTerminais() {
   const select = getEl('terminal');
   if (!select) return;
   carregarTerminais().then(terminais => {
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Selecione...</option>';
+    terminais.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
+    if (valorAtual && terminais.includes(valorAtual)) select.value = valorAtual;
+  });
+}
+
+// Carregar TODOS os terminais (para o campo Local)
+let todosTerminaisPromise = null;
+function carregarTodosTerminais(forceRefresh = false) {
+  if (!forceRefresh && todosTerminaisCache.length > 0) return Promise.resolve(todosTerminaisCache);
+  if (todosTerminaisPromise) return todosTerminaisPromise;
+  todosTerminaisPromise = new Promise((resolve) => {
+    const callbackName = 'carregarTodosTerminaisCallback_' + Date.now();
+    window[callbackName] = function(terminais) {
+      todosTerminaisCache = terminais;
+      delete window[callbackName];
+      todosTerminaisPromise = null;
+      resolve(terminais);
+    };
+    const script = document.createElement('script');
+    script.src = `${URL_PLANILHA}?acao=terminais_todos&callback=${callbackName}&_=${Date.now()}`;
+    script.onerror = () => {
+      delete window[callbackName];
+      todosTerminaisPromise = null;
+      todosTerminaisCache = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
+      resolve(todosTerminaisCache);
+    };
+    document.body.appendChild(script);
+  });
+  return todosTerminaisPromise;
+}
+function preencherSelectLocal() {
+  const select = getEl('envio-local');
+  if (!select) return;
+  carregarTodosTerminais().then(terminais => {
     const valorAtual = select.value;
     select.innerHTML = '<option value="">Selecione...</option>';
     terminais.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
@@ -303,28 +340,23 @@ class InspecaoVeicular {
       this.resetarFormulario();
     } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
-  // ================== MÉTODO CORRIGIDO ==================
   conferirInspecoes() {
     const getDataBrasil = () => {
       const d = new Date();
       return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
     };
     const hoje = getDataBrasil();
-    console.log('📅 Data consultada (front-end):', hoje);
     let fiscalParam = '';
     if (currentUserRole === 'FISCAL') {
       const fiscalNome = localStorage.getItem('inspectorName');
       if (fiscalNome && fiscalNome !== 'undefined' && fiscalNome !== 'null') {
         fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
-        console.log('👤 Filtrando por fiscal:', fiscalNome);
       }
     }
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
       window[callbackName] = (dados) => {
-        console.log('📥 Resposta do servidor:', dados);
         if (dados && dados.erro) {
-          console.error('Erro do servidor:', dados.erro);
           alert('Erro ao consultar: ' + dados.erro);
         } else if (!dados || (Array.isArray(dados) && dados.length === 0)) {
           alert('Nenhuma inspeção encontrada para hoje.');
@@ -335,15 +367,9 @@ class InspecaoVeicular {
         resolve();
       };
       const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
-      console.log('🌐 URL gerada para consulta:', url);
       const script = document.createElement('script');
       script.src = url;
-      script.onerror = (err) => {
-        console.error('❌ Erro no carregamento do script:', err);
-        delete window[callbackName];
-        alert('Erro ao consultar. Verifique sua conexão.');
-        reject(err);
-      };
+      script.onerror = () => { delete window[callbackName]; alert('Erro ao consultar.'); reject(); };
       document.body.appendChild(script);
     });
   }
@@ -385,12 +411,78 @@ function gerarTextoExportacao(inspecoes, role) {
 function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if (m) m.classList.remove('is-open'); }
 
 // ====================================================================
-// ENVIO DE INFORMAÇÕES (mantido igual)
+// ENVIO DE INFORMAÇÕES (com novas regras)
 // ====================================================================
 let rascunhoAtualId = null;
-function abrirModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.add('is-open'); preencherDataAtual(); carregarRascunho(); }
+
+function abrirModalEnvio() {
+  const modal = getEl('modal-envio-informacoes');
+  if (modal) modal.classList.add('is-open');
+  preencherDataAtual();
+  preencherSelectLocal();
+  preencherResponsavel();
+  carregarRascunho();
+  aplicarRegrasPorArea(); // inicial
+  aplicarRegrasPorMotivo(); // inicial
+  // Adicionar event listeners para área e motivo
+  document.querySelectorAll('input[name="areaDestino"]').forEach(radio => {
+    radio.removeEventListener('change', aplicarRegrasPorArea);
+    radio.addEventListener('change', aplicarRegrasPorArea);
+  });
+  document.querySelectorAll('input[name="motivo"]').forEach(radio => {
+    radio.removeEventListener('change', aplicarRegrasPorMotivo);
+    radio.addEventListener('change', aplicarRegrasPorMotivo);
+  });
+}
 function fecharModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.remove('is-open'); }
 function preencherDataAtual() { const d = getEl('envio-data'); if (d && !d.value) d.value = new Date().toISOString().split('T')[0]; }
+function preencherResponsavel() {
+  const nome = localStorage.getItem('inspectorName') || localStorage.getItem('inspectorApelido') || '';
+  const resp = getEl('envio-responsavel');
+  if (resp) resp.value = nome;
+}
+function aplicarRegrasPorArea() {
+  const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  const motivos = document.querySelectorAll('input[name="motivo"]');
+  const avariasRadio = document.querySelector('input[name="motivo"][value="AVARIAS"]');
+  const outrosRadio = document.querySelector('input[name="motivo"][value="OUTROS"]');
+  const pedidoRadio = document.querySelector('input[name="motivo"][value="PEDIDO DE FOLGAS"]');
+  const solicitacaoRadio = document.querySelector('input[name="motivo"][value="SOLICITAÇÃO DE MATERIAIS"]');
+  
+  if (areaSelecionada === 'SAF' || areaSelecionada === 'PLANTÃO' || areaSelecionada === 'OUTRAS ÁREAS') {
+    // Apenas Avarias e Outros habilitados
+    if (avariasRadio) avariasRadio.disabled = false;
+    if (outrosRadio) outrosRadio.disabled = false;
+    if (pedidoRadio) pedidoRadio.disabled = true;
+    if (solicitacaoRadio) solicitacaoRadio.disabled = true;
+    // Se algum desabilitado estiver marcado, desmarcar
+    if (pedidoRadio?.checked) pedidoRadio.checked = false;
+    if (solicitacaoRadio?.checked) solicitacaoRadio.checked = false;
+  } else {
+    // Fiscalização: todos habilitados
+    motivos.forEach(m => m.disabled = false);
+  }
+  // Reaplicar regras de motivo após possível mudança
+  aplicarRegrasPorMotivo();
+}
+function aplicarRegrasPorMotivo() {
+  const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
+  const campos = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'];
+  const inputs = campos.map(id => getEl(id));
+  if (motivo === 'AVARIAS') {
+    // Campos habilitados e obrigatórios
+    inputs.forEach(inp => { if (inp) { inp.disabled = false; inp.required = true; } });
+  } else if (motivo === 'OUTROS') {
+    // Campos habilitados, não obrigatórios
+    inputs.forEach(inp => { if (inp) { inp.disabled = false; inp.required = false; } });
+  } else if (motivo === 'PEDIDO DE FOLGAS' || motivo === 'SOLICITAÇÃO DE MATERIAIS') {
+    // Campos desabilitados e não obrigatórios
+    inputs.forEach(inp => { if (inp) { inp.disabled = true; inp.required = false; inp.value = ''; } });
+  } else {
+    // Nenhum motivo selecionado: desabilita? Melhor manter habilitado? Vamos manter habilitado não obrigatório.
+    inputs.forEach(inp => { if (inp) { inp.disabled = false; inp.required = false; } });
+  }
+}
 function salvarRascunho() {
   const dados = {
     id: rascunhoAtualId || Date.now().toString(),
@@ -405,7 +497,8 @@ function salvarRascunho() {
     historico: getEl('envio-historico').value,
     local: getEl('envio-local').value,
     data: getEl('envio-data').value,
-    anexo: localStorage.getItem('anexoAtual') || ''
+    anexo: localStorage.getItem('anexoAtual') || '',
+    responsavel: getEl('envio-responsavel').value
   };
   localStorage.setItem(`rascunho_${dados.id}`, JSON.stringify(dados));
   rascunhoAtualId = dados.id;
@@ -430,28 +523,57 @@ function carregarRascunho() {
     getEl('envio-historico').value = dados.historico || '';
     getEl('envio-local').value = dados.local || '';
     getEl('envio-data').value = dados.data || '';
+    getEl('envio-responsavel').value = dados.responsavel || localStorage.getItem('inspectorName') || '';
+    localStorage.setItem('anexoAtual', dados.anexo || '');
+    // Aplicar regras novamente após carregar
+    aplicarRegrasPorArea();
+    aplicarRegrasPorMotivo();
   } else limparFormularioEnvio();
 }
 function limparFormularioEnvio() {
   document.querySelectorAll('input[name="areaDestino"], input[name="motivo"]').forEach(r => r.checked = false);
   getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
   getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
+  getEl('envio-data').value = ''; getEl('envio-responsavel').value = localStorage.getItem('inspectorName') || '';
   preencherDataAtual();
   rascunhoAtualId = null;
+  localStorage.removeItem('anexoAtual');
 }
-function editarRascunho() { carregarRascunho(); }
 function enviarRelatorio() {
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
   const carro = getEl('envio-carro').value.trim();
+  const linha = getEl('envio-linha').value.trim();
+  const motorista = getEl('envio-motorista').value.trim();
+  const hora = getEl('envio-hora').value;
+  const sentido = getEl('envio-sentido').value;
   const data = getEl('envio-data').value;
-  if (!areaDestino || !motivo || !carro || !data) { alert('Preencha Área, Motivo, Carro e Data.'); return; }
+  const local = getEl('envio-local').value;
+  const responsavel = getEl('envio-responsavel').value;
+
+  if (!areaDestino) { alert('Selecione a Área de Destino.'); return; }
+  if (!motivo) { alert('Selecione o Motivo.'); return; }
+  if (!data) { alert('Preencha a Data.'); return; }
+  if (!local) { alert('Selecione o Local.'); return; }
+
+  // Validações específicas para Avarias
+  if (motivo === 'AVARIAS') {
+    if (!carro) { alert('O campo CARRO é obrigatório para Avarias.'); return; }
+    if (!linha) { alert('O campo LINHA é obrigatório para Avarias.'); return; }
+    if (!motorista) { alert('O campo MOT. é obrigatório para Avarias.'); return; }
+    if (!hora) { alert('O campo HORA é obrigatório para Avarias.'); return; }
+    if (!sentido) { alert('O campo SENT. é obrigatório para Avarias.'); return; }
+  }
+
   const dadosEnvio = {
     areaDestino, motivo,
-    carro: getEl('envio-carro').value, linha: getEl('envio-linha').value, motorista: getEl('envio-motorista').value,
-    cobrador: getEl('envio-cobrador').value, hora: getEl('envio-hora').value, sentido: getEl('envio-sentido').value,
-    historico: getEl('envio-historico').value, local: getEl('envio-local').value, data: getEl('envio-data').value,
-    anexo: localStorage.getItem('anexoAtual') || '', fiscal: localStorage.getItem('inspectorName')
+    carro, linha, motorista,
+    cobrador: getEl('envio-cobrador').value,
+    hora, sentido,
+    historico: getEl('envio-historico').value,
+    local, data,
+    anexo: localStorage.getItem('anexoAtual') || '',
+    fiscal: responsavel || localStorage.getItem('inspectorName')
   };
   if (confirm('Enviar relatório? Os dados serão salvos na planilha.')) {
     fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ acao: 'envio_informacoes', dados: JSON.stringify(dadosEnvio) }) })
@@ -503,7 +625,6 @@ function initEventListeners() {
   getEl('btn-fechar-banner')?.addEventListener('click', fecharBanner);
   getEl('btn-envio-informacoes')?.addEventListener('click', (e) => { e.preventDefault(); abrirModalEnvio(); });
   getEl('btn-salvar-rascunho')?.addEventListener('click', salvarRascunho);
-  getEl('btn-editar-rascunho')?.addEventListener('click', editarRascunho);
   getEl('btn-enviar-relatorio')?.addEventListener('click', enviarRelatorio);
   getEl('btn-anexar')?.addEventListener('click', anexarArquivo);
   getEl('btn-consultar-envios')?.addEventListener('click', consultarEnvios);
@@ -515,7 +636,8 @@ async function inicializar() {
   initModals(); initEventListeners(); initTheme(); registerServiceWorker();
   await refreshInspetores(); checkLoginStatus(); mostrarBannerAviso(); aplicarBloqueioDeDatas();
   await carregarTerminais(); preencherSelectTerminais();
-  window.addEventListener('pageshow', async (e) => { if (e.persisted) { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
-  document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
+  await carregarTodosTerminais(); // pré-carrega para o campo local
+  window.addEventListener('pageshow', async (e) => { if (e.persisted) { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); await carregarTodosTerminais(true); } });
+  document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); await carregarTodosTerminais(true); } });
 }
 window.addEventListener('load', inicializar);
