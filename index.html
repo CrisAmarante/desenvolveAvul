@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20260330">
+    <link rel="stylesheet" href="styles.css?v=20260331">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -69,7 +69,7 @@
     <div class="modal-header"><h2 class="modal-title">🚍 INSPEÇÃO VEICULAR DIÁRIA</h2><button class="modal-close" onclick="window.modals.inspecaoVeicular.close()">×</button></div>
     <div>
       <div class="top-fields"><div class="field"><label>CARRO</label><input type="text" id="carro" placeholder="Placa/Identificação" maxlength="10" required></div><div class="field"><label>TERMINAL</label><select id="terminal" required><option value="">Selecione...</option></select></div></div>
-      <table class="inspection-table" id="tabela-inspecao"><thead><tr><th>ITEM</th><th>OK</th><th>COM DEFEITO</th><th>OBS.</th><th>POSIÇÃO (Ventilador)</th></tr></thead><tbody>
+      <table class="inspection-table" id="tabela-inspecao"><thead><tr><th>ITEM</th><th>OK</th><th>COM DEFEITO</th><th>OBS.</th><th>POSIÇÃO (Ventilador)</th> </thead><tbody>
         <tr data-item="elevador"><td class="item-name">ELEVADOR</td><td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td><td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td><td><input type="text" class="obs-input" placeholder="Observação"></td><td class="posicao-cell"></td></tr>
         <tr data-item="thoreb"><td class="item-name">THOREB</td><td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td><td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td><td><input type="text" class="obs-input" placeholder="Observação"></td><td class="posicao-cell"></td></tr>
         <tr data-item="usb"><td class="item-name">USB</td><td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="ok"><span class="checkmark"></span></label></td><td class="checkbox-cell"><label class="custom-checkbox"><input type="checkbox" class="defeito"><span class="checkmark"></span></label></td><td><input type="text" class="obs-input" placeholder="Observação"></td><td class="posicao-cell"></td></tr>
@@ -84,87 +84,34 @@
 <!-- MODAL CONSULTA INSPEÇÕES -->
 <div id="modal-conferir-inspecoes" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Minhas Inspeções - Hoje</h2><button class="modal-close" onclick="fecharModalConferir()">×</button></div><div id="lista-inspecoes"></div></div></div>
 
+<!-- MODAL ENVIO DE INFORMAÇÕES -->
 <div id="modal-envio-informacoes" class="modal">
   <div class="modal-content envio-modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">📋 RELATÓRIO À CHEFIA DO TRÁFEGO</h2>
-      <button class="modal-close" onclick="fecharModalEnvio()">×</button>
-    </div>
+    <div class="modal-header"><h2 class="modal-title">📋 RELATÓRIO À CHEFIA DO TRÁFEGO</h2><button class="modal-close" onclick="fecharModalEnvio()">×</button></div>
     <form id="form-envio">
-      <div class="form-section">
-        <label>ÁREA DE DESTINO:</label>
-        <div class="radio-group" id="area-destino-group">
-          <label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label>
-          <label><input type="radio" name="areaDestino" value="SAF"> SAF</label>
-          <label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label>
-          <label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label>
-        </div>
-      </div>
-      <div class="form-section">
-        <label>MOTIVO:</label>
-        <div class="radio-group" id="motivo-group">
-          <label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label>
-          <label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label>
-          <label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label>
-          <label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label>
-        </div>
-      </div>
-      <div class="form-row" id="dados-veiculo">
-        <div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div>
-        <div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div>
-        <div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div>
-        <div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div>
-      </div>
-      <div class="form-row" id="dados-hora-sentido">
-        <div class="field"><label>HORA</label><input type="time" id="envio-hora"></div>
-        <div class="field"><label>SENT.</label>
-          <select id="envio-sentido">
-            <option value="">Selecione</option>
-            <option value="IDA">IDA</option>
-            <option value="VOLTA">VOLTA</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-section">
-        <label>HISTÓRICO:</label>
-        <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..."></textarea>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>LOCAL:</label>
-          <select id="envio-local">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-        <div class="field"><label>RESPONSÁVEL:</label>
-          <input type="text" id="envio-responsavel" readonly>
-        </div>
-        <div class="field"><label>DATA:</label><input type="date" id="envio-data"></div>
-      </div>
-      <div class="action-buttons">
-        <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
-        <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
-       <button type="button" id="btn-anexar" class="btn-secundario" disabled>📎 ANEXAR (em breve)</button>
-        <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
-      </div>
+      <div class="form-section"><label>ÁREA DE DESTINO:</label><div class="radio-group" id="area-destino-group"><label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label><label><input type="radio" name="areaDestino" value="SAF"> SAF</label><label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label><label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label></div></div>
+      <div class="form-section"><label>MOTIVO:</label><div class="radio-group" id="motivo-group"><label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label><label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label><label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label><label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label></div></div>
+      <div class="form-row" id="dados-veiculo"><div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div><div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div><div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div><div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div></div>
+      <div class="form-row" id="dados-hora-sentido"><div class="field"><label>HORA</label><input type="time" id="envio-hora"></div><div class="field"><label>SENT.</label><select id="envio-sentido"><option value="">Selecione</option><option value="IDA">IDA</option><option value="VOLTA">VOLTA</option></select></div></div>
+      <div class="form-section"><label>HISTÓRICO:</label><textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..."></textarea></div>
+      <div class="form-row"><div class="field"><label>LOCAL:</label><select id="envio-local"><option value="">Selecione...</option></select></div><div class="field"><label>RESPONSÁVEL:</label><input type="text" id="envio-responsavel" readonly></div><div class="field"><label>DATA:</label><input type="date" id="envio-data"></div></div>
+      <div class="action-buttons"><button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button><button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button><button type="button" id="btn-anexar" class="btn-secundario" disabled>📎 ANEXAR (em breve)</button><button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button></div>
     </form>
   </div>
 </div>
 
 <!-- MODAL LISTA DE ENVIOS -->
 <div id="modal-lista-envios" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 ENVIOS REALIZADOS</h2><button class="modal-close" onclick="fecharModalListaEnvios()">×</button></div><div id="lista-envios-container"></div></div></div>
-<!-- Modal para exibição detalhada do envio -->
+
+<!-- MODAL DETALHE DO ENVIO -->
 <div id="modal-detalhe-envio" class="modal">
   <div class="modal-content envio-detalhe-modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">📄 DETALHES DO RELATÓRIO</h2>
-      <button class="modal-close" onclick="fecharModalDetalheEnvio()">×</button>
-    </div>
+    <div class="modal-header"><h2 class="modal-title">📄 DETALHES DO RELATÓRIO</h2><button class="modal-close" onclick="fecharModalDetalheEnvio()">×</button></div>
     <div id="detalhe-envio-conteudo"></div>
-    <div class="action-buttons" style="margin-top: 20px;">
-      <button id="btn-exportar-detalhe" class="btn-principal">📋 COPIAR</button>
-    </div>
+    <div class="action-buttons" style="margin-top: 20px;"><button id="btn-exportar-detalhe" class="btn-principal">📋 COPIAR</button></div>
   </div>
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>
