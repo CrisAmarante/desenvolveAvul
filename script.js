@@ -1,8 +1,7 @@
 // ====================================================================
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzDzqC5d30qOfp-2_8jYwnklvspOStsm1lHCOwBOqzxSIfCEuhwbx2MCBrCcuCNMezK/exec";
-
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzM47z9njqsKW5BT2OiKq9nGKwZrgrrbMI4F4JTi1oJzd2xDAvXtCSvBH-C_4-VlO6K/exec";
 let INSPETORES = {};
 
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
@@ -214,7 +213,7 @@ async function checkLoginStatus() {
     else if (btnEnvio) btnEnvio.style.display = 'none';
     main.style.display = 'none';
     insp.style.display = 'flex';
-    showWelcomeToast(apelido); // exibe o apelido
+    showWelcomeToast(apelido);
     const logoutBtn = insp.querySelector('.logout-btn');
     if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${apelido}</small>`;
   } else {
@@ -304,7 +303,6 @@ class InspecaoVeicular {
   async open() { if (canCreateInspection) { await carregarTerminais(true); preencherSelectTerminais(); this.openForm(); } else await this.conferirInspecoes(); }
   openForm() { this.modal.open(); this.preencherAutomatico(); this.resetarFormulario(); const btn = getEl('btn-conferir-inspecoes'); if (btn) btn.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none'; }
   preencherAutomatico() {
-    // Usa o apelido armazenado
     const apelido = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName') || 'Inspetor';
     if (getEl('fiscal')) getEl('fiscal').value = apelido;
     const agora = new Date();
@@ -417,13 +415,14 @@ function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if
 // ENVIO DE INFORMAÇÕES
 // ====================================================================
 let rascunhoAtualId = null;
+let enviosLista = [];
 
 function abrirModalEnvio() {
   const m = getEl('modal-envio-informacoes');
   if (m) m.classList.add('is-open');
   preencherDataAtual();
   preencherResponsavel();
-  preencherSelectLocal();  // carrega todos os terminais para o campo LOCAL
+  preencherSelectLocal();
   carregarRascunho();
 }
 function fecharModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.remove('is-open'); }
@@ -435,7 +434,6 @@ function preencherResponsavel() {
     resp.value = apelido;
   }
 }
-
 function salvarRascunho() {
   const dados = {
     id: rascunhoAtualId || Date.now().toString(),
@@ -475,8 +473,7 @@ function carregarRascunho() {
     getEl('envio-historico').value = dados.historico || '';
     getEl('envio-local').value = dados.local || '';
     getEl('envio-data').value = dados.data || '';
-    preencherResponsavel(); // garante que responsável seja o atual
-    // Atualiza regras de habilitacao baseadas no motivo
+    preencherResponsavel();
     aplicarRegrasPorMotivo();
   } else {
     limparFormularioEnvio();
@@ -489,12 +486,8 @@ function limparFormularioEnvio() {
   getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
   preencherDataAtual();
   rascunhoAtualId = null;
-  // Resetar regras
   habilitarCamposAvarias(true);
 }
-function editarRascunho() { carregarRascunho(); }
-
-// Funções para habilitar/desabilitar campos conforme motivo
 function habilitarCamposAvarias(habilitar) {
   const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'];
   ids.forEach(id => {
@@ -509,7 +502,6 @@ function aplicarRegrasPorMotivo() {
   const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
   if (motivoSelecionado === 'AVARIAS') {
     habilitarCamposAvarias(true);
-    // Torna obrigatórios
     ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
       const campo = getEl(id);
       if (campo) campo.required = true;
@@ -527,7 +519,6 @@ function aplicarRegrasPorMotivo() {
       if (campo) campo.required = false;
     });
   } else {
-    // Nenhum motivo selecionado - mantém campos como estavam (desabilitados? Melhor desabilitar)
     habilitarCamposAvarias(false);
   }
 }
@@ -536,7 +527,6 @@ function aplicarRegrasPorArea() {
   const radiosMotivo = document.querySelectorAll('input[name="motivo"]');
   radiosMotivo.forEach(radio => radio.disabled = false);
   if (areaSelecionada === 'SAF' || areaSelecionada === 'PLANTÃO' || areaSelecionada === 'OUTRAS ÁREAS') {
-    // Apenas AVARIAS e OUTROS devem ser habilitados
     radiosMotivo.forEach(radio => {
       if (radio.value !== 'AVARIAS' && radio.value !== 'OUTROS') {
         radio.disabled = true;
@@ -545,29 +535,20 @@ function aplicarRegrasPorArea() {
         radio.disabled = false;
       }
     });
-    // Se o motivo atual estiver desabilitado, limpa e aplica regras
     const motivoAtual = document.querySelector('input[name="motivo"]:checked');
-    if (motivoAtual && motivoAtual.disabled) {
-      motivoAtual.checked = false;
-    }
-  } else {
-    // Fiscalização: todos os motivos habilitados
-    radiosMotivo.forEach(radio => radio.disabled = false);
+    if (motivoAtual && motivoAtual.disabled) motivoAtual.checked = false;
   }
-  aplicarRegrasPorMotivo(); // reaplica regras de campos após possível mudança de motivo
+  aplicarRegrasPorMotivo();
 }
-
 function enviarRelatorio() {
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
   const carro = getEl('envio-carro').value.trim();
   const data = getEl('envio-data').value;
-
   if (!areaDestino) { alert('Selecione a Área de Destino.'); return; }
   if (!motivo) { alert('Selecione o Motivo.'); return; }
   if (motivo === 'AVARIAS' && !carro) { alert('Para o motivo AVARIAS, o campo CARRO é obrigatório.'); return; }
   if (!data) { alert('Preencha a Data.'); return; }
-
   const dadosEnvio = {
     areaDestino, motivo,
     carro: getEl('envio-carro').value,
@@ -590,20 +571,34 @@ function enviarRelatorio() {
 }
 function anexarArquivo() {
   alert('Funcionalidade de anexo será ativada em breve.');
-  // Se quiser habilitar depois, basta remover este alert e implementar a lógica de captura de imagem.
 }
 function consultarEnvios() {
   const fiscal = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName');
   const hoje = new Date().toLocaleDateString('pt-BR');
   const callbackName = 'mostrarListaEnvios';
   window[callbackName] = function(dados) {
+    enviosLista = dados;
     const container = getEl('lista-envios-container'), modal = getEl('modal-lista-envios');
     if (!container || !modal) return;
-    if (dados.length === 0) container.innerHTML = '<p>Nenhum envio encontrado para hoje.</p>';
-    else {
+    if (dados.length === 0) {
+      container.innerHTML = '<p>Nenhum envio encontrado para hoje.</p>';
+    } else {
       let html = '';
-      dados.forEach(e => { html += `<div class="envio-item"><strong>${e.carro} - ${e.data}</strong><br>Área: ${e.areaDestino} | Motivo: ${e.motivo}<br>Local: ${e.local || 'N/I'} | Histórico: ${e.historico || 'N/I'}<br>Anexo: ${e.anexo ? `<a href="${e.anexo}" target="_blank">Ver anexo</a>` : 'Nenhum'}</div>`; });
+      dados.forEach((envio, idx) => {
+        html += `
+          <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
+            <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
+            CARRO: ${envio.carro || 'N/I'} | DATA: ${envio.data || 'N/I'} | MOTORISTA: ${envio.motorista || 'N/I'}
+          </div>
+        `;
+      });
       container.innerHTML = html;
+      document.querySelectorAll('.envio-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          const idx = parseInt(el.dataset.idx);
+          if (!isNaN(idx)) mostrarDetalheEnvio(enviosLista[idx]);
+        });
+      });
     }
     modal.classList.add('is-open');
     delete window[callbackName];
@@ -613,7 +608,56 @@ function consultarEnvios() {
   script.onerror = () => alert('Erro ao consultar envios.');
   document.body.appendChild(script);
 }
-function fecharModalListaEnvios() { const m = getEl('modal-lista-envios'); if (m) m.classList.remove('is-open'); }
+function mostrarDetalheEnvio(envio) {
+  const modal = getEl('modal-detalhe-envio');
+  const container = getEl('detalhe-envio-conteudo');
+  if (!modal || !container) return;
+  let html = `
+    <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px;">
+      <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
+      <div><strong>HORA:</strong> ${envio.hora || 'N/I'} <strong>COB.:</strong> ${envio.cobrador || 'N/I'} <strong>SENT.:</strong> ${envio.sentido || 'N/I'}</div>
+      <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
+      <div><strong>MOT.:</strong> ${envio.motorista || 'N/I'}</div>
+      <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
+      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${envio.data || 'N/I'}</div>
+      <div><strong>ANEXO:</strong> ${envio.anexo ? `<a href="${envio.anexo}" target="_blank">Ver anexo</a>` : 'Nenhum'}</div>
+      <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
+    </div>
+  `;
+  container.innerHTML = html;
+  modal.classList.add('is-open');
+  const btnExport = document.getElementById('btn-exportar-detalhe');
+  if (btnExport) {
+    btnExport.onclick = () => {
+      const texto = gerarTextoDetalheEnvio(envio);
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('Detalhes copiados para a área de transferência!');
+      }).catch(() => {
+        alert('Erro ao copiar. Tente selecionar manualmente.');
+      });
+    };
+  }
+}
+function gerarTextoDetalheEnvio(envio) {
+  let texto = `=== RELATÓRIO À CHEFIA DO TRÁFEGO ===\n\n`;
+  texto += `MOTIVO: ${envio.motivo || 'N/I'}\n`;
+  texto += `HORA: ${envio.hora || 'N/I'}  COB.: ${envio.cobrador || 'N/I'}  SENT.: ${envio.sentido || 'N/I'}\n`;
+  texto += `CARRO: ${envio.carro || 'N/I'}\n`;
+  texto += `MOTORISTA: ${envio.motorista || 'N/I'}\n`;
+  texto += `LINHA: ${envio.linha || 'N/I'}  HISTÓRICO: ${envio.historico || 'N/I'}\n`;
+  texto += `LOCAL: ${envio.local || 'N/I'}  DATA: ${envio.data || 'N/I'}\n`;
+  texto += `ANEXO: ${envio.anexo || 'Nenhum'}\n`;
+  texto += `RESPONSÁVEL: ${envio.fiscal || 'N/I'}\n`;
+  return texto;
+}
+function fecharModalDetalheEnvio() {
+  const modal = getEl('modal-detalhe-envio');
+  if (modal) modal.classList.remove('is-open');
+}
+function fecharModalListaEnvios() {
+  const modal = getEl('modal-lista-envios');
+  if (modal) modal.classList.remove('is-open');
+}
 
 // ====================================================================
 // INICIALIZAÇÃO
@@ -639,7 +683,6 @@ function initEventListeners() {
   getEl('btn-enviar-relatorio')?.addEventListener('click', enviarRelatorio);
   getEl('btn-anexar')?.addEventListener('click', anexarArquivo);
   getEl('btn-consultar-envios')?.addEventListener('click', consultarEnvios);
-  // Eventos para regras dinâmicas
   document.querySelectorAll('input[name="areaDestino"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorArea));
   document.querySelectorAll('input[name="motivo"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorMotivo));
 }
