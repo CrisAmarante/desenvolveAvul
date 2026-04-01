@@ -2,7 +2,7 @@
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzM47z9njqsKW5BT2OiKq9nGKwZrgrrbMI4F4JTi1oJzd2xDAvXtCSvBH-C_4-VlO6K/exec";
-
+// ====================================================================
 let INSPETORES = {};
 
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
@@ -18,6 +18,8 @@ const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE',
 let currentUserRole = '';
 let canCreateInspection = false;
 let terminaisCache = [];
+let terminaisTimestamp = 0;
+const TERMINAIS_CACHE_DURACAO = 30 * 60 * 1000; // 30 minutos
 
 function logDebug(...args) { console.log('[PENSO]', ...args); }
 function getEl(id) { return document.getElementById(id); }
@@ -116,16 +118,20 @@ async function refreshInspetores() {
 }
 
 // ====================================================================
-// TERMINAIS (apenas SIM)
+// TERMINAIS (apenas SIM) com cache
 // ====================================================================
 let terminaisPromise = null;
 function carregarTerminais(forceRefresh = false) {
-  if (!forceRefresh && terminaisCache.length > 0) return Promise.resolve(terminaisCache);
+  const agora = Date.now();
+  if (!forceRefresh && terminaisCache.length && (agora - terminaisTimestamp < TERMINAIS_CACHE_DURACAO)) {
+    return Promise.resolve(terminaisCache);
+  }
   if (terminaisPromise) return terminaisPromise;
   terminaisPromise = new Promise((resolve) => {
     const callbackName = 'carregarTerminaisCallback_' + Date.now();
     window[callbackName] = function(terminais) {
       terminaisCache = terminais;
+      terminaisTimestamp = Date.now();
       delete window[callbackName];
       terminaisPromise = null;
       resolve(terminais);
@@ -136,6 +142,7 @@ function carregarTerminais(forceRefresh = false) {
       delete window[callbackName];
       terminaisPromise = null;
       terminaisCache = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
+      terminaisTimestamp = Date.now();
       resolve(terminaisCache);
     };
     document.body.appendChild(script);
@@ -159,7 +166,7 @@ function preencherSelectTerminais() {
 let todosTerminaisCache = [];
 let todosTerminaisPromise = null;
 function carregarTodosTerminais(forceRefresh = false) {
-  if (!forceRefresh && todosTerminaisCache.length > 0) return Promise.resolve(todosTerminaisCache);
+  if (!forceRefresh && todosTerminaisCache.length) return Promise.resolve(todosTerminaisCache);
   if (todosTerminaisPromise) return todosTerminaisPromise;
   todosTerminaisPromise = new Promise((resolve) => {
     const callbackName = 'carregarTodosTerminaisCallback_' + Date.now();
@@ -284,15 +291,41 @@ function mostrarBannerAviso() {
 }
 
 // ====================================================================
+// UTILITÁRIO DE FORMATAÇÃO DE DATA
+// ====================================================================
+function formatarData(data) {
+  if (!data) return 'N/I';
+  if (typeof data === 'string') {
+    if (data.includes('-')) {
+      const [ano, mes, dia] = data.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+    if (data.includes('/')) {
+      const partes = data.split('/');
+      if (partes[0].length === 4) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+      return data;
+    }
+  }
+  if (data instanceof Date) {
+    const dia = data.getDate().toString().padStart(2, '0');
+    const mes = (data.getMonth() + 1).toString().padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  }
+  const str = data.toString();
+  const match = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (match) return match[0];
+  return str;
+}
+
+// ====================================================================
 // INSPEÇÃO VEICULAR
 // ====================================================================
 class InspecaoVeicular {
   constructor() { this.modal = new ModalController('modal-inspecao-veicular'); this.initEventListeners(); }
-
-  close() {
-    this.modal.close();
-  }
-
+  close() { this.modal.close(); }
   initEventListeners() {
     getEl('btn-inspecao-veicular')?.addEventListener('click', (e) => { e.preventDefault(); this.open(); });
     document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
@@ -306,8 +339,22 @@ class InspecaoVeicular {
     getEl('btn-enviar-inspecao')?.addEventListener('click', () => this.enviarInspecao());
     getEl('btn-conferir-inspecoes')?.addEventListener('click', () => this.conferirInspecoes());
   }
-  async open() { if (canCreateInspection) { await carregarTerminais(true); preencherSelectTerminais(); this.openForm(); } else await this.conferirInspecoes(); }
-  openForm() { this.modal.open(); this.preencherAutomatico(); this.resetarFormulario(); const btn = getEl('btn-conferir-inspecoes'); if (btn) btn.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none'; }
+  async open() {
+    if (canCreateInspection) {
+      // Carrega terminais do cache (já deve estar carregado) e abre imediatamente
+      preencherSelectTerminais(); // usa cache
+      this.openForm();
+    } else {
+      await this.conferirInspecoes();
+    }
+  }
+  openForm() {
+    this.modal.open();
+    this.preencherAutomatico();
+    this.resetarFormulario();
+    const btn = getEl('btn-conferir-inspecoes');
+    if (btn) btn.style.display = (currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR') ? 'block' : 'none';
+  }
   preencherAutomatico() {
     const apelido = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName') || 'Inspetor';
     if (getEl('fiscal')) getEl('fiscal').value = apelido;
@@ -347,33 +394,40 @@ class InspecaoVeicular {
       this.resetarFormulario();
     } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
+  // Consulta padrão (hoje)
   conferirInspecoes() {
-    const getDataBrasil = () => {
-      const d = new Date();
-      return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
-    };
-    const hoje = getDataBrasil();
-    let fiscalParam = '';
+    this.conferirInspecoesComFiltro(null, null, null, null);
+  }
+  // Consulta com filtros opcionais
+  conferirInspecoesComFiltro(dataInicio, dataFim, carro, fiscalFiltro) {
+    const params = new URLSearchParams();
+    params.append('acao', 'consultar_inspecoes');
+    if (dataInicio) params.append('dataInicio', dataInicio);
+    if (dataFim) params.append('dataFim', dataFim);
+    if (carro) params.append('carro', carro);
+    if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
+    // Se for fiscal, envia seu próprio nome para filtro de visualização
     if (currentUserRole === 'FISCAL') {
-      const fiscalNome = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName');
-      if (fiscalNome && fiscalNome !== 'undefined' && fiscalNome !== 'null') {
-        fiscalParam = `&fiscal=${encodeURIComponent(fiscalNome)}`;
-      }
+      params.append('fiscal', localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName'));
     }
+    return this._executarConsultaInspecao(params);
+  }
+  _executarConsultaInspecao(params) {
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
       window[callbackName] = (dados) => {
         if (dados && dados.erro) {
           alert('Erro ao consultar: ' + dados.erro);
         } else if (!dados || (Array.isArray(dados) && dados.length === 0)) {
-          alert('Nenhuma inspeção encontrada para hoje.');
+          alert('Nenhuma inspeção encontrada.');
         } else {
           mostrarModalConferir(dados, currentUserRole);
         }
         delete window[callbackName];
         resolve();
       };
-      const url = `${URL_PLANILHA}?acao=consultar_inspecoes&data=${encodeURIComponent(hoje)}${fiscalParam}&callback=${callbackName}`;
+      params.append('callback', callbackName);
+      const url = `${URL_PLANILHA}?${params.toString()}`;
       const script = document.createElement('script');
       script.src = url;
       script.onerror = () => { delete window[callbackName]; alert('Erro ao consultar. Verifique sua conexão.'); reject(); };
@@ -384,6 +438,41 @@ class InspecaoVeicular {
 function mostrarModalConferir(inspecoes, role) {
   const modal = getEl('modal-conferir-inspecoes'), container = getEl('lista-inspecoes');
   if (!modal || !container) return;
+  // Adicionar painel de filtros (se não existir)
+  if (!document.getElementById('filtros-inspecao')) {
+    const filtrosDiv = document.createElement('div');
+    filtrosDiv.id = 'filtros-inspecao';
+    filtrosDiv.style.marginBottom = '15px';
+    filtrosDiv.style.padding = '10px';
+    filtrosDiv.style.background = 'var(--card-bg)';
+    filtrosDiv.style.borderRadius = '8px';
+    filtrosDiv.innerHTML = `
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+        <div><label>Data Início</label><input type="date" id="filtro-inspecao-data-inicio"></div>
+        <div><label>Data Fim</label><input type="date" id="filtro-inspecao-data-fim"></div>
+        <div><label>Carro</label><input type="text" id="filtro-inspecao-carro" placeholder="Placa/Identificação"></div>
+        ${role !== 'FISCAL' ? `<div><label>Fiscal</label><input type="text" id="filtro-inspecao-fiscal" placeholder="Apelido"></div>` : ''}
+        <div><button id="btn-aplicar-filtros-inspecao" class="btn-secundario">🔍 Aplicar</button></div>
+        <div><button id="btn-limpar-filtros-inspecao" class="btn-secundario">🗑️ Limpar</button></div>
+      </div>
+    `;
+    container.parentNode.insertBefore(filtrosDiv, container);
+    document.getElementById('btn-aplicar-filtros-inspecao').addEventListener('click', () => {
+      const dataInicio = document.getElementById('filtro-inspecao-data-inicio').value;
+      const dataFim = document.getElementById('filtro-inspecao-data-fim').value;
+      const carro = document.getElementById('filtro-inspecao-carro').value;
+      const fiscalFiltro = role !== 'FISCAL' ? document.getElementById('filtro-inspecao-fiscal').value : null;
+      window.modals.inspecaoVeicular.conferirInspecoesComFiltro(dataInicio, dataFim, carro, fiscalFiltro);
+    });
+    document.getElementById('btn-limpar-filtros-inspecao').addEventListener('click', () => {
+      document.getElementById('filtro-inspecao-data-inicio').value = '';
+      document.getElementById('filtro-inspecao-data-fim').value = '';
+      document.getElementById('filtro-inspecao-carro').value = '';
+      if (role !== 'FISCAL') document.getElementById('filtro-inspecao-fiscal').value = '';
+      window.modals.inspecaoVeicular.conferirInspecoes(); // volta para hoje
+    });
+  }
+  // Exibir dados
   let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div><div id="lista-inspecoes-conteudo">';
   inspecoes.forEach(ins => {
     const itensDefeito = [];
@@ -418,7 +507,7 @@ function gerarTextoExportacao(inspecoes, role) {
 function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if (m) m.classList.remove('is-open'); }
 
 // ====================================================================
-// ENVIO DE INFORMAÇÕES
+// ENVIO DE INFORMAÇÕES (com filtros)
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
@@ -578,41 +667,63 @@ function enviarRelatorio() {
 function anexarArquivo() {
   alert('Funcionalidade de anexo será ativada em breve.');
 }
+// Consulta padrão (hoje)
 function consultarEnvios() {
-  const fiscal = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName');
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  const callbackName = 'mostrarListaEnvios';
-  window[callbackName] = function(dados) {
-    enviosLista = dados;
-    const container = getEl('lista-envios-container'), modal = getEl('modal-lista-envios');
-    if (!container || !modal) return;
-    if (dados.length === 0) {
-      container.innerHTML = '<p>Nenhum envio encontrado para hoje.</p>';
-    } else {
-      let html = '';
-      dados.forEach((envio, idx) => {
-        html += `
-          <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
-            <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
-            CARRO: ${envio.carro || 'N/I'} | DATA: ${envio.data || 'N/I'} | MOTORISTA: ${envio.motorista || 'N/I'}
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-      document.querySelectorAll('.envio-item').forEach(el => {
-        el.addEventListener('click', (e) => {
-          const idx = parseInt(el.dataset.idx);
-          if (!isNaN(idx)) mostrarDetalheEnvio(enviosLista[idx]);
+  consultarEnviosComFiltro(null, null, null, null, null);
+}
+function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, prefixo, fiscalFiltro) {
+  const params = new URLSearchParams();
+  params.append('acao', 'consultar_envios');
+  if (dataInicio) params.append('dataInicio', dataInicio);
+  if (dataFim) params.append('dataFim', dataFim);
+  if (motivo) params.append('motivo', motivo);
+  if (carro) params.append('carro', carro);
+  if (prefixo) params.append('prefixo', prefixo);
+  if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
+  // Fiscal só vê seus próprios envios (já tratado no Apps Script)
+  if (currentUserRole === 'FISCAL') {
+    params.append('fiscal', localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName'));
+  }
+  return _executarConsultaEnvios(params);
+}
+function _executarConsultaEnvios(params) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'mostrarListaEnvios_' + Date.now();
+    window[callbackName] = function(dados) {
+      enviosLista = dados;
+      const container = getEl('lista-envios-container'), modal = getEl('modal-lista-envios');
+      if (!container || !modal) return;
+      if (dados.length === 0) {
+        container.innerHTML = '<p>Nenhum envio encontrado.</p>';
+      } else {
+        let html = '';
+        dados.forEach((envio, idx) => {
+          html += `
+            <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
+              <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
+              CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
+            </div>
+          `;
         });
-      });
-    }
-    modal.classList.add('is-open');
-    delete window[callbackName];
-  };
-  const script = document.createElement('script');
-  script.src = `${URL_PLANILHA}?acao=consultar_envios&fiscal=${encodeURIComponent(fiscal)}&data=${encodeURIComponent(hoje)}&callback=${callbackName}`;
-  script.onerror = () => alert('Erro ao consultar envios.');
-  document.body.appendChild(script);
+        container.innerHTML = html;
+        document.querySelectorAll('.envio-item').forEach(el => {
+          el.addEventListener('click', (e) => {
+            const idx = parseInt(el.dataset.idx);
+            if (!isNaN(idx)) mostrarDetalheEnvio(enviosLista[idx]);
+          });
+        });
+      }
+      modal.classList.add('is-open');
+      delete window[callbackName];
+      resolve();
+    };
+    params.append('callback', callbackName);
+    const url = `${URL_PLANILHA}?${params.toString()}`;
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => { delete window[callbackName]; alert('Erro ao consultar.'); reject(); };
+    document.body.appendChild(script);
+  });
 }
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
@@ -625,7 +736,7 @@ function mostrarDetalheEnvio(envio) {
       <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
       <div><strong>MOT.:</strong> ${envio.motorista || 'N/I'}</div>
       <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
-      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${envio.data || 'N/I'}</div>
+      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${formatarData(envio.data)}</div>
       <div><strong>ANEXO:</strong> ${envio.anexo ? `<a href="${envio.anexo}" target="_blank">Ver anexo</a>` : 'Nenhum'}</div>
       <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
@@ -651,7 +762,7 @@ function gerarTextoDetalheEnvio(envio) {
   texto += `CARRO: ${envio.carro || 'N/I'}\n`;
   texto += `MOTORISTA: ${envio.motorista || 'N/I'}\n`;
   texto += `LINHA: ${envio.linha || 'N/I'}  HISTÓRICO: ${envio.historico || 'N/I'}\n`;
-  texto += `LOCAL: ${envio.local || 'N/I'}  DATA: ${envio.data || 'N/I'}\n`;
+  texto += `LOCAL: ${envio.local || 'N/I'}  DATA: ${formatarData(envio.data)}\n`;
   texto += `ANEXO: ${envio.anexo || 'Nenhum'}\n`;
   texto += `RESPONSÁVEL: ${envio.fiscal || 'N/I'}\n`;
   return texto;
@@ -666,7 +777,7 @@ function fecharModalListaEnvios() {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO (com adição de painel de filtros de envio)
 // ====================================================================
 function initModals() {
   window.modals = {
@@ -691,6 +802,66 @@ function initEventListeners() {
   getEl('btn-consultar-envios')?.addEventListener('click', consultarEnvios);
   document.querySelectorAll('input[name="areaDestino"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorArea));
   document.querySelectorAll('input[name="motivo"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorMotivo));
+
+  // Adicionar painel de filtros no modal de lista de envios
+  const modalLista = getEl('modal-lista-envios');
+  if (modalLista && !document.getElementById('filtros-envio')) {
+    const content = modalLista.querySelector('.modal-content');
+    const filtrosDiv = document.createElement('div');
+    filtrosDiv.id = 'filtros-envio';
+    filtrosDiv.style.marginBottom = '15px';
+    filtrosDiv.style.padding = '10px';
+    filtrosDiv.style.background = 'var(--card-bg)';
+    filtrosDiv.style.borderRadius = '8px';
+    const role = currentUserRole;
+    const maxDias = role === 'FISCAL' ? 15 : (role === 'ENCARREGADO' || role === 'INSPETOR' || role === 'PLANTONISTA') ? 30 : (role === 'SAF' ? 180 : 0);
+    const maxDiasTexto = maxDias ? ` (máx ${maxDias} dias)` : ' (ilimitado)';
+    filtrosDiv.innerHTML = `
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+        <div><label>Data Início</label><input type="date" id="filtro-envio-data-inicio"></div>
+        <div><label>Data Fim${maxDiasTexto}</label><input type="date" id="filtro-envio-data-fim"></div>
+        <div><label>Motivo</label><select id="filtro-envio-motivo"><option value="">Todos</option><option value="AVARIAS">AVARIAS</option><option value="PEDIDO DE FOLGAS">PEDIDO DE FOLGAS</option><option value="SOLICITAÇÃO DE MATERIAIS">SOLICITAÇÃO DE MATERIAIS</option><option value="OUTROS">OUTROS</option></select></div>
+        <div><label>Carro</label><input type="text" id="filtro-envio-carro" placeholder="Placa/Identificação"></div>
+        <div><label>Prefixo</label><input type="text" id="filtro-envio-prefixo" placeholder="Parte do carro"></div>
+        ${role !== 'FISCAL' ? `<div><label>Fiscal</label><input type="text" id="filtro-envio-fiscal" placeholder="Apelido"></div>` : ''}
+        <div><button id="btn-aplicar-filtros-envio" class="btn-secundario">🔍 Aplicar</button></div>
+        <div><button id="btn-limpar-filtros-envio" class="btn-secundario">🗑️ Limpar</button></div>
+      </div>
+    `;
+    // Inserir após o cabeçalho
+    const header = content.querySelector('.modal-header');
+    if (header) header.insertAdjacentElement('afterend', filtrosDiv);
+    else content.insertBefore(filtrosDiv, content.firstChild);
+
+    // Eventos
+    document.getElementById('btn-aplicar-filtros-envio').addEventListener('click', () => {
+      const dataInicio = document.getElementById('filtro-envio-data-inicio').value;
+      let dataFim = document.getElementById('filtro-envio-data-fim').value;
+      const motivo = document.getElementById('filtro-envio-motivo').value;
+      const carro = document.getElementById('filtro-envio-carro').value;
+      const prefixo = document.getElementById('filtro-envio-prefixo').value;
+      const fiscalFiltro = role !== 'FISCAL' ? document.getElementById('filtro-envio-fiscal').value : null;
+
+      // Validar período máximo
+      if (maxDias > 0 && dataInicio && dataFim) {
+        const diff = (new Date(dataFim) - new Date(dataInicio)) / (1000 * 60 * 60 * 24);
+        if (diff > maxDias) {
+          alert(`Período máximo de ${maxDias} dias. Ajuste as datas.`);
+          return;
+        }
+      }
+      consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, prefixo, fiscalFiltro);
+    });
+    document.getElementById('btn-limpar-filtros-envio').addEventListener('click', () => {
+      document.getElementById('filtro-envio-data-inicio').value = '';
+      document.getElementById('filtro-envio-data-fim').value = '';
+      document.getElementById('filtro-envio-motivo').value = '';
+      document.getElementById('filtro-envio-carro').value = '';
+      document.getElementById('filtro-envio-prefixo').value = '';
+      if (role !== 'FISCAL') document.getElementById('filtro-envio-fiscal').value = '';
+      consultarEnvios(); // volta para hoje
+    });
+  }
 }
 function applyTheme(theme) { if (theme === "dark") { document.body.classList.add("dark"); getEl('theme-toggle').innerHTML = "☀️"; } else { document.body.classList.remove("dark"); getEl('theme-toggle').innerHTML = "🌙"; } }
 function initTheme() { const tt = getEl('theme-toggle'); if (!tt) return; const saved = localStorage.getItem("theme") || "light"; applyTheme(saved); tt.addEventListener("click", () => { const cur = localStorage.getItem("theme") === "dark" ? "light" : "dark"; localStorage.setItem("theme", cur); applyTheme(cur); }); }
@@ -698,7 +869,8 @@ function registerServiceWorker() { if ('serviceWorker' in navigator) navigator.s
 async function inicializar() {
   initModals(); initEventListeners(); initTheme(); registerServiceWorker();
   await refreshInspetores(); checkLoginStatus(); mostrarBannerAviso(); aplicarBloqueioDeDatas();
-  await carregarTerminais(); preencherSelectTerminais();
+  // Pré-carrega terminais em background
+  carregarTerminais().then(() => preencherSelectTerminais());
   window.addEventListener('pageshow', async (e) => { if (e.persisted) { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
   document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
 }
