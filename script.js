@@ -2,7 +2,7 @@
 // CONFIGURAÇÕES GERAIS
 // ====================================================================
 const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzM47z9njqsKW5BT2OiKq9nGKwZrgrrbMI4F4JTi1oJzd2xDAvXtCSvBH-C_4-VlO6K/exec";
-// ====================================================================
+
 let INSPETORES = {};
 
 const DATA_INICIO_BANNER = new Date('2026-07-10T00:00:00');
@@ -295,60 +295,38 @@ function mostrarBannerAviso() {
 // ====================================================================
 function formatarData(data) {
   if (!data) return 'N/I';
-  
-  // Se for objeto Date
   if (data instanceof Date) {
     const dia = data.getDate().toString().padStart(2, '0');
     const mes = (data.getMonth() + 1).toString().padStart(2, '0');
     const ano = data.getFullYear();
     return `${dia}/${mes}/${ano}`;
   }
-  
-  // Se for string
   if (typeof data === 'string') {
-    // Remove qualquer parte de hora ou timezone
     let dataStr = data.split('T')[0].split(' ')[0];
-    
-    // Verifica formato YYYY-MM-DD
     if (dataStr.match(/^\d{4}-\d{2}-\d{2}/)) {
       const [ano, mes, dia] = dataStr.split('-');
       return `${dia}/${mes}/${ano}`;
     }
-    
-    // Verifica formato DD/MM/YYYY
-    if (dataStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
-      return dataStr;
-    }
+    if (dataStr.match(/^\d{2}\/\d{2}\/\d{4}/)) return dataStr;
   }
-  
-  // Fallback: tenta extrair data com regex
   const match = String(data).match(/(\d{2})\/(\d{2})\/(\d{4})/);
   if (match) return match[0];
-  
   return 'N/I';
 }
-
 function formatarHora(hora) {
   if (!hora) return 'N/I';
-  
-  // Se for objeto Date
   if (hora instanceof Date) {
     const horas = hora.getHours().toString().padStart(2, '0');
     const minutos = hora.getMinutes().toString().padStart(2, '0');
     return `${horas}:${minutos}`;
   }
-  
-  // Se for string
   if (typeof hora === 'string') {
-    // Se vier com formato ISO (ex: 1899-12-30T11:03:28.000Z)
     if (hora.includes('T')) {
       const match = hora.match(/T(\d{2}):(\d{2})/);
       if (match) return `${match[1]}:${match[2]}`;
     }
-    // Se já for HH:MM
     if (hora.match(/^\d{2}:\d{2}/)) return hora;
   }
-  
   return 'N/I';
 }
 
@@ -373,8 +351,7 @@ class InspecaoVeicular {
   }
   async open() {
     if (canCreateInspection) {
-      // Carrega terminais do cache (já deve estar carregado) e abre imediatamente
-      preencherSelectTerminais(); // usa cache
+      preencherSelectTerminais();
       this.openForm();
     } else {
       await this.conferirInspecoes();
@@ -426,11 +403,9 @@ class InspecaoVeicular {
       this.resetarFormulario();
     } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
-  // Consulta padrão (hoje)
   conferirInspecoes() {
     this.conferirInspecoesComFiltro(null, null, null, null);
   }
-  // Consulta com filtros opcionais
   conferirInspecoesComFiltro(dataInicio, dataFim, carro, fiscalFiltro) {
     const params = new URLSearchParams();
     params.append('acao', 'consultar_inspecoes');
@@ -438,7 +413,6 @@ class InspecaoVeicular {
     if (dataFim) params.append('dataFim', dataFim);
     if (carro) params.append('carro', carro);
     if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
-    // Se for fiscal, envia seu próprio nome para filtro de visualização
     if (currentUserRole === 'FISCAL') {
       params.append('fiscal', localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName'));
     }
@@ -470,7 +444,6 @@ class InspecaoVeicular {
 function mostrarModalConferir(inspecoes, role) {
   const modal = getEl('modal-conferir-inspecoes'), container = getEl('lista-inspecoes');
   if (!modal || !container) return;
-  // Adicionar painel de filtros (se não existir)
   if (!document.getElementById('filtros-inspecao')) {
     const filtrosDiv = document.createElement('div');
     filtrosDiv.id = 'filtros-inspecao';
@@ -501,10 +474,9 @@ function mostrarModalConferir(inspecoes, role) {
       document.getElementById('filtro-inspecao-data-fim').value = '';
       document.getElementById('filtro-inspecao-carro').value = '';
       if (role !== 'FISCAL') document.getElementById('filtro-inspecao-fiscal').value = '';
-      window.modals.inspecaoVeicular.conferirInspecoes(); // volta para hoje
+      window.modals.inspecaoVeicular.conferirInspecoes();
     });
   }
-  // Exibir dados
   let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div><div id="lista-inspecoes-conteudo">';
   inspecoes.forEach(ins => {
     const itensDefeito = [];
@@ -539,7 +511,7 @@ function gerarTextoExportacao(inspecoes, role) {
 function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if (m) m.classList.remove('is-open'); }
 
 // ====================================================================
-// ENVIO DE INFORMAÇÕES (com filtros)
+// ENVIO DE INFORMAÇÕES (com fluxo obrigatório)
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
@@ -551,9 +523,18 @@ function abrirModalEnvio() {
   preencherResponsavel();
   preencherSelectLocal();
   carregarRascunho();
+  // Desabilita campos até área selecionada
+  habilitarCamposSecundarios(false);
 }
 function fecharModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.remove('is-open'); }
-function preencherDataAtual() { const d = getEl('envio-data'); if (d && !d.value) d.value = new Date().toISOString().split('T')[0]; }
+function preencherDataAtual() { 
+  const d = getEl('envio-data'); 
+  if (d && !d.value) {
+    const hoje = new Date().toISOString().split('T')[0];
+    d.value = hoje;
+    d.max = hoje; // não permite data futura
+  }
+}
 function preencherResponsavel() {
   const resp = getEl('envio-responsavel');
   if (resp) {
@@ -561,11 +542,137 @@ function preencherResponsavel() {
     resp.value = apelido;
   }
 }
+function habilitarCamposSecundarios(habilitar) {
+  const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-cobrador', 'envio-hora', 'envio-sentido', 'envio-historico', 'envio-local', 'btn-salvar-rascunho', 'btn-enviar-relatorio'];
+  ids.forEach(id => {
+    const campo = getEl(id);
+    if (campo) {
+      if (id.startsWith('btn')) campo.disabled = !habilitar;
+      else campo.disabled = !habilitar;
+    }
+  });
+}
+function aplicarRegrasPorArea() {
+  const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  const campoOutrasArea = getEl('campo-outras-area');
+  const inputOutrasArea = getEl('envio-outras-area');
+  
+  if (areaSelecionada === 'OUTRAS ÁREAS') {
+    campoOutrasArea.style.display = 'block';
+    inputOutrasArea.required = true;
+  } else {
+    campoOutrasArea.style.display = 'none';
+    inputOutrasArea.required = false;
+    inputOutrasArea.value = '';
+  }
+  
+  // Habilita os campos secundários apenas se área foi selecionada
+  if (areaSelecionada) {
+    habilitarCamposSecundarios(true);
+  } else {
+    habilitarCamposSecundarios(false);
+  }
+  
+  // Regras de motivos por área
+  const radiosMotivo = document.querySelectorAll('input[name="motivo"]');
+  radiosMotivo.forEach(radio => radio.disabled = false);
+  if (areaSelecionada === 'SAF' || areaSelecionada === 'PLANTÃO' || areaSelecionada === 'OUTRAS ÁREAS') {
+    radiosMotivo.forEach(radio => {
+      if (radio.value !== 'AVARIAS' && radio.value !== 'OUTROS') {
+        radio.disabled = true;
+        if (radio.checked) radio.checked = false;
+      } else {
+        radio.disabled = false;
+      }
+    });
+    const motivoAtual = document.querySelector('input[name="motivo"]:checked');
+    if (motivoAtual && motivoAtual.disabled) motivoAtual.checked = false;
+  }
+  aplicarRegrasPorMotivo();
+}
+function aplicarRegrasPorMotivo() {
+  const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
+  const campoOutrosMotivo = getEl('campo-outros-motivo');
+  const inputOutrosMotivo = getEl('envio-outros-motivo');
+  
+  if (motivoSelecionado === 'OUTROS') {
+    campoOutrosMotivo.style.display = 'block';
+    inputOutrosMotivo.required = true;
+  } else {
+    campoOutrosMotivo.style.display = 'none';
+    inputOutrosMotivo.required = false;
+    inputOutrosMotivo.value = '';
+  }
+  
+  if (motivoSelecionado === 'AVARIAS') {
+    habilitarCamposAvarias(true);
+    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
+      const campo = getEl(id);
+      if (campo) campo.required = true;
+    });
+  } else if (motivoSelecionado === 'OUTROS') {
+    habilitarCamposAvarias(true);
+    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
+      const campo = getEl(id);
+      if (campo) campo.required = false;
+    });
+  } else if (motivoSelecionado === 'PEDIDO DE FOLGAS' || motivoSelecionado === 'SOLICITAÇÃO DE MATERIAIS') {
+    habilitarCamposAvarias(false);
+    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
+      const campo = getEl(id);
+      if (campo) campo.required = false;
+    });
+  } else {
+    habilitarCamposAvarias(false);
+  }
+}
+function habilitarCamposAvarias(habilitar) {
+  const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'];
+  ids.forEach(id => {
+    const campo = getEl(id);
+    if (campo) {
+      campo.disabled = !habilitar;
+      if (!habilitar) campo.value = '';
+    }
+  });
+}
+function validarFormulario() {
+  const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  if (!areaSelecionada) { alert('Selecione a Área de Destino.'); return false; }
+  if (areaSelecionada === 'OUTRAS ÁREAS') {
+    const outrasArea = getEl('envio-outras-area').value.trim();
+    if (!outrasArea) { alert('Digite a Área de Destino.'); return false; }
+  }
+  const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
+  if (!motivoSelecionado) { alert('Selecione o Motivo.'); return false; }
+  if (motivoSelecionado === 'OUTROS') {
+    const outrosMotivo = getEl('envio-outros-motivo').value.trim();
+    if (!outrosMotivo) { alert('Descreva o motivo resumidamente.'); return false; }
+  }
+  const carro = getEl('envio-carro').value.trim();
+  if (motivoSelecionado === 'AVARIAS' && !carro) { alert('Para o motivo AVARIAS, o campo CARRO é obrigatório.'); return false; }
+  const data = getEl('envio-data').value;
+  if (!data) { alert('Preencha a Data.'); return false; }
+  const hoje = new Date().toISOString().split('T')[0];
+  if (data > hoje) { alert('A data não pode ser maior que a data atual.'); return false; }
+  return true;
+}
 function salvarRascunho() {
+  if (!validarFormulario()) return;
+  const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  let areaDestinoFinal = areaDestino;
+  if (areaDestino === 'OUTRAS ÁREAS') {
+    areaDestinoFinal = getEl('envio-outras-area').value.trim();
+  }
+  const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
+  let motivoFinal = motivo;
+  if (motivo === 'OUTROS') {
+    motivoFinal = getEl('envio-outros-motivo').value.trim();
+  }
   const dados = {
     id: rascunhoAtualId || Date.now().toString(),
-    areaDestino: document.querySelector('input[name="areaDestino"]:checked')?.value || '',
-    motivo: document.querySelector('input[name="motivo"]:checked')?.value || '',
+    areaDestino: areaDestinoFinal,
+    motivo: motivoFinal,
     carro: getEl('envio-carro').value,
     linha: getEl('envio-linha').value,
     motorista: getEl('envio-motorista').value,
@@ -589,8 +696,25 @@ function carregarRascunho() {
   }
   const dados = JSON.parse(localStorage.getItem(`rascunho_${rascunhoAtualId}`));
   if (dados) {
-    if (dados.areaDestino) document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`).checked = true;
-    if (dados.motivo) document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
+    // Restaurar área de destino
+    const areaOriginal = dados.areaDestino;
+    const areasPermitidas = ['FISCALIZAÇÃO', 'SAF', 'PLANTÃO'];
+    if (areasPermitidas.includes(areaOriginal)) {
+      document.querySelector(`input[name="areaDestino"][value="${areaOriginal}"]`).checked = true;
+    } else {
+      document.querySelector(`input[name="areaDestino"][value="OUTRAS ÁREAS"]`).checked = true;
+      getEl('envio-outras-area').value = areaOriginal;
+      getEl('campo-outras-area').style.display = 'block';
+    }
+    // Restaurar motivo
+    const motivosPermitidos = ['AVARIAS', 'PEDIDO DE FOLGAS', 'SOLICITAÇÃO DE MATERIAIS'];
+    if (motivosPermitidos.includes(dados.motivo)) {
+      document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
+    } else {
+      document.querySelector(`input[name="motivo"][value="OUTROS"]`).checked = true;
+      getEl('envio-outros-motivo').value = dados.motivo;
+      getEl('campo-outros-motivo').style.display = 'block';
+    }
     getEl('envio-carro').value = dados.carro || '';
     getEl('envio-linha').value = dados.linha || '';
     getEl('envio-motorista').value = dados.motorista || '';
@@ -601,6 +725,8 @@ function carregarRascunho() {
     getEl('envio-local').value = dados.local || '';
     getEl('envio-data').value = dados.data || '';
     preencherResponsavel();
+    habilitarCamposSecundarios(true);
+    aplicarRegrasPorArea();
     aplicarRegrasPorMotivo();
   } else {
     limparFormularioEnvio();
@@ -609,75 +735,32 @@ function carregarRascunho() {
 }
 function limparFormularioEnvio() {
   document.querySelectorAll('input[name="areaDestino"], input[name="motivo"]').forEach(r => r.checked = false);
+  getEl('envio-outras-area').value = '';
+  getEl('campo-outras-area').style.display = 'none';
+  getEl('envio-outros-motivo').value = '';
+  getEl('campo-outros-motivo').style.display = 'none';
   getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
   getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
   preencherDataAtual();
   rascunhoAtualId = null;
+  habilitarCamposSecundarios(false);
   habilitarCamposAvarias(true);
 }
-function habilitarCamposAvarias(habilitar) {
-  const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'];
-  ids.forEach(id => {
-    const campo = getEl(id);
-    if (campo) {
-      campo.disabled = !habilitar;
-      if (!habilitar) campo.value = '';
-    }
-  });
-}
-function aplicarRegrasPorMotivo() {
-  const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
-  if (motivoSelecionado === 'AVARIAS') {
-    habilitarCamposAvarias(true);
-    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
-      const campo = getEl(id);
-      if (campo) campo.required = true;
-    });
-  } else if (motivoSelecionado === 'OUTROS') {
-    habilitarCamposAvarias(true);
-    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
-      const campo = getEl(id);
-      if (campo) campo.required = false;
-    });
-  } else if (motivoSelecionado === 'PEDIDO DE FOLGAS' || motivoSelecionado === 'SOLICITAÇÃO DE MATERIAIS') {
-    habilitarCamposAvarias(false);
-    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
-      const campo = getEl(id);
-      if (campo) campo.required = false;
-    });
-  } else {
-    habilitarCamposAvarias(false);
-  }
-}
-function aplicarRegrasPorArea() {
-  const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
-  const radiosMotivo = document.querySelectorAll('input[name="motivo"]');
-  radiosMotivo.forEach(radio => radio.disabled = false);
-  if (areaSelecionada === 'SAF' || areaSelecionada === 'PLANTÃO' || areaSelecionada === 'OUTRAS ÁREAS') {
-    radiosMotivo.forEach(radio => {
-      if (radio.value !== 'AVARIAS' && radio.value !== 'OUTROS') {
-        radio.disabled = true;
-        if (radio.checked) radio.checked = false;
-      } else {
-        radio.disabled = false;
-      }
-    });
-    const motivoAtual = document.querySelector('input[name="motivo"]:checked');
-    if (motivoAtual && motivoAtual.disabled) motivoAtual.checked = false;
-  }
-  aplicarRegrasPorMotivo();
-}
 function enviarRelatorio() {
+  if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  let areaDestinoFinal = areaDestino;
+  if (areaDestino === 'OUTRAS ÁREAS') {
+    areaDestinoFinal = getEl('envio-outras-area').value.trim();
+  }
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
-  const carro = getEl('envio-carro').value.trim();
-  const data = getEl('envio-data').value;
-  if (!areaDestino) { alert('Selecione a Área de Destino.'); return; }
-  if (!motivo) { alert('Selecione o Motivo.'); return; }
-  if (motivo === 'AVARIAS' && !carro) { alert('Para o motivo AVARIAS, o campo CARRO é obrigatório.'); return; }
-  if (!data) { alert('Preencha a Data.'); return; }
+  let motivoFinal = motivo;
+  if (motivo === 'OUTROS') {
+    motivoFinal = getEl('envio-outros-motivo').value.trim();
+  }
   const dadosEnvio = {
-    areaDestino, motivo,
+    areaDestino: areaDestinoFinal,
+    motivo: motivoFinal,
     carro: getEl('envio-carro').value,
     linha: getEl('envio-linha').value,
     motorista: getEl('envio-motorista').value,
@@ -699,20 +782,17 @@ function enviarRelatorio() {
 function anexarArquivo() {
   alert('Funcionalidade de anexo será ativada em breve.');
 }
-// Consulta padrão (hoje)
 function consultarEnvios() {
   consultarEnviosComFiltro(null, null, null, null, null);
 }
-function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, prefixo, fiscalFiltro) {
+function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFiltro) {
   const params = new URLSearchParams();
   params.append('acao', 'consultar_envios');
   if (dataInicio) params.append('dataInicio', dataInicio);
   if (dataFim) params.append('dataFim', dataFim);
   if (motivo) params.append('motivo', motivo);
   if (carro) params.append('carro', carro);
-  if (prefixo) params.append('prefixo', prefixo);
   if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
-  // Fiscal só vê seus próprios envios (já tratado no Apps Script)
   if (currentUserRole === 'FISCAL') {
     params.append('fiscal', localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName'));
   }
@@ -730,13 +810,12 @@ function _executarConsultaEnvios(params) {
       } else {
         let html = '';
         dados.forEach((envio, idx) => {
-         // Dentro de _executarConsultaEnvios, no template da lista:
-  html += `
-  <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
-    <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
-    CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
-  </div>
-` ;
+          html += `
+            <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
+              <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
+              CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
+            </div>
+          `;
         });
         container.innerHTML = html;
         document.querySelectorAll('.envio-item').forEach(el => {
@@ -762,10 +841,8 @@ function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
   if (!modal || !container) return;
-  
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
-  
   let html = `
     <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px;">
       <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
@@ -780,7 +857,6 @@ function mostrarDetalheEnvio(envio) {
   `;
   container.innerHTML = html;
   modal.classList.add('is-open');
-  
   const btnExport = document.getElementById('btn-exportar-detalhe');
   if (btnExport) {
     btnExport.onclick = () => {
@@ -796,7 +872,6 @@ function mostrarDetalheEnvio(envio) {
 function gerarTextoDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
-  
   let texto = `=== RELATÓRIO À CHEFIA DO TRÁFEGO ===\n\n`;
   texto += `MOTIVO: ${envio.motivo || 'N/I'}\n`;
   texto += `HORA: ${horaFormatada}  COB.: ${envio.cobrador || 'N/I'}  SENT.: ${envio.sentido || 'N/I'}\n`;
@@ -818,7 +893,7 @@ function fecharModalListaEnvios() {
 }
 
 // ====================================================================
-// INICIALIZAÇÃO (com adição de painel de filtros de envio)
+// INICIALIZAÇÃO
 // ====================================================================
 function initModals() {
   window.modals = {
@@ -844,7 +919,7 @@ function initEventListeners() {
   document.querySelectorAll('input[name="areaDestino"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorArea));
   document.querySelectorAll('input[name="motivo"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorMotivo));
 
-  // Adicionar painel de filtros no modal de lista de envios
+  // Painel de filtros para envios
   const modalLista = getEl('modal-lista-envios');
   if (modalLista && !document.getElementById('filtros-envio')) {
     const content = modalLista.querySelector('.modal-content');
@@ -863,44 +938,33 @@ function initEventListeners() {
         <div><label>Data Fim${maxDiasTexto}</label><input type="date" id="filtro-envio-data-fim"></div>
         <div><label>Motivo</label><select id="filtro-envio-motivo"><option value="">Todos</option><option value="AVARIAS">AVARIAS</option><option value="PEDIDO DE FOLGAS">PEDIDO DE FOLGAS</option><option value="SOLICITAÇÃO DE MATERIAIS">SOLICITAÇÃO DE MATERIAIS</option><option value="OUTROS">OUTROS</option></select></div>
         <div><label>Carro</label><input type="text" id="filtro-envio-carro" placeholder="Placa/Identificação"></div>
-        <div><label>Prefixo</label><input type="text" id="filtro-envio-prefixo" placeholder="Parte do carro"></div>
         ${role !== 'FISCAL' ? `<div><label>Fiscal</label><input type="text" id="filtro-envio-fiscal" placeholder="Apelido"></div>` : ''}
         <div><button id="btn-aplicar-filtros-envio" class="btn-secundario">🔍 Aplicar</button></div>
         <div><button id="btn-limpar-filtros-envio" class="btn-secundario">🗑️ Limpar</button></div>
       </div>
     `;
-    // Inserir após o cabeçalho
     const header = content.querySelector('.modal-header');
     if (header) header.insertAdjacentElement('afterend', filtrosDiv);
     else content.insertBefore(filtrosDiv, content.firstChild);
-
-    // Eventos
     document.getElementById('btn-aplicar-filtros-envio').addEventListener('click', () => {
       const dataInicio = document.getElementById('filtro-envio-data-inicio').value;
       let dataFim = document.getElementById('filtro-envio-data-fim').value;
       const motivo = document.getElementById('filtro-envio-motivo').value;
       const carro = document.getElementById('filtro-envio-carro').value;
-      const prefixo = document.getElementById('filtro-envio-prefixo').value;
       const fiscalFiltro = role !== 'FISCAL' ? document.getElementById('filtro-envio-fiscal').value : null;
-
-      // Validar período máximo
       if (maxDias > 0 && dataInicio && dataFim) {
         const diff = (new Date(dataFim) - new Date(dataInicio)) / (1000 * 60 * 60 * 24);
-        if (diff > maxDias) {
-          alert(`Período máximo de ${maxDias} dias. Ajuste as datas.`);
-          return;
-        }
+        if (diff > maxDias) { alert(`Período máximo de ${maxDias} dias. Ajuste as datas.`); return; }
       }
-      consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, prefixo, fiscalFiltro);
+      consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFiltro);
     });
     document.getElementById('btn-limpar-filtros-envio').addEventListener('click', () => {
       document.getElementById('filtro-envio-data-inicio').value = '';
       document.getElementById('filtro-envio-data-fim').value = '';
       document.getElementById('filtro-envio-motivo').value = '';
       document.getElementById('filtro-envio-carro').value = '';
-      document.getElementById('filtro-envio-prefixo').value = '';
       if (role !== 'FISCAL') document.getElementById('filtro-envio-fiscal').value = '';
-      consultarEnvios(); // volta para hoje
+      consultarEnvios();
     });
   }
 }
@@ -910,7 +974,6 @@ function registerServiceWorker() { if ('serviceWorker' in navigator) navigator.s
 async function inicializar() {
   initModals(); initEventListeners(); initTheme(); registerServiceWorker();
   await refreshInspetores(); checkLoginStatus(); mostrarBannerAviso(); aplicarBloqueioDeDatas();
-  // Pré-carrega terminais em background
   carregarTerminais().then(() => preencherSelectTerminais());
   window.addEventListener('pageshow', async (e) => { if (e.persisted) { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
   document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
