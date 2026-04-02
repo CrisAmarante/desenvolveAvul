@@ -761,20 +761,25 @@ function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
   if (!modal || !container) return;
+  
+  const horaFormatada = formatarHora(envio.hora);
+  const dataFormatada = formatarData(envio.data);
+  
   let html = `
     <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px;">
       <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
-      <div><strong>HORA:</strong> ${envio.hora || 'N/I'} <strong>COB.:</strong> ${envio.cobrador || 'N/I'} <strong>SENT.:</strong> ${envio.sentido || 'N/I'}</div>
+      <div><strong>HORA:</strong> ${horaFormatada} <strong>COB.:</strong> ${envio.cobrador || 'N/I'} <strong>SENT.:</strong> ${envio.sentido || 'N/I'}</div>
       <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
       <div><strong>MOT.:</strong> ${envio.motorista || 'N/I'}</div>
       <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
-      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${formatarData(envio.data)}</div>
+      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${dataFormatada}</div>
       <div><strong>ANEXO:</strong> ${envio.anexo ? `<a href="${envio.anexo}" target="_blank">Ver anexo</a>` : 'Nenhum'}</div>
       <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
   `;
   container.innerHTML = html;
   modal.classList.add('is-open');
+  
   const btnExport = document.getElementById('btn-exportar-detalhe');
   if (btnExport) {
     btnExport.onclick = () => {
@@ -788,13 +793,16 @@ function mostrarDetalheEnvio(envio) {
   }
 }
 function gerarTextoDetalheEnvio(envio) {
+  const horaFormatada = formatarHora(envio.hora);
+  const dataFormatada = formatarData(envio.data);
+  
   let texto = `=== RELATÓRIO À CHEFIA DO TRÁFEGO ===\n\n`;
   texto += `MOTIVO: ${envio.motivo || 'N/I'}\n`;
-  texto += `HORA: ${envio.hora || 'N/I'}  COB.: ${envio.cobrador || 'N/I'}  SENT.: ${envio.sentido || 'N/I'}\n`;
+  texto += `HORA: ${horaFormatada}  COB.: ${envio.cobrador || 'N/I'}  SENT.: ${envio.sentido || 'N/I'}\n`;
   texto += `CARRO: ${envio.carro || 'N/I'}\n`;
   texto += `MOTORISTA: ${envio.motorista || 'N/I'}\n`;
   texto += `LINHA: ${envio.linha || 'N/I'}  HISTÓRICO: ${envio.historico || 'N/I'}\n`;
-  texto += `LOCAL: ${envio.local || 'N/I'}  DATA: ${formatarData(envio.data)}\n`;
+  texto += `LOCAL: ${envio.local || 'N/I'}  DATA: ${dataFormatada}\n`;
   texto += `ANEXO: ${envio.anexo || 'Nenhum'}\n`;
   texto += `RESPONSÁVEL: ${envio.fiscal || 'N/I'}\n`;
   return texto;
