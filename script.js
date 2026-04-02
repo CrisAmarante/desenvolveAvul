@@ -291,33 +291,65 @@ function mostrarBannerAviso() {
 }
 
 // ====================================================================
-// UTILITÁRIO DE FORMATAÇÃO DE DATA
+// UTILITÁRIO DE FORMATAÇÃO DE DATA E HORA
 // ====================================================================
 function formatarData(data) {
   if (!data) return 'N/I';
-  if (typeof data === 'string') {
-    if (data.includes('-')) {
-      const [ano, mes, dia] = data.split('-');
-      return `${dia}/${mes}/${ano}`;
-    }
-    if (data.includes('/')) {
-      const partes = data.split('/');
-      if (partes[0].length === 4) {
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-      }
-      return data;
-    }
-  }
+  
+  // Se for objeto Date
   if (data instanceof Date) {
     const dia = data.getDate().toString().padStart(2, '0');
     const mes = (data.getMonth() + 1).toString().padStart(2, '0');
     const ano = data.getFullYear();
     return `${dia}/${mes}/${ano}`;
   }
-  const str = data.toString();
-  const match = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  
+  // Se for string
+  if (typeof data === 'string') {
+    // Remove qualquer parte de hora ou timezone
+    let dataStr = data.split('T')[0].split(' ')[0];
+    
+    // Verifica formato YYYY-MM-DD
+    if (dataStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+      const [ano, mes, dia] = dataStr.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+    
+    // Verifica formato DD/MM/YYYY
+    if (dataStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+      return dataStr;
+    }
+  }
+  
+  // Fallback: tenta extrair data com regex
+  const match = String(data).match(/(\d{2})\/(\d{2})\/(\d{4})/);
   if (match) return match[0];
-  return str;
+  
+  return 'N/I';
+}
+
+function formatarHora(hora) {
+  if (!hora) return 'N/I';
+  
+  // Se for objeto Date
+  if (hora instanceof Date) {
+    const horas = hora.getHours().toString().padStart(2, '0');
+    const minutos = hora.getMinutes().toString().padStart(2, '0');
+    return `${horas}:${minutos}`;
+  }
+  
+  // Se for string
+  if (typeof hora === 'string') {
+    // Se vier com formato ISO (ex: 1899-12-30T11:03:28.000Z)
+    if (hora.includes('T')) {
+      const match = hora.match(/T(\d{2}):(\d{2})/);
+      if (match) return `${match[1]}:${match[2]}`;
+    }
+    // Se já for HH:MM
+    if (hora.match(/^\d{2}:\d{2}/)) return hora;
+  }
+  
+  return 'N/I';
 }
 
 // ====================================================================
