@@ -102,3 +102,49 @@ textarea { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius:
   max-width: 500px;
   width: 90%;
 }
+/* Estilos para campos obrigatórios */
+.required {
+  color: #d11a2d;
+  font-weight: bold;
+}
+
+/* Ajuste do painel de filtros para ficar justificado */
+#filtros-envio,
+#filtros-inspecao {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#filtros-envio > div,
+#filtros-inspecao > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+#filtros-envio label,
+#filtros-inspecao label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+#filtros-envio input,
+#filtros-envio select,
+#filtros-inspecao input {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+/* Botões dentro dos filtros */
+#filtros-envio button,
+#filtros-inspecao button {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
