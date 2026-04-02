@@ -730,12 +730,13 @@ function _executarConsultaEnvios(params) {
       } else {
         let html = '';
         dados.forEach((envio, idx) => {
-          html += `
-            <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
-              <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
-              CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
-            </div>
-          `;
+         // Dentro de _executarConsultaEnvios, no template da lista:
+  html += `
+  <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
+    <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
+    CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
+  </div>
+` ;
         });
         container.innerHTML = html;
         document.querySelectorAll('.envio-item').forEach(el => {
