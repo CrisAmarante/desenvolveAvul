@@ -22,4 +22,5 @@ desktop.ini
 *.bak
 *.tmp
 
-
+# Arquivos particulares
+upgrades.txt
