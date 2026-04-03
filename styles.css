@@ -148,3 +148,10 @@ textarea { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius:
   padding: 6px 12px;
   font-size: 0.8rem;
 }
+/* Efeito visual para os botões de posição quando estão bloqueados */
+.pos-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #cbd5e1;
+  color: #cbd5e1;
+}
