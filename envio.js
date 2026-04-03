@@ -331,7 +331,17 @@ function enviarRelatorio() {
     fiscal: localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName')
   };
   
-  fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ acao: 'envio_informacoes', dados: JSON.stringify(dadosEnvio) }) })
+ // --- INÍCIO DO CÓDIGO ATUALIZADO ---
+  const formData = new FormData();
+  formData.append('acao', 'envio_informacoes');
+  formData.append('dados', JSON.stringify(dadosEnvio));
+
+  // ATENÇÃO: Ao usar FormData, não colocamos o cabeçalho 'Content-Type'
+  fetch(URL_PLANILHA, { 
+    method: 'POST', 
+    mode: 'no-cors', 
+    body: formData 
+  })
     .then(() => { 
       alert('Relatório e anexos enviados com sucesso!'); 
       if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`); 
@@ -345,6 +355,7 @@ function enviarRelatorio() {
       btnEnviar.innerHTML = textoBotaoOriginal;
       btnEnviar.disabled = false;
     });
+  // --- FIM DO CÓDIGO ATUALIZADO ---
 }
 
 function limparFormularioEnvio() {
