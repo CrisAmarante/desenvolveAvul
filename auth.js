@@ -42,27 +42,52 @@ async function login(e) {
   e.preventDefault();
   const senha = getEl('password').value.trim();
   const errorMsg = getEl('login-error');
-  let nomeEncontrado = null, apelidoEncontrado = null;
-  for (const [apelido, info] of Object.entries(INSPETORES)) {
-    if (await hashPassword(senha, apelido) === info.hash) {
-      nomeEncontrado = info.nome;
-      apelidoEncontrado = apelido;
-      break;
+  const btnSubmit = e.target.querySelector('button[type="submit"]');
+  
+  // Muda o botão para mostrar que está carregando
+  const textoOriginal = btnSubmit.innerHTML;
+  btnSubmit.innerHTML = 'Verificando...';
+  btnSubmit.disabled = true;
+  errorMsg.style.display = 'none';
+
+  // Cria a comunicação com o backend
+  const callbackName = 'loginCallback_' + Date.now();
+  
+  window[callbackName] = function(resposta) {
+    delete window[callbackName];
+    btnSubmit.innerHTML = textoOriginal;
+    btnSubmit.disabled = false;
+
+    if (resposta && resposta.sucesso) {
+      // Login aprovado pelo servidor!
+      localStorage.setItem('inspectorLoggedIn', 'true');
+      localStorage.setItem('inspectorName', resposta.nome);
+      localStorage.setItem('inspectorApelido', resposta.apelido);
+      localStorage.setItem('inspectorRole', resposta.funcao);
+      
+      registrarLog(resposta.apelido);
+      window.modals.login.close();
+      checkLoginStatus();
+    } else {
+      // Login reprovado (PIN não existe ou está errado)
+      errorMsg.style.display = 'block';
+      getEl('password').value = '';
+      getEl('password').focus();
     }
-  }
-  if (nomeEncontrado) {
-    localStorage.setItem('inspectorLoggedIn', 'true');
-    localStorage.setItem('inspectorName', nomeEncontrado);
-    localStorage.setItem('inspectorApelido', apelidoEncontrado);
-    localStorage.setItem('inspectorRole', INSPETORES[apelidoEncontrado].funcao);
-    registrarLog(apelidoEncontrado);
-    window.modals.login.close();
-    checkLoginStatus();
-  } else {
-    errorMsg.style.display = 'block';
-    getEl('password').value = '';
-    getEl('password').focus();
-  }
+  };
+
+  // Envia a requisição para o Google Apps Script testar o PIN
+  const script = document.createElement('script');
+  script.src = `${URL_PLANILHA}?acao=login&senha=${encodeURIComponent(senha)}&callback=${callbackName}`;
+  
+  script.onerror = () => {
+    delete window[callbackName];
+    btnSubmit.innerHTML = textoOriginal;
+    btnSubmit.disabled = false;
+    alert('Erro de conexão. Verifique sua internet.');
+  };
+  
+  document.body.appendChild(script);
 }
 function logoutInspector() {
   localStorage.removeItem('inspectorLoggedIn');
