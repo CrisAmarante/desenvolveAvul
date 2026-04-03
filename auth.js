@@ -11,21 +11,27 @@ async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
   const nome = localStorage.getItem('inspectorName');
   const apelido = localStorage.getItem('inspectorApelido');
+  const role = localStorage.getItem('inspectorRole'); // Pega a função direto do que o Google aprovou
+
   const main = getEl('main-screen');
   const insp = getEl('inspector-screen');
   const btnInspecao = getEl('btn-inspecao-veicular');
   const btnEnvio = getEl('btn-envio-informacoes');
-  if (logado === 'true' && nome && apelido && INSPETORES[apelido]) {
-    const role = INSPETORES[apelido].funcao;
+  
+  // Agora não checamos mais o INSPETORES[apelido]
+  if (logado === 'true' && nome && apelido && role) {
     currentUserRole = role;
     canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
-    localStorage.setItem('inspectorRole', role);
+    
     if (btnInspecao && role !== 'MONITOR') btnInspecao.style.display = 'flex';
     else if (btnInspecao) btnInspecao.style.display = 'none';
+    
     if (btnEnvio && role !== 'MONITOR') btnEnvio.style.display = 'flex';
     else if (btnEnvio) btnEnvio.style.display = 'none';
-    main.style.display = 'none';
-    insp.style.display = 'flex';
+    
+    if (main) main.style.display = 'none';
+    if (insp) insp.style.display = 'flex';
+    
     showWelcomeToast(apelido);
     const logoutBtn = insp.querySelector('.logout-btn');
     if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${apelido}</small>`;
@@ -34,8 +40,8 @@ async function checkLoginStatus() {
     localStorage.removeItem('inspectorName');
     localStorage.removeItem('inspectorApelido');
     localStorage.removeItem('inspectorRole');
-    main.style.display = 'flex';
-    insp.style.display = 'none';
+    if (main) main.style.display = 'flex';
+    if (insp) insp.style.display = 'none';
   }
 }
 async function login(e) {
