@@ -91,9 +91,27 @@ function initTheme() { const tt = getEl('theme-toggle'); if (!tt) return; const 
 function registerServiceWorker() { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').then(r => console.log('SW registrado:', r.scope)).catch(e => console.error('Falha no SW:', e)); }
 async function inicializar() {
   initModals(); initEventListeners(); initTheme(); registerServiceWorker();
-  await refreshInspetores(); checkLoginStatus(); mostrarBannerAviso(); aplicarBloqueioDeDatas();
+  
+  checkLoginStatus(); // Tiramos o await refreshInspetores() daqui
+  mostrarBannerAviso(); 
+  aplicarBloqueioDeDatas();
+  
   carregarTerminais().then(() => preencherSelectTerminais());
-  window.addEventListener('pageshow', async (e) => { if (e.persisted) { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
-  document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await refreshInspetores(); checkLoginStatus(); await carregarTerminais(true); preencherSelectTerminais(); } });
+  
+  window.addEventListener('pageshow', async (e) => { 
+    if (e.persisted) { 
+      checkLoginStatus(); 
+      await carregarTerminais(true); 
+      preencherSelectTerminais(); 
+    } 
+  });
+  
+  document.addEventListener('visibilitychange', async () => { 
+    if (document.visibilityState === 'visible') { 
+      checkLoginStatus(); 
+      await carregarTerminais(true); 
+      preencherSelectTerminais(); 
+    } 
+  });
 }
 window.addEventListener('load', inicializar);
