@@ -133,9 +133,13 @@
         <div class="field"><label>DATA:</label><input type="date" id="envio-data" max=""></div>
       </div>
       <div class="action-buttons">
+        <input type="file" id="input-arquivo-oculto" accept="image/*, application/pdf" style="display: none;">
+        
         <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
         <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
-        <button type="button" id="btn-anexar" class="btn-secundario" disabled>📎 ANEXAR (em breve)</button>
+        
+        <button type="button" id="btn-anexar" class="btn-secundario">📎 ANEXAR</button>
+        
         <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
       </div>
     </form>
