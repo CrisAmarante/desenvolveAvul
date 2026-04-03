@@ -1,9 +1,9 @@
 // ====================================================================
-// ENVIO DE INFORMAÇÕES (com fluxo obrigatório)
+// ENVIO DE INFORMAÇÕES (com fluxo obrigatório e Upload)
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
-let anexoAtualObj = null; // <- NOVA VARIÁVEL AQUI
+let anexoAtualObj = null;
 
 function abrirModalEnvio() {
   const m = getEl('modal-envio-informacoes');
@@ -12,18 +12,20 @@ function abrirModalEnvio() {
   preencherResponsavel();
   preencherSelectLocal();
   carregarRascunho();
-  // Desabilita campos até área selecionada
   habilitarCamposSecundarios(false);
 }
+
 function fecharModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.remove('is-open'); }
+
 function preencherDataAtual() { 
   const d = getEl('envio-data'); 
   if (d && !d.value) {
     const hoje = new Date().toISOString().split('T')[0];
     d.value = hoje;
-    d.max = hoje; // não permite data futura
+    d.max = hoje;
   }
 }
+
 function preencherResponsavel() {
   const resp = getEl('envio-responsavel');
   if (resp) {
@@ -31,6 +33,7 @@ function preencherResponsavel() {
     resp.value = apelido;
   }
 }
+
 function habilitarCamposSecundarios(habilitar) {
   const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-cobrador', 'envio-hora', 'envio-sentido', 'envio-historico', 'envio-local', 'btn-salvar-rascunho', 'btn-enviar-relatorio'];
   ids.forEach(id => {
@@ -41,6 +44,7 @@ function habilitarCamposSecundarios(habilitar) {
     }
   });
 }
+
 function aplicarRegrasPorArea() {
   const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
   const campoOutrasArea = getEl('campo-outras-area');
@@ -55,14 +59,9 @@ function aplicarRegrasPorArea() {
     inputOutrasArea.value = '';
   }
   
-  // Habilita os campos secundários apenas se área foi selecionada
-  if (areaSelecionada) {
-    habilitarCamposSecundarios(true);
-  } else {
-    habilitarCamposSecundarios(false);
-  }
+  if (areaSelecionada) habilitarCamposSecundarios(true);
+  else habilitarCamposSecundarios(false);
   
-  // Regras de motivos por área
   const radiosMotivo = document.querySelectorAll('input[name="motivo"]');
   radiosMotivo.forEach(radio => radio.disabled = false);
   if (areaSelecionada === 'SAF' || areaSelecionada === 'PLANTÃO' || areaSelecionada === 'OUTRAS ÁREAS') {
@@ -79,6 +78,7 @@ function aplicarRegrasPorArea() {
   }
   aplicarRegrasPorMotivo();
 }
+
 function aplicarRegrasPorMotivo() {
   const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
   const campoOutrosMotivo = getEl('campo-outros-motivo');
@@ -115,6 +115,7 @@ function aplicarRegrasPorMotivo() {
     habilitarCamposAvarias(false);
   }
 }
+
 function habilitarCamposAvarias(habilitar) {
   const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'];
   ids.forEach(id => {
@@ -125,6 +126,7 @@ function habilitarCamposAvarias(habilitar) {
     }
   });
 }
+
 function validarFormulario() {
   const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
   if (!areaSelecionada) { alert('Selecione a Área de Destino.'); return false; }
@@ -146,6 +148,7 @@ function validarFormulario() {
   if (data > hoje) { alert('A data não pode ser maior que a data atual.'); return false; }
   return true;
 }
+
 function salvarRascunho() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
@@ -177,6 +180,7 @@ function salvarRascunho() {
   rascunhoAtualId = dados.id;
   alert('Rascunho salvo!');
 }
+
 function carregarRascunho() {
   if (!rascunhoAtualId) {
     const keys = Object.keys(localStorage).filter(k => k.startsWith('rascunho_'));
@@ -185,7 +189,6 @@ function carregarRascunho() {
   }
   const dados = JSON.parse(localStorage.getItem(`rascunho_${rascunhoAtualId}`));
   if (dados) {
-    // Restaurar área de destino
     const areaOriginal = dados.areaDestino;
     const areasPermitidas = ['FISCALIZAÇÃO', 'SAF', 'PLANTÃO'];
     if (areasPermitidas.includes(areaOriginal)) {
@@ -195,7 +198,6 @@ function carregarRascunho() {
       getEl('envio-outras-area').value = areaOriginal;
       getEl('campo-outras-area').style.display = 'block';
     }
-    // Restaurar motivo
     const motivosPermitidos = ['AVARIAS', 'PEDIDO DE FOLGAS', 'SOLICITAÇÃO DE MATERIAIS'];
     if (motivosPermitidos.includes(dados.motivo)) {
       document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
@@ -222,24 +224,16 @@ function carregarRascunho() {
     preencherResponsavel();
   }
 }
-function limparFormularioEnvio() {
-  document.querySelectorAll('input[name="areaDestino"], input[name="motivo"]').forEach(r => r.checked = false);
-  getEl('envio-outras-area').value = '';
-  getEl('campo-outras-area').style.display = 'none';
-  getEl('envio-outros-motivo').value = '';
-  getEl('campo-outros-motivo').style.display = 'none';
-  getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
-  getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
-  preencherDataAtual();
-  rascunhoAtualId = null;
-  habilitarCamposSecundarios(false);
-  habilitarCamposAvarias(true);
-}
+
 // ====================================================================
 // PROCESSAMENTO DE ANEXOS (COMPRESSÃO E BASE64)
 // ====================================================================
 function acionarInputArquivo() {
   getEl('input-arquivo-oculto').click();
+}
+
+function anexarArquivo() {
+  acionarInputArquivo();
 }
 
 getEl('input-arquivo-oculto')?.addEventListener('change', function(event) {
@@ -253,14 +247,12 @@ getEl('input-arquivo-oculto')?.addEventListener('change', function(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     if (file.type.includes('pdf')) {
-      // PDF não comprime, manda direto
       anexoAtualObj = { base64: e.target.result.split(',')[1], mimeType: file.type };
       btnAnexar.innerHTML = '✅ Arquivo Anexado';
       btnAnexar.disabled = false;
-      btnAnexar.style.borderColor = '#10b981'; // Fica verdinho
+      btnAnexar.style.borderColor = '#10b981';
       btnAnexar.style.color = '#10b981';
     } else if (file.type.includes('image')) {
-      // Se for imagem, joga no compressor
       comprimirImagem(e.target.result, file.type, function(base64Compressed) {
         anexoAtualObj = { base64: base64Compressed, mimeType: file.type };
         btnAnexar.innerHTML = '✅ Foto Anexada';
@@ -281,7 +273,6 @@ function comprimirImagem(dataUrl, mimeType, callback) {
   const img = new Image();
   img.onload = function() {
     const canvas = document.createElement('canvas');
-    // Resolução máxima de 1200px (excelente para relatórios sem pesar)
     const MAX_WIDTH = 1200; 
     const MAX_HEIGHT = 1200;
     let width = img.width;
@@ -297,12 +288,15 @@ function comprimirImagem(dataUrl, mimeType, callback) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, width, height);
     
-    // Converte para Base64 com 70% de qualidade
     const newDataUrl = canvas.toDataURL(mimeType, 0.7); 
-    callback(newDataUrl.split(',')[1]); // Retorna apenas o código purinho
+    callback(newDataUrl.split(',')[1]);
   };
   img.src = dataUrl;
 }
+
+// ====================================================================
+// ENVIO PARA O SERVIDOR E LIMPEZA
+// ====================================================================
 function enviarRelatorio() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
@@ -333,7 +327,7 @@ function enviarRelatorio() {
     historico: getEl('envio-historico').value,
     local: getEl('envio-local').value,
     data: getEl('envio-data').value,
-    anexoObj: anexoAtualObj, // AQUI VAI NOSSO ARQUIVO PESADO!
+    anexoObj: anexoAtualObj,
     fiscal: localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName')
   };
   
@@ -362,7 +356,6 @@ function limparFormularioEnvio() {
   getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
   getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
   
-  // Limpa o anexo visualmente e na memória
   anexoAtualObj = null;
   const inputArq = getEl('input-arquivo-oculto');
   if(inputArq) inputArq.value = '';
@@ -379,13 +372,13 @@ function limparFormularioEnvio() {
   habilitarCamposAvarias(true);
 }
 
-function anexarArquivo() {
-  // Substitui aquele seu 'alert' antigo
-  acionarInputArquivo();
-}
+// ====================================================================
+// CONSULTAS DE ENVIOS
+// ====================================================================
 function consultarEnvios() {
   consultarEnviosComFiltro(null, null, null, null, null);
 }
+
 function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFiltro) {
   const params = new URLSearchParams();
   params.append('acao', 'consultar_envios');
@@ -399,6 +392,7 @@ function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFilt
   }
   return _executarConsultaEnvios(params);
 }
+
 function _executarConsultaEnvios(params) {
   return new Promise((resolve, reject) => {
     const callbackName = 'mostrarListaEnvios_' + Date.now();
@@ -438,6 +432,7 @@ function _executarConsultaEnvios(params) {
     document.body.appendChild(script);
   });
 }
+
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
@@ -452,7 +447,7 @@ function mostrarDetalheEnvio(envio) {
       <div><strong>MOT.:</strong> ${envio.motorista || 'N/I'}</div>
       <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
       <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${dataFormatada}</div>
-      <div><strong>ANEXO:</strong> ${envio.anexo ? `<a href="${envio.anexo}" target="_blank">Ver anexo</a>` : 'Nenhum'}</div>
+      <div><strong>ANEXO:</strong> ${envio.anexo ? `<a href="${envio.anexo}" target="_blank" style="color: #10b981; text-decoration: underline;">Ver anexo</a>` : 'Nenhum'}</div>
       <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
   `;
@@ -470,6 +465,7 @@ function mostrarDetalheEnvio(envio) {
     };
   }
 }
+
 function gerarTextoDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
@@ -484,10 +480,12 @@ function gerarTextoDetalheEnvio(envio) {
   texto += `RESPONSÁVEL: ${envio.fiscal || 'N/I'}\n`;
   return texto;
 }
+
 function fecharModalDetalheEnvio() {
   const modal = getEl('modal-detalhe-envio');
   if (modal) modal.classList.remove('is-open');
 }
+
 function fecharModalListaEnvios() {
   const modal = getEl('modal-lista-envios');
   if (modal) modal.classList.remove('is-open');
