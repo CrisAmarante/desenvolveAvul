@@ -5,16 +5,54 @@
 class InspecaoVeicular {
   constructor() { this.modal = new ModalController('modal-inspecao-veicular'); this.initEventListeners(); }
   close() { this.modal.close(); }
-  initEventListeners() {
+initEventListeners() {
     getEl('btn-inspecao-veicular')?.addEventListener('click', (e) => { e.preventDefault(); this.open(); });
+    
     document.querySelectorAll('#tabela-inspecao tbody tr').forEach(row => {
-      const cbOk = row.querySelector('.ok'), cbDef = row.querySelector('.defeito');
+      const cbOk = row.querySelector('.ok');
+      const cbDef = row.querySelector('.defeito');
+      const obsInput = row.querySelector('.obs-input');
+      const posBtns = row.querySelectorAll('.pos-btn');
+
+      // Nova regra: Atualiza o bloqueio dos campos da linha
+      const atualizarEstadoLinha = () => {
+        const isDefective = cbDef.checked;
+        
+        // Bloqueia e limpa o input de observação se não estiver com defeito
+        if (obsInput) {
+          obsInput.disabled = !isDefective;
+          if (!isDefective) obsInput.value = ''; 
+        }
+        
+        // Bloqueia e limpa os botões de posição (F, M, T) se não estiver com defeito
+        if (posBtns) {
+          posBtns.forEach(btn => {
+            btn.disabled = !isDefective;
+            if (!isDefective) btn.classList.remove('active');
+          });
+        }
+      };
+
       if (cbOk && cbDef) {
-        cbOk.addEventListener('change', () => { if (cbOk.checked) cbDef.checked = false; });
-        cbDef.addEventListener('change', () => { if (cbDef.checked) cbOk.checked = false; });
+        cbOk.addEventListener('change', () => { 
+          if (cbOk.checked) cbDef.checked = false; 
+          atualizarEstadoLinha(); // Chama a regra ao clicar
+        });
+        cbDef.addEventListener('change', () => { 
+          if (cbDef.checked) cbOk.checked = false; 
+          atualizarEstadoLinha(); // Chama a regra ao clicar
+        });
       }
     });
-    document.querySelectorAll('.pos-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); btn.classList.toggle('active'); }));
+
+    document.querySelectorAll('.pos-btn').forEach(btn => btn.addEventListener('click', (e) => { 
+      e.stopPropagation(); 
+      // Só deixa ativar o botão se ele não estiver bloqueado
+      if (!btn.disabled) {
+        btn.classList.toggle('active'); 
+      }
+    }));
+    
     getEl('btn-enviar-inspecao')?.addEventListener('click', () => this.enviarInspecao());
     getEl('btn-conferir-inspecoes')?.addEventListener('click', () => this.conferirInspecoes());
   }
@@ -45,7 +83,22 @@ class InspecaoVeicular {
     if (getEl('data')) getEl('data').value = agora.toLocaleDateString('pt-BR');
     if (getEl('hora')) getEl('hora').value = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
-  resetarFormulario() { if (getEl('carro')) getEl('carro').value = ''; document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false); document.querySelectorAll('.obs-input').forEach(inp => inp.value = ''); document.querySelectorAll('.pos-btn').forEach(btn => btn.classList.remove('active')); }
+ resetarFormulario() { 
+    if (getEl('carro')) getEl('carro').value = ''; 
+    document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false); 
+    
+    // Agora limpa e BLOQUEIA os inputs de texto por padrão
+    document.querySelectorAll('.obs-input').forEach(inp => { 
+      inp.value = ''; 
+      inp.disabled = true; 
+    }); 
+    
+    // Agora limpa e BLOQUEIA os botões F, M, T por padrão
+    document.querySelectorAll('.pos-btn').forEach(btn => { 
+      btn.classList.remove('active'); 
+      btn.disabled = true; 
+    }); 
+  }
   coletarDados() {
     const carro = getEl('carro').value.trim(), terminal = getEl('terminal').value, fiscal = getEl('fiscal').value, data = getEl('data').value, hora = getEl('hora').value;
     if (!carro || !terminal) { alert('Preencha o campo CARRO e selecione o TERMINAL.'); return null; }
