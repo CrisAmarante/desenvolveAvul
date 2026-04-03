@@ -126,7 +126,9 @@ initEventListeners() {
     } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
   conferirInspecoes() {
-    this.conferirInspecoesComFiltro(null, null, null, null);
+    // Por padrão, pega a data exata de hoje no formato YYYY-MM-DD
+    const hoje = new Date().toISOString().split('T')[0];
+    this.conferirInspecoesComFiltro(hoje, hoje, null, null);
   }
   conferirInspecoesComFiltro(dataInicio, dataFim, carro, fiscalFiltro) {
     const params = new URLSearchParams();
@@ -140,16 +142,16 @@ initEventListeners() {
     }
     return this._executarConsultaInspecao(params);
   }
-  _executarConsultaInspecao(params) {
+ _executarConsultaInspecao(params) {
     return new Promise((resolve, reject) => {
       const callbackName = 'consultarInspecoesCallback_' + Date.now();
       window[callbackName] = (dados) => {
         if (dados && dados.erro) {
           alert('Erro ao consultar: ' + dados.erro);
-        } else if (!dados || (Array.isArray(dados) && dados.length === 0)) {
-          alert('Nenhuma inspeção encontrada.');
         } else {
-          mostrarModalConferir(dados, currentUserRole);
+          // Em vez de bloquear com um alert, sempre abre o modal
+          // O modal cuidará de exibir a mensagem de "vazio" na tela
+          mostrarModalConferir(dados || [], currentUserRole, params);
         }
         delete window[callbackName];
         resolve();
@@ -163,9 +165,13 @@ initEventListeners() {
     });
   }
 }
-function mostrarModalConferir(inspecoes, role) {
+function mostrarModalConferir(inspecoes, role, params) {
   const modal = getEl('modal-conferir-inspecoes'), container = getEl('lista-inspecoes');
   if (!modal || !container) return;
+  
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Monta o painel de filtros se ele ainda não existir
   if (!document.getElementById('filtros-inspecao')) {
     const filtrosDiv = document.createElement('div');
     filtrosDiv.id = 'filtros-inspecao';
@@ -173,10 +179,12 @@ function mostrarModalConferir(inspecoes, role) {
     filtrosDiv.style.padding = '10px';
     filtrosDiv.style.background = 'var(--card-bg)';
     filtrosDiv.style.borderRadius = '8px';
+    
+    // Injeta os inputs de Data Início e Fim já preenchidos com o dia de hoje
     filtrosDiv.innerHTML = `
       <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
-        <div><label>Data Início</label><input type="date" id="filtro-inspecao-data-inicio"></div>
-        <div><label>Data Fim</label><input type="date" id="filtro-inspecao-data-fim"></div>
+        <div><label>Data Início</label><input type="date" id="filtro-inspecao-data-inicio" value="${hoje}"></div>
+        <div><label>Data Fim</label><input type="date" id="filtro-inspecao-data-fim" value="${hoje}"></div>
         <div><label>Carro</label><input type="text" id="filtro-inspecao-carro" placeholder="Placa/Identificação"></div>
         ${role !== 'FISCAL' ? `<div><label>Fiscal</label><input type="text" id="filtro-inspecao-fiscal" placeholder="Apelido"></div>` : ''}
         <div><button id="btn-aplicar-filtros-inspecao" class="btn-secundario">🔍 Aplicar</button></div>
@@ -184,6 +192,7 @@ function mostrarModalConferir(inspecoes, role) {
       </div>
     `;
     container.parentNode.insertBefore(filtrosDiv, container);
+    
     document.getElementById('btn-aplicar-filtros-inspecao').addEventListener('click', () => {
       const dataInicio = document.getElementById('filtro-inspecao-data-inicio').value;
       const dataFim = document.getElementById('filtro-inspecao-data-fim').value;
@@ -191,30 +200,63 @@ function mostrarModalConferir(inspecoes, role) {
       const fiscalFiltro = role !== 'FISCAL' ? document.getElementById('filtro-inspecao-fiscal').value : null;
       window.modals.inspecaoVeicular.conferirInspecoesComFiltro(dataInicio, dataFim, carro, fiscalFiltro);
     });
+    
     document.getElementById('btn-limpar-filtros-inspecao').addEventListener('click', () => {
-      document.getElementById('filtro-inspecao-data-inicio').value = '';
-      document.getElementById('filtro-inspecao-data-fim').value = '';
+      document.getElementById('filtro-inspecao-data-inicio').value = hoje;
+      document.getElementById('filtro-inspecao-data-fim').value = hoje;
       document.getElementById('filtro-inspecao-carro').value = '';
       if (role !== 'FISCAL') document.getElementById('filtro-inspecao-fiscal').value = '';
       window.modals.inspecaoVeicular.conferirInspecoes();
     });
   }
+
+  // --- TRATAMENTO: O QUE ACONTECE SE A LISTA VIER VAZIA ---
+  if (!inspecoes || inspecoes.length === 0) {
+    // Confere se o usuário pesquisou só "hoje" ou usou outros filtros
+    let isDefaultToday = true;
+    if (params) {
+      const pIn = params.get('dataInicio');
+      const pFim = params.get('dataFim');
+      const pCar = params.get('carro');
+      const pFis = params.get('fiscalFiltro');
+      if (pIn !== hoje || pFim !== hoje || pCar || pFis) {
+        isDefaultToday = false;
+      }
+    }
+    
+    const msg = isDefaultToday ? 'Nenhuma inspeção nesta data.' : 'Nenhuma inspeção encontrada para estes filtros.';
+    
+    container.innerHTML = `<div style="text-align: center; padding: 30px 10px; font-weight: 500;">${msg}</div>`;
+    modal.classList.add('is-open');
+    return;
+  }
+
+  // --- SE TIVER RESULTADO, MONTA A LISTA NORMALMENTE ---
   let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div><div id="lista-inspecoes-conteudo">';
+  
   inspecoes.forEach(ins => {
     const itensDefeito = [];
     if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
     if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
     if (ins.usb.status === 'DEFEITO') itensDefeito.push(`USB: ${ins.usb.obs || 'sem obs'}`);
     if (ins.ventilador.status === 'DEFEITO') { let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`; if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`; itensDefeito.push(d); }
+    
     if (itensDefeito.length === 0) return;
+    
     let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);"><strong>${ins.carro} - ${ins.terminal}</strong><br>`;
     if (role !== 'FISCAL') linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
     linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">${itensDefeito.map(i => `<li>⚠️ ${i}</li>`).join('')}</ul></div>`;
     html += linha;
   });
+  
   html += '</div>';
   container.innerHTML = html;
-  document.getElementById('exportar-lista')?.addEventListener('click', () => { const texto = gerarTextoExportacao(inspecoes, role); navigator.clipboard.writeText(texto).then(() => alert('Lista copiada!')).catch(() => alert('Erro ao copiar.')); });
+  
+  document.getElementById('exportar-lista')?.addEventListener('click', () => { 
+    const texto = gerarTextoExportacao(inspecoes, role); 
+    navigator.clipboard.writeText(texto).then(() => alert('Lista copiada!')).catch(() => alert('Erro ao copiar.')); 
+  });
+  
   modal.classList.add('is-open');
 }
 function gerarTextoExportacao(inspecoes, role) {
