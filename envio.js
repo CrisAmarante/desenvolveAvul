@@ -3,6 +3,7 @@
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
+let anexoAtualObj = null; // <- NOVA VARIÁVEL AQUI
 
 function abrirModalEnvio() {
   const m = getEl('modal-envio-informacoes');
@@ -234,6 +235,74 @@ function limparFormularioEnvio() {
   habilitarCamposSecundarios(false);
   habilitarCamposAvarias(true);
 }
+// ====================================================================
+// PROCESSAMENTO DE ANEXOS (COMPRESSÃO E BASE64)
+// ====================================================================
+function acionarInputArquivo() {
+  getEl('input-arquivo-oculto').click();
+}
+
+getEl('input-arquivo-oculto')?.addEventListener('change', function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const btnAnexar = getEl('btn-anexar');
+  btnAnexar.innerHTML = '⏳ Processando...';
+  btnAnexar.disabled = true;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    if (file.type.includes('pdf')) {
+      // PDF não comprime, manda direto
+      anexoAtualObj = { base64: e.target.result.split(',')[1], mimeType: file.type };
+      btnAnexar.innerHTML = '✅ Arquivo Anexado';
+      btnAnexar.disabled = false;
+      btnAnexar.style.borderColor = '#10b981'; // Fica verdinho
+      btnAnexar.style.color = '#10b981';
+    } else if (file.type.includes('image')) {
+      // Se for imagem, joga no compressor
+      comprimirImagem(e.target.result, file.type, function(base64Compressed) {
+        anexoAtualObj = { base64: base64Compressed, mimeType: file.type };
+        btnAnexar.innerHTML = '✅ Foto Anexada';
+        btnAnexar.disabled = false;
+        btnAnexar.style.borderColor = '#10b981';
+        btnAnexar.style.color = '#10b981';
+      });
+    } else {
+      alert("Formato não suportado. Envie apenas imagens ou PDF.");
+      btnAnexar.innerHTML = '📎 ANEXAR';
+      btnAnexar.disabled = false;
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
+function comprimirImagem(dataUrl, mimeType, callback) {
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    // Resolução máxima de 1200px (excelente para relatórios sem pesar)
+    const MAX_WIDTH = 1200; 
+    const MAX_HEIGHT = 1200;
+    let width = img.width;
+    let height = img.height;
+
+    if (width > height) {
+      if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+    } else {
+      if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+    }
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    // Converte para Base64 com 70% de qualidade
+    const newDataUrl = canvas.toDataURL(mimeType, 0.7); 
+    callback(newDataUrl.split(',')[1]); // Retorna apenas o código purinho
+  };
+  img.src = dataUrl;
+}
 function enviarRelatorio() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
@@ -246,6 +315,12 @@ function enviarRelatorio() {
   if (motivo === 'OUTROS') {
     motivoFinal = getEl('envio-outros-motivo').value.trim();
   }
+  
+  const btnEnviar = getEl('btn-enviar-relatorio');
+  const textoBotaoOriginal = btnEnviar.innerHTML;
+  btnEnviar.innerHTML = '⏳ Enviando...';
+  btnEnviar.disabled = true;
+
   const dadosEnvio = {
     areaDestino: areaDestinoFinal,
     motivo: motivoFinal,
@@ -258,17 +333,55 @@ function enviarRelatorio() {
     historico: getEl('envio-historico').value,
     local: getEl('envio-local').value,
     data: getEl('envio-data').value,
-    anexo: localStorage.getItem('anexoAtual') || '',
+    anexoObj: anexoAtualObj, // AQUI VAI NOSSO ARQUIVO PESADO!
     fiscal: localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName')
   };
-  if (confirm('Enviar relatório? Os dados serão salvos na planilha.')) {
-    fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ acao: 'envio_informacoes', dados: JSON.stringify(dadosEnvio) }) })
-      .then(() => { alert('Relatório enviado!'); if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`); limparFormularioEnvio(); fecharModalEnvio(); })
-      .catch(() => alert('Erro ao enviar.'));
-  }
+  
+  fetch(URL_PLANILHA, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ acao: 'envio_informacoes', dados: JSON.stringify(dadosEnvio) }) })
+    .then(() => { 
+      alert('Relatório e anexos enviados com sucesso!'); 
+      if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`); 
+      limparFormularioEnvio(); 
+      fecharModalEnvio(); 
+      btnEnviar.innerHTML = textoBotaoOriginal;
+      btnEnviar.disabled = false;
+    })
+    .catch(() => {
+      alert('Erro ao enviar.');
+      btnEnviar.innerHTML = textoBotaoOriginal;
+      btnEnviar.disabled = false;
+    });
 }
+
+function limparFormularioEnvio() {
+  document.querySelectorAll('input[name="areaDestino"], input[name="motivo"]').forEach(r => r.checked = false);
+  getEl('envio-outras-area').value = '';
+  getEl('campo-outras-area').style.display = 'none';
+  getEl('envio-outros-motivo').value = '';
+  getEl('campo-outros-motivo').style.display = 'none';
+  getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
+  getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
+  
+  // Limpa o anexo visualmente e na memória
+  anexoAtualObj = null;
+  const inputArq = getEl('input-arquivo-oculto');
+  if(inputArq) inputArq.value = '';
+  const btnAnexar = getEl('btn-anexar');
+  if(btnAnexar) {
+    btnAnexar.innerHTML = '📎 ANEXAR';
+    btnAnexar.style.borderColor = '#64748b';
+    btnAnexar.style.color = 'var(--text)';
+  }
+
+  preencherDataAtual();
+  rascunhoAtualId = null;
+  habilitarCamposSecundarios(false);
+  habilitarCamposAvarias(true);
+}
+
 function anexarArquivo() {
-  alert('Funcionalidade de anexo será ativada em breve.');
+  // Substitui aquele seu 'alert' antigo
+  acionarInputArquivo();
 }
 function consultarEnvios() {
   consultarEnviosComFiltro(null, null, null, null, null);
