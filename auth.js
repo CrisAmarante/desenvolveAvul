@@ -1,0 +1,96 @@
+// ====================================================================
+// VARIÁVEIS DE AUTENTICAÇÃO E PERMISSÕES
+// ====================================================================
+const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE', 'FISCAL', 'PLANTONISTA'];
+let currentUserRole = '';
+let canCreateInspection = false;
+// ====================================================================
+// LOGIN/LOGOUT
+// ====================================================================
+async function checkLoginStatus() {
+  const logado = localStorage.getItem('inspectorLoggedIn');
+  const nome = localStorage.getItem('inspectorName');
+  const apelido = localStorage.getItem('inspectorApelido');
+  const main = getEl('main-screen');
+  const insp = getEl('inspector-screen');
+  const btnInspecao = getEl('btn-inspecao-veicular');
+  const btnEnvio = getEl('btn-envio-informacoes');
+  if (logado === 'true' && nome && apelido && INSPETORES[apelido]) {
+    const role = INSPETORES[apelido].funcao;
+    currentUserRole = role;
+    canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
+    localStorage.setItem('inspectorRole', role);
+    if (btnInspecao && role !== 'MONITOR') btnInspecao.style.display = 'flex';
+    else if (btnInspecao) btnInspecao.style.display = 'none';
+    if (btnEnvio && role !== 'MONITOR') btnEnvio.style.display = 'flex';
+    else if (btnEnvio) btnEnvio.style.display = 'none';
+    main.style.display = 'none';
+    insp.style.display = 'flex';
+    showWelcomeToast(apelido);
+    const logoutBtn = insp.querySelector('.logout-btn');
+    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${apelido}</small>`;
+  } else {
+    localStorage.removeItem('inspectorLoggedIn');
+    localStorage.removeItem('inspectorName');
+    localStorage.removeItem('inspectorApelido');
+    localStorage.removeItem('inspectorRole');
+    main.style.display = 'flex';
+    insp.style.display = 'none';
+  }
+}
+async function login(e) {
+  e.preventDefault();
+  const senha = getEl('password').value.trim();
+  const errorMsg = getEl('login-error');
+  let nomeEncontrado = null, apelidoEncontrado = null;
+  for (const [apelido, info] of Object.entries(INSPETORES)) {
+    if (await hashPassword(senha, apelido) === info.hash) {
+      nomeEncontrado = info.nome;
+      apelidoEncontrado = apelido;
+      break;
+    }
+  }
+  if (nomeEncontrado) {
+    localStorage.setItem('inspectorLoggedIn', 'true');
+    localStorage.setItem('inspectorName', nomeEncontrado);
+    localStorage.setItem('inspectorApelido', apelidoEncontrado);
+    localStorage.setItem('inspectorRole', INSPETORES[apelidoEncontrado].funcao);
+    registrarLog(apelidoEncontrado);
+    window.modals.login.close();
+    checkLoginStatus();
+  } else {
+    errorMsg.style.display = 'block';
+    getEl('password').value = '';
+    getEl('password').focus();
+  }
+}
+function logoutInspector() {
+  localStorage.removeItem('inspectorLoggedIn');
+  localStorage.removeItem('inspectorName');
+  localStorage.removeItem('inspectorApelido');
+  localStorage.removeItem('inspectorRole');
+  checkLoginStatus();
+}
+function showWelcomeToast(apelido) {
+  const toast = getEl('welcome-toast');
+  if (!toast) return;
+  getEl('toast-name').textContent = apelido;
+  toast.classList.add('show');
+  setTimeout(() => hideWelcomeToast(), 3500);
+  const clickHandler = () => { hideWelcomeToast(); document.removeEventListener('click', clickHandler); };
+  setTimeout(() => document.addEventListener('click', clickHandler), 300);
+}
+function hideWelcomeToast() { const t = getEl('welcome-toast'); if (t) t.classList.remove('show'); }
+function aplicarBloqueioDeDatas() {
+  const now = new Date();
+  for (const [id, date] of Object.entries(disableDates)) {
+    const btn = getEl(id);
+    if (btn && now < date) { btn.classList.add('disabled'); btn.setAttribute('href', '#'); btn.title = `Disponível a partir de ${date.toLocaleDateString('pt-BR')}`; btn.style.pointerEvents = 'none'; btn.style.opacity = '0.45'; }
+  }
+}
+function fecharBanner() { const b = getEl('aviso-temporario'); if (b) b.style.display = 'none'; }
+function mostrarBannerAviso() {
+  const agora = new Date();
+  const banner = getEl('aviso-temporario');
+  if (banner) banner.style.display = (agora >= DATA_INICIO_BANNER && agora < DATA_FIM_BANNER) ? 'flex' : 'none';
+}
