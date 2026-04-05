@@ -339,7 +339,7 @@ function enviarRelatorio() {
   // ATENÇÃO: Ao usar FormData, não colocamos o cabeçalho 'Content-Type'
   fetch(URL_PLANILHA, { 
     method: 'POST', 
-    mode: 'no-cors', 
+  // mode: 'no-cors', 
     body: formData 
   })
     .then(() => { 
