@@ -1,13 +1,13 @@
 // ====================================================================
-// ENVIO DE INFORMAÇÕES (com até 4 anexos) - VERSÃO CORRIGIDA
+// ENVIO DE INFORMAÇÕES (com até 4 anexos, rascunho, upload)
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
-let anexosArray = [];          // cada elemento: { base64, mimeType, nome }
+let anexosArray = [];          // armazena { base64, mimeType, nome }
 
+// --- Elementos DOM (certifique-se de que existem no HTML) ---
 function getEl(id) { return document.getElementById(id); }
 
-// --- Abrir/fechar modal ---
 function abrirModalEnvio() {
   const m = getEl('modal-envio-informacoes');
   if (m) m.classList.add('is-open');
@@ -16,9 +16,9 @@ function abrirModalEnvio() {
   preencherSelectLocal();
   carregarRascunho();
   habilitarCamposSecundarios(false);
-  anexosArray = [];
-  atualizarListaAnexos();
-  if (!getEl('input-arquivos-multiplos')) criarInputMultiploAnexos();
+  criarInputMultiploAnexos();   // garante que o input existe
+  atualizarListaAnexos();       // limpa lista visual
+  anexosArray = [];             // reseta anexos ao abrir
 }
 
 function fecharModalEnvio() {
@@ -44,7 +44,7 @@ function preencherResponsavel() {
 }
 
 function preencherSelectLocal() {
-  // Mantenha sua lógica original de preenchimento de locais
+  // (mantenha sua lógica original de preenchimento de locais)
 }
 
 function habilitarCamposSecundarios(habilitar) {
@@ -55,24 +55,119 @@ function habilitarCamposSecundarios(habilitar) {
   });
 }
 
-// --- Regras (copie suas funções originais) ---
-function aplicarRegrasPorArea() { /* seu código original */ }
-function aplicarRegrasPorMotivo() { /* seu código original */ }
-function habilitarCamposAvarias(habilitar) { /* seu código original */ }
-function validarFormulario() { /* seu código original */ }
+function aplicarRegrasPorArea() {
+  const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  const campoOutrasArea = getEl('campo-outras-area');
+  const inputOutrasArea = getEl('envio-outras-area');
+  if (areaSelecionada === 'OUTRAS ÁREAS') {
+    campoOutrasArea.style.display = 'block';
+    inputOutrasArea.required = true;
+  } else {
+    campoOutrasArea.style.display = 'none';
+    inputOutrasArea.required = false;
+    inputOutrasArea.value = '';
+  }
+  if (areaSelecionada) habilitarCamposSecundarios(true);
+  else habilitarCamposSecundarios(false);
+  const radiosMotivo = document.querySelectorAll('input[name="motivo"]');
+  radiosMotivo.forEach(radio => radio.disabled = false);
+  if (areaSelecionada === 'SAF' || areaSelecionada === 'PLANTÃO' || areaSelecionada === 'OUTRAS ÁREAS') {
+    radiosMotivo.forEach(radio => {
+      if (radio.value !== 'AVARIAS' && radio.value !== 'OUTROS') {
+        radio.disabled = true;
+        if (radio.checked) radio.checked = false;
+      } else {
+        radio.disabled = false;
+      }
+    });
+    const motivoAtual = document.querySelector('input[name="motivo"]:checked');
+    if (motivoAtual && motivoAtual.disabled) motivoAtual.checked = false;
+  }
+  aplicarRegrasPorMotivo();
+}
+
+function aplicarRegrasPorMotivo() {
+  const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
+  const campoOutrosMotivo = getEl('campo-outros-motivo');
+  const inputOutrosMotivo = getEl('envio-outros-motivo');
+  if (motivoSelecionado === 'OUTROS') {
+    campoOutrosMotivo.style.display = 'block';
+    inputOutrosMotivo.required = true;
+  } else {
+    campoOutrosMotivo.style.display = 'none';
+    inputOutrosMotivo.required = false;
+    inputOutrosMotivo.value = '';
+  }
+  if (motivoSelecionado === 'AVARIAS') {
+    habilitarCamposAvarias(true);
+    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
+      const campo = getEl(id);
+      if (campo) campo.required = true;
+    });
+  } else if (motivoSelecionado === 'OUTROS') {
+    habilitarCamposAvarias(true);
+    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
+      const campo = getEl(id);
+      if (campo) campo.required = false;
+    });
+  } else if (motivoSelecionado === 'PEDIDO DE FOLGAS' || motivoSelecionado === 'SOLICITAÇÃO DE MATERIAIS') {
+    habilitarCamposAvarias(false);
+    ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'].forEach(id => {
+      const campo = getEl(id);
+      if (campo) campo.required = false;
+    });
+  } else {
+    habilitarCamposAvarias(false);
+  }
+}
+
+function habilitarCamposAvarias(habilitar) {
+  const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-hora', 'envio-sentido'];
+  ids.forEach(id => {
+    const campo = getEl(id);
+    if (campo) {
+      campo.disabled = !habilitar;
+      if (!habilitar) campo.value = '';
+    }
+  });
+}
+
+function validarFormulario() {
+  const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
+  if (!areaSelecionada) { alert('Selecione a Área de Destino.'); return false; }
+  if (areaSelecionada === 'OUTRAS ÁREAS') {
+    const outrasArea = getEl('envio-outras-area').value.trim();
+    if (!outrasArea) { alert('Digite a Área de Destino.'); return false; }
+  }
+  const motivoSelecionado = document.querySelector('input[name="motivo"]:checked')?.value;
+  if (!motivoSelecionado) { alert('Selecione o Motivo.'); return false; }
+  if (motivoSelecionado === 'OUTROS') {
+    const outrosMotivo = getEl('envio-outros-motivo').value.trim();
+    if (!outrosMotivo) { alert('Descreva o motivo resumidamente.'); return false; }
+  }
+  const carro = getEl('envio-carro').value.trim();
+  if (motivoSelecionado === 'AVARIAS' && !carro) { alert('Para o motivo AVARIAS, o campo CARRO é obrigatório.'); return false; }
+  const data = getEl('envio-data').value;
+  if (!data) { alert('Preencha a Data.'); return false; }
+  const hoje = new Date().toISOString().split('T')[0];
+  if (data > hoje) { alert('A data não pode ser maior que a data atual.'); return false; }
+  return true;
+}
 
 // ====================================================================
 // ANEXOS MÚLTIPLOS (até 4)
 // ====================================================================
 function criarInputMultiploAnexos() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.id = 'input-arquivos-multiplos';
-  input.multiple = true;
-  input.accept = 'image/*,application/pdf';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.addEventListener('change', processarArquivosSelecionados);
+  if (!getEl('input-arquivos-multiplos')) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.id = 'input-arquivos-multiplos';
+    input.multiple = true;
+    input.accept = 'image/*,application/pdf';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', processarArquivosSelecionados);
+  }
 }
 
 function anexarArquivos() {
@@ -92,7 +187,7 @@ async function processarArquivosSelecionados(event) {
   const validos = novosAnexos.filter(a => a !== null);
   anexosArray.push(...validos);
   atualizarListaAnexos();
-  event.target.value = '';
+  event.target.value = ''; // limpa input para permitir re-seleção
 }
 
 function processarArquivo(file) {
@@ -126,13 +221,14 @@ function comprimirImagem(dataUrl, mimeType, callback) {
   const img = new Image();
   img.onload = function() {
     const canvas = document.createElement('canvas');
+    const MAX_WIDTH = 1200;
+    const MAX_HEIGHT = 1200;
     let width = img.width;
     let height = img.height;
-    const MAX = 1200;
     if (width > height) {
-      if (width > MAX) { height *= MAX / width; width = MAX; }
+      if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
     } else {
-      if (height > MAX) { width *= MAX / height; height = MAX; }
+      if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
     }
     canvas.width = width;
     canvas.height = height;
@@ -165,14 +261,20 @@ function removerAnexo(idx) {
 }
 
 // ====================================================================
-// RASCUNHO (salva e carrega os anexos)
+// RASCUNHO (inclui os anexos)
 // ====================================================================
 function salvarRascunho() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
-  let areaDestinoFinal = areaDestino === 'OUTRAS ÁREAS' ? getEl('envio-outras-area').value.trim() : areaDestino;
+  let areaDestinoFinal = areaDestino;
+  if (areaDestino === 'OUTRAS ÁREAS') {
+    areaDestinoFinal = getEl('envio-outras-area').value.trim();
+  }
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
-  let motivoFinal = motivo === 'OUTROS' ? getEl('envio-outros-motivo').value.trim() : motivo;
+  let motivoFinal = motivo;
+  if (motivo === 'OUTROS') {
+    motivoFinal = getEl('envio-outros-motivo').value.trim();
+  }
   const dados = {
     id: rascunhoAtualId || Date.now().toString(),
     areaDestino: areaDestinoFinal,
@@ -201,15 +303,17 @@ function carregarRascunho() {
   }
   const dados = JSON.parse(localStorage.getItem(`rascunho_${rascunhoAtualId}`));
   if (dados) {
-    // Preenche os campos
-    if (['FISCALIZAÇÃO','SAF','PLANTÃO'].includes(dados.areaDestino)) {
-      document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`).checked = true;
+    const areaOriginal = dados.areaDestino;
+    const areasPermitidas = ['FISCALIZAÇÃO', 'SAF', 'PLANTÃO'];
+    if (areasPermitidas.includes(areaOriginal)) {
+      document.querySelector(`input[name="areaDestino"][value="${areaOriginal}"]`).checked = true;
     } else {
       document.querySelector(`input[name="areaDestino"][value="OUTRAS ÁREAS"]`).checked = true;
-      getEl('envio-outras-area').value = dados.areaDestino;
+      getEl('envio-outras-area').value = areaOriginal;
       getEl('campo-outras-area').style.display = 'block';
     }
-    if (['AVARIAS','PEDIDO DE FOLGAS','SOLICITAÇÃO DE MATERIAIS'].includes(dados.motivo)) {
+    const motivosPermitidos = ['AVARIAS', 'PEDIDO DE FOLGAS', 'SOLICITAÇÃO DE MATERIAIS'];
+    if (motivosPermitidos.includes(dados.motivo)) {
       document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
     } else {
       document.querySelector(`input[name="motivo"][value="OUTROS"]`).checked = true;
@@ -245,9 +349,15 @@ function carregarRascunho() {
 function enviarRelatorio() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
-  let areaDestinoFinal = areaDestino === 'OUTRAS ÁREAS' ? getEl('envio-outras-area').value.trim() : areaDestino;
+  let areaDestinoFinal = areaDestino;
+  if (areaDestino === 'OUTRAS ÁREAS') {
+    areaDestinoFinal = getEl('envio-outras-area').value.trim();
+  }
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
-  let motivoFinal = motivo === 'OUTROS' ? getEl('envio-outros-motivo').value.trim() : motivo;
+  let motivoFinal = motivo;
+  if (motivo === 'OUTROS') {
+    motivoFinal = getEl('envio-outros-motivo').value.trim();
+  }
 
   const btnEnviar = getEl('btn-enviar-relatorio');
   const textoBotaoOriginal = btnEnviar.innerHTML;
@@ -270,10 +380,6 @@ function enviarRelatorio() {
     fiscal: localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName')
   };
 
-  // LOG para depuração
-  console.log('📤 Enviando dados:', dadosEnvio);
-  console.log('📎 Número de anexos:', dadosEnvio.anexos.length);
-
   const formData = new FormData();
   formData.append('acao', 'envio_informacoes');
   formData.append('dados', JSON.stringify(dadosEnvio));
@@ -284,14 +390,13 @@ function enviarRelatorio() {
     body: formData
   })
     .then(() => {
-      alert('✅ Relatório e anexos enviados com sucesso!');
+      alert('Relatório e anexos enviados com sucesso!');
       if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`);
       limparFormularioEnvio();
       fecharModalEnvio();
     })
-    .catch((error) => {
-      console.error('❌ Erro no fetch:', error);
-      alert('Erro ao enviar. Verifique o console.');
+    .catch(() => {
+      alert('Erro ao enviar.');
     })
     .finally(() => {
       btnEnviar.innerHTML = textoBotaoOriginal;
