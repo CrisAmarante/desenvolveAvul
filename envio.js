@@ -1,10 +1,13 @@
 // ====================================================================
-// ENVIO DE INFORMAÇÕES (com fluxo obrigatório e Upload)
+// ENVIO DE INFORMAÇÕES (com até 4 anexos, rascunho, upload)
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
-let anexoAtualObj = null;
+let anexosArray = [];          // cada elemento: { base64, mimeType, nome }
 
+function getEl(id) { return document.getElementById(id); }
+
+// --- Abrir/fechar modal ---
 function abrirModalEnvio() {
   const m = getEl('modal-envio-informacoes');
   if (m) m.classList.add('is-open');
@@ -13,12 +16,18 @@ function abrirModalEnvio() {
   preencherSelectLocal();
   carregarRascunho();
   habilitarCamposSecundarios(false);
+  anexosArray = [];
+  atualizarListaAnexos();
+  if (!getEl('input-arquivos-multiplos')) criarInputMultiploAnexos();
 }
 
-function fecharModalEnvio() { const m = getEl('modal-envio-informacoes'); if (m) m.classList.remove('is-open'); }
+function fecharModalEnvio() {
+  const m = getEl('modal-envio-informacoes');
+  if (m) m.classList.remove('is-open');
+}
 
-function preencherDataAtual() { 
-  const d = getEl('envio-data'); 
+function preencherDataAtual() {
+  const d = getEl('envio-data');
   if (d && !d.value) {
     const hoje = new Date().toISOString().split('T')[0];
     d.value = hoje;
@@ -34,17 +43,21 @@ function preencherResponsavel() {
   }
 }
 
+function preencherSelectLocal() {
+  // (mantenha sua lógica original de preenchimento de locais, se houver)
+}
+
 function habilitarCamposSecundarios(habilitar) {
   const ids = ['envio-carro', 'envio-linha', 'envio-motorista', 'envio-cobrador', 'envio-hora', 'envio-sentido', 'envio-historico', 'envio-local', 'btn-salvar-rascunho', 'btn-enviar-relatorio'];
   ids.forEach(id => {
     const campo = getEl(id);
-    if (campo) {
-      if (id.startsWith('btn')) campo.disabled = !habilitar;
-      else campo.disabled = !habilitar;
-    }
+    if (campo) campo.disabled = !habilitar;
   });
 }
 
+// ====================================================================
+// REGRAS DE ÁREA, MOTIVO E VALIDAÇÕES (copiadas do seu arquivo original)
+// ====================================================================
 function aplicarRegrasPorArea() {
   const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
   const campoOutrasArea = getEl('campo-outras-area');
@@ -149,18 +162,118 @@ function validarFormulario() {
   return true;
 }
 
+// ====================================================================
+// ANEXOS MÚLTIPLOS (até 4) - COMPRESSÃO E BASE64
+// ====================================================================
+function criarInputMultiploAnexos() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.id = 'input-arquivos-multiplos';
+  input.multiple = true;
+  input.accept = 'image/*,application/pdf';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.addEventListener('change', processarArquivosSelecionados);
+}
+
+function anexarArquivos() {
+  const input = getEl('input-arquivos-multiplos');
+  if (input) input.click();
+}
+
+async function processarArquivosSelecionados(event) {
+  const files = Array.from(event.target.files);
+  if (anexosArray.length + files.length > 4) {
+    alert('Máximo de 4 anexos por envio.');
+    event.target.value = '';
+    return;
+  }
+  const promises = files.map(file => processarArquivo(file));
+  const novosAnexos = await Promise.all(promises);
+  const validos = novosAnexos.filter(a => a !== null);
+  anexosArray.push(...validos);
+  atualizarListaAnexos();
+  event.target.value = '';
+}
+
+function processarArquivo(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if (file.type.includes('pdf')) {
+        resolve({
+          base64: e.target.result.split(',')[1],
+          mimeType: file.type,
+          nome: file.name
+        });
+      } else if (file.type.includes('image')) {
+        comprimirImagem(e.target.result, file.type, (base64Compressed) => {
+          resolve({
+            base64: base64Compressed,
+            mimeType: file.type,
+            nome: file.name
+          });
+        });
+      } else {
+        alert(`Formato não suportado: ${file.name}`);
+        resolve(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function comprimirImagem(dataUrl, mimeType, callback) {
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    let width = img.width;
+    let height = img.height;
+    const MAX = 1200;
+    if (width > height) {
+      if (width > MAX) { height *= MAX / width; width = MAX; }
+    } else {
+      if (height > MAX) { width *= MAX / height; height = MAX; }
+    }
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+    const newDataUrl = canvas.toDataURL(mimeType, 0.7);
+    callback(newDataUrl.split(',')[1]);
+  };
+  img.src = dataUrl;
+}
+
+function atualizarListaAnexos() {
+  const container = getEl('lista-anexos');
+  if (!container) return;
+  if (anexosArray.length === 0) {
+    container.innerHTML = '<small>Nenhum anexo selecionado (máx. 4)</small>';
+    return;
+  }
+  container.innerHTML = anexosArray.map((a, idx) => `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+      <span>📎 ${a.nome}</span>
+      <button type="button" onclick="removerAnexo(${idx})" style="background:#d11a2d; color:white; border:none; border-radius:4px; padding:2px 8px;">❌</button>
+    </div>
+  `).join('');
+}
+
+function removerAnexo(idx) {
+  anexosArray.splice(idx, 1);
+  atualizarListaAnexos();
+}
+
+// ====================================================================
+// RASCUNHO (salva e carrega os anexos)
+// ====================================================================
 function salvarRascunho() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
-  let areaDestinoFinal = areaDestino;
-  if (areaDestino === 'OUTRAS ÁREAS') {
-    areaDestinoFinal = getEl('envio-outras-area').value.trim();
-  }
+  let areaDestinoFinal = areaDestino === 'OUTRAS ÁREAS' ? getEl('envio-outras-area').value.trim() : areaDestino;
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
-  let motivoFinal = motivo;
-  if (motivo === 'OUTROS') {
-    motivoFinal = getEl('envio-outros-motivo').value.trim();
-  }
+  let motivoFinal = motivo === 'OUTROS' ? getEl('envio-outros-motivo').value.trim() : motivo;
   const dados = {
     id: rascunhoAtualId || Date.now().toString(),
     areaDestino: areaDestinoFinal,
@@ -174,7 +287,7 @@ function salvarRascunho() {
     historico: getEl('envio-historico').value,
     local: getEl('envio-local').value,
     data: getEl('envio-data').value,
-    anexo: localStorage.getItem('anexoAtual') || ''
+    anexos: anexosArray.map(a => ({ base64: a.base64, mimeType: a.mimeType, nome: a.nome }))
   };
   localStorage.setItem(`rascunho_${dados.id}`, JSON.stringify(dados));
   rascunhoAtualId = dados.id;
@@ -189,17 +302,16 @@ function carregarRascunho() {
   }
   const dados = JSON.parse(localStorage.getItem(`rascunho_${rascunhoAtualId}`));
   if (dados) {
-    const areaOriginal = dados.areaDestino;
-    const areasPermitidas = ['FISCALIZAÇÃO', 'SAF', 'PLANTÃO'];
-    if (areasPermitidas.includes(areaOriginal)) {
-      document.querySelector(`input[name="areaDestino"][value="${areaOriginal}"]`).checked = true;
+    // Área de destino
+    if (['FISCALIZAÇÃO','SAF','PLANTÃO'].includes(dados.areaDestino)) {
+      document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`).checked = true;
     } else {
       document.querySelector(`input[name="areaDestino"][value="OUTRAS ÁREAS"]`).checked = true;
-      getEl('envio-outras-area').value = areaOriginal;
+      getEl('envio-outras-area').value = dados.areaDestino;
       getEl('campo-outras-area').style.display = 'block';
     }
-    const motivosPermitidos = ['AVARIAS', 'PEDIDO DE FOLGAS', 'SOLICITAÇÃO DE MATERIAIS'];
-    if (motivosPermitidos.includes(dados.motivo)) {
+    // Motivo
+    if (['AVARIAS','PEDIDO DE FOLGAS','SOLICITAÇÃO DE MATERIAIS'].includes(dados.motivo)) {
       document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
     } else {
       document.querySelector(`input[name="motivo"][value="OUTROS"]`).checked = true;
@@ -215,6 +327,10 @@ function carregarRascunho() {
     getEl('envio-historico').value = dados.historico || '';
     getEl('envio-local').value = dados.local || '';
     getEl('envio-data').value = dados.data || '';
+    if (dados.anexos && Array.isArray(dados.anexos)) {
+      anexosArray = dados.anexos;
+      atualizarListaAnexos();
+    }
     preencherResponsavel();
     habilitarCamposSecundarios(true);
     aplicarRegrasPorArea();
@@ -226,90 +342,15 @@ function carregarRascunho() {
 }
 
 // ====================================================================
-// PROCESSAMENTO DE ANEXOS (COMPRESSÃO E BASE64)
-// ====================================================================
-function acionarInputArquivo() {
-  getEl('input-arquivo-oculto').click();
-}
-
-function anexarArquivo() {
-  acionarInputArquivo();
-}
-
-getEl('input-arquivo-oculto')?.addEventListener('change', function(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const btnAnexar = getEl('btn-anexar');
-  btnAnexar.innerHTML = '⏳ Processando...';
-  btnAnexar.disabled = true;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    if (file.type.includes('pdf')) {
-      anexoAtualObj = { base64: e.target.result.split(',')[1], mimeType: file.type };
-      btnAnexar.innerHTML = '✅ Arquivo Anexado';
-      btnAnexar.disabled = false;
-      btnAnexar.style.borderColor = '#10b981';
-      btnAnexar.style.color = '#10b981';
-    } else if (file.type.includes('image')) {
-      comprimirImagem(e.target.result, file.type, function(base64Compressed) {
-        anexoAtualObj = { base64: base64Compressed, mimeType: file.type };
-        btnAnexar.innerHTML = '✅ Foto Anexada';
-        btnAnexar.disabled = false;
-        btnAnexar.style.borderColor = '#10b981';
-        btnAnexar.style.color = '#10b981';
-      });
-    } else {
-      alert("Formato não suportado. Envie apenas imagens ou PDF.");
-      btnAnexar.innerHTML = '📎 ANEXAR';
-      btnAnexar.disabled = false;
-    }
-  };
-  reader.readAsDataURL(file);
-});
-
-function comprimirImagem(dataUrl, mimeType, callback) {
-  const img = new Image();
-  img.onload = function() {
-    const canvas = document.createElement('canvas');
-    const MAX_WIDTH = 1200; 
-    const MAX_HEIGHT = 1200;
-    let width = img.width;
-    let height = img.height;
-
-    if (width > height) {
-      if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-    } else {
-      if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-    }
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, width, height);
-    
-    const newDataUrl = canvas.toDataURL(mimeType, 0.7); 
-    callback(newDataUrl.split(',')[1]);
-  };
-  img.src = dataUrl;
-}
-
-// ====================================================================
-// ENVIO PARA O SERVIDOR E LIMPEZA
+// ENVIO PARA O SERVIDOR (COM ARRAY DE ANEXOS)
 // ====================================================================
 function enviarRelatorio() {
   if (!validarFormulario()) return;
   const areaDestino = document.querySelector('input[name="areaDestino"]:checked')?.value;
-  let areaDestinoFinal = areaDestino;
-  if (areaDestino === 'OUTRAS ÁREAS') {
-    areaDestinoFinal = getEl('envio-outras-area').value.trim();
-  }
+  let areaDestinoFinal = areaDestino === 'OUTRAS ÁREAS' ? getEl('envio-outras-area').value.trim() : areaDestino;
   const motivo = document.querySelector('input[name="motivo"]:checked')?.value;
-  let motivoFinal = motivo;
-  if (motivo === 'OUTROS') {
-    motivoFinal = getEl('envio-outros-motivo').value.trim();
-  }
-  
+  let motivoFinal = motivo === 'OUTROS' ? getEl('envio-outros-motivo').value.trim() : motivo;
+
   const btnEnviar = getEl('btn-enviar-relatorio');
   const textoBotaoOriginal = btnEnviar.innerHTML;
   btnEnviar.innerHTML = '⏳ Enviando...';
@@ -327,35 +368,36 @@ function enviarRelatorio() {
     historico: getEl('envio-historico').value,
     local: getEl('envio-local').value,
     data: getEl('envio-data').value,
-    anexoObj: anexoAtualObj,
+    anexos: anexosArray.map(a => ({ base64: a.base64, mimeType: a.mimeType, nome: a.nome })),
     fiscal: localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName')
   };
-  
- // --- INÍCIO DO CÓDIGO ATUALIZADO ---
+
+  console.log('📤 Enviando dados:', dadosEnvio);
+  console.log('📎 Número de anexos:', dadosEnvio.anexos.length);
+
   const formData = new FormData();
   formData.append('acao', 'envio_informacoes');
   formData.append('dados', JSON.stringify(dadosEnvio));
 
-  // ATENÇÃO: Ao usar FormData, não colocamos o cabeçalho 'Content-Type'
-  fetch(URL_PLANILHA, { 
-    method: 'POST', 
-    mode: 'no-cors', 
-    body: formData 
+  fetch(URL_PLANILHA, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: formData
   })
-    .then(() => { 
-      alert('Relatório e anexos enviados com sucesso!'); 
-      if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`); 
-      limparFormularioEnvio(); 
-      fecharModalEnvio(); 
-      btnEnviar.innerHTML = textoBotaoOriginal;
-      btnEnviar.disabled = false;
+    .then(() => {
+      alert('✅ Relatório e anexos enviados com sucesso!');
+      if (rascunhoAtualId) localStorage.removeItem(`rascunho_${rascunhoAtualId}`);
+      limparFormularioEnvio();
+      fecharModalEnvio();
     })
-    .catch(() => {
-      alert('Erro ao enviar.');
+    .catch((error) => {
+      console.error('❌ Erro no fetch:', error);
+      alert('Erro ao enviar. Verifique o console.');
+    })
+    .finally(() => {
       btnEnviar.innerHTML = textoBotaoOriginal;
       btnEnviar.disabled = false;
     });
-  // --- FIM DO CÓDIGO ATUALIZADO ---
 }
 
 function limparFormularioEnvio() {
@@ -364,19 +406,18 @@ function limparFormularioEnvio() {
   getEl('campo-outras-area').style.display = 'none';
   getEl('envio-outros-motivo').value = '';
   getEl('campo-outros-motivo').style.display = 'none';
-  getEl('envio-carro').value = ''; getEl('envio-linha').value = ''; getEl('envio-motorista').value = ''; getEl('envio-cobrador').value = '';
-  getEl('envio-hora').value = ''; getEl('envio-sentido').value = ''; getEl('envio-historico').value = ''; getEl('envio-local').value = '';
-  
-  anexoAtualObj = null;
-  const inputArq = getEl('input-arquivo-oculto');
-  if(inputArq) inputArq.value = '';
-  const btnAnexar = getEl('btn-anexar');
-  if(btnAnexar) {
-    btnAnexar.innerHTML = '📎 ANEXAR';
-    btnAnexar.style.borderColor = '#64748b';
-    btnAnexar.style.color = 'var(--text)';
-  }
-
+  getEl('envio-carro').value = '';
+  getEl('envio-linha').value = '';
+  getEl('envio-motorista').value = '';
+  getEl('envio-cobrador').value = '';
+  getEl('envio-hora').value = '';
+  getEl('envio-sentido').value = '';
+  getEl('envio-historico').value = '';
+  getEl('envio-local').value = '';
+  anexosArray = [];
+  atualizarListaAnexos();
+  const inputArq = getEl('input-arquivos-multiplos');
+  if (inputArq) inputArq.value = '';
   preencherDataAtual();
   rascunhoAtualId = null;
   habilitarCamposSecundarios(false);
@@ -384,7 +425,7 @@ function limparFormularioEnvio() {
 }
 
 // ====================================================================
-// CONSULTAS DE ENVIOS
+// CONSULTAS DE ENVIOS (com suporte a múltiplos anexos)
 // ====================================================================
 function consultarEnvios() {
   consultarEnviosComFiltro(null, null, null, null, null);
@@ -398,7 +439,7 @@ function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFilt
   if (motivo) params.append('motivo', motivo);
   if (carro) params.append('carro', carro);
   if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
-  if (currentUserRole === 'FISCAL') {
+  if (window.currentUserRole === 'FISCAL') {
     params.append('fiscal', localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName'));
   }
   return _executarConsultaEnvios(params);
@@ -450,6 +491,11 @@ function mostrarDetalheEnvio(envio) {
   if (!modal || !container) return;
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
+  let anexosHtml = 'Nenhum';
+  if (envio.anexos && envio.anexos !== 'Nenhum') {
+    const links = envio.anexos.split(' ; ');
+    anexosHtml = links.map(link => `<a href="${link}" target="_blank" style="color:#10b981; text-decoration:underline;">Anexo</a>`).join(' | ');
+  }
   let html = `
     <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px;">
       <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
@@ -458,7 +504,7 @@ function mostrarDetalheEnvio(envio) {
       <div><strong>MOT.:</strong> ${envio.motorista || 'N/I'}</div>
       <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
       <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${dataFormatada}</div>
-      <div><strong>ANEXO:</strong> ${envio.anexo ? `<a href="${envio.anexo}" target="_blank" style="color: #10b981; text-decoration: underline;">Ver anexo</a>` : 'Nenhum'}</div>
+      <div><strong>ANEXOS:</strong> ${anexosHtml}</div>
       <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
   `;
@@ -468,11 +514,7 @@ function mostrarDetalheEnvio(envio) {
   if (btnExport) {
     btnExport.onclick = () => {
       const texto = gerarTextoDetalheEnvio(envio);
-      navigator.clipboard.writeText(texto).then(() => {
-        alert('Detalhes copiados para a área de transferência!');
-      }).catch(() => {
-        alert('Erro ao copiar. Tente selecionar manualmente.');
-      });
+      navigator.clipboard.writeText(texto).then(() => alert('Detalhes copiados!'));
     };
   }
 }
@@ -487,7 +529,7 @@ function gerarTextoDetalheEnvio(envio) {
   texto += `MOTORISTA: ${envio.motorista || 'N/I'}\n`;
   texto += `LINHA: ${envio.linha || 'N/I'}  HISTÓRICO: ${envio.historico || 'N/I'}\n`;
   texto += `LOCAL: ${envio.local || 'N/I'}  DATA: ${dataFormatada}\n`;
-  texto += `ANEXO: ${envio.anexo || 'Nenhum'}\n`;
+  texto += `ANEXOS: ${envio.anexos || 'Nenhum'}\n`;
   texto += `RESPONSÁVEL: ${envio.fiscal || 'N/I'}\n`;
   return texto;
 }
@@ -500,4 +542,22 @@ function fecharModalDetalheEnvio() {
 function fecharModalListaEnvios() {
   const modal = getEl('modal-lista-envios');
   if (modal) modal.classList.remove('is-open');
+}
+
+// ====================================================================
+// FUNÇÕES AUXILIARES DE FORMATAÇÃO
+// ====================================================================
+function formatarData(dataStr) {
+  if (!dataStr) return '';
+  if (dataStr.includes('/')) return dataStr;
+  const partes = dataStr.split('-');
+  if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  return dataStr;
+}
+
+function formatarHora(horaStr) {
+  if (!horaStr) return '';
+  if (horaStr.includes(':')) return horaStr;
+  if (horaStr.includes('T')) return horaStr.split('T')[1].substring(0,5);
+  return horaStr;
 }
