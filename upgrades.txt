@@ -1,3 +1,8 @@
+Na exportação informar a quantidade de anexos;
+Corrigir a informação Local;
+Corrigir o botão de anexar que está repetindo os anexos (duplicando)
+Permitir a exportação em pdf do documento de informação consolidado.
+Inserir hash de assinatura no rodapé (semelhante à ssinatira gov)
 Tela envio: a rota obrigatória não funciona. è possível selecionar Motivo antes de àrea de destino
   incluir a mensagem "selecione a área de destino"
   tornar os campos outros, sentido, carro e linha, quando aplicáveis, com mínimo de caracteres (3)
