@@ -168,16 +168,17 @@ function validarFormulario() {
 // ====================================================================
 function anexarArquivos() {
   const input = getEl('input-arquivos');
-  if (input) input.click();
+  if (input) {
+    // Garante que o arquivo será lido logo após o usuário selecionar a foto
+    input.onchange = processarArquivosSelecionados;
+    input.click(); // Abre a galeria
+  } else {
+    alert("Erro: Campo de anexo não encontrado na tela.");
+  }
 }
 
 // Ouve as mudanças no input físico do HTML
 document.getElementById('input-arquivos')?.addEventListener('change', processarArquivosSelecionados);
-
-function anexarArquivos() {
-  const input = getEl('input-arquivos-multiplos');
-  if (input) input.click();
-}
 
 async function processarArquivosSelecionados(event) {
   const files = Array.from(event.target.files);
