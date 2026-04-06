@@ -166,16 +166,13 @@ function validarFormulario() {
 // ====================================================================
 // ANEXOS MÚLTIPLOS (até 4) - COMPRESSÃO E BASE64
 // ====================================================================
-function criarInputMultiploAnexos() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.id = 'input-arquivos-multiplos';
-  input.multiple = true;
-  input.accept = 'image/*,application/pdf';
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.addEventListener('change', processarArquivosSelecionados);
+function anexarArquivos() {
+  const input = getEl('input-arquivos');
+  if (input) input.click();
 }
+
+// Ouve as mudanças no input físico do HTML
+document.getElementById('input-arquivos')?.addEventListener('change', processarArquivosSelecionados);
 
 function anexarArquivos() {
   const input = getEl('input-arquivos-multiplos');
