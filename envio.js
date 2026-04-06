@@ -18,7 +18,8 @@ function abrirModalEnvio() {
   habilitarCamposSecundarios(false);
   anexosArray = [];
   atualizarListaAnexos();
-  if (!getEl('input-arquivos-multiplos')) criarInputMultiploAnexos();
+  const input = getEl('input-arquivos');
+  if(input) input.value = ''; // Zera o input real
 }
 
 function fecharModalEnvio() {
