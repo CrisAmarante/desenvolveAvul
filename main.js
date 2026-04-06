@@ -32,7 +32,7 @@ function initEventListeners() {
   getEl('btn-envio-informacoes')?.addEventListener('click', (e) => { e.preventDefault(); abrirModalEnvio(); });
   getEl('btn-salvar-rascunho')?.addEventListener('click', salvarRascunho);
   getEl('btn-enviar-relatorio')?.addEventListener('click', enviarRelatorio);
-  getEl('btn-anexar')?.addEventListener('click', anexarArquivo);
+  getEl('btn-anexar')?.addEventListener('click', anexarArquivos);
   getEl('btn-consultar-envios')?.addEventListener('click', consultarEnvios);
   document.querySelectorAll('input[name="areaDestino"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorArea));
   document.querySelectorAll('input[name="motivo"]').forEach(radio => radio.addEventListener('change', aplicarRegrasPorMotivo));
