@@ -45,7 +45,21 @@ function preencherResponsavel() {
 }
 
 function preencherSelectLocal() {
-  // (mantenha sua lógica original de preenchimento de locais, se houver)
+  const select = getEl('envio-local'); // Seleciona o elemento pelo ID definido no HTML
+  if (!select) return;
+
+  // Limpa as opções atuais, mantendo apenas a primeira ("Selecione...")
+  select.innerHTML = '<option value="">Selecione...</option>';
+
+  // Verifica se a lista de terminais (carregada no main.js) existe e é um array
+  if (window.terminais && Array.isArray(window.terminais)) {
+    window.terminais.forEach(terminal => {
+      const option = document.createElement('option');
+      option.value = terminal;
+      option.textContent = terminal;
+      select.appendChild(option);
+    });
+  }
 }
 
 function habilitarCamposSecundarios(habilitar) {
