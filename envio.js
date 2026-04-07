@@ -8,26 +8,18 @@ let anexosArray = [];          // cada elemento: { base64, mimeType, nome }
 function getEl(id) { return document.getElementById(id); }
 
 // --- Abrir/fechar modal ---
-async function abrirModalEnvio() {
+function abrirModalEnvio() {
   const m = getEl('modal-envio-informacoes');
   if (m) m.classList.add('is-open');
-  
-  // Garante que os terminais estejam carregados antes de preencher o select
-  if (!window.terminais || window.terminais.length === 0) {
-    if (typeof carregarTerminais === 'function') {
-      await carregarTerminais(true);
-    }
-  }
-  
   preencherDataAtual();
   preencherResponsavel();
-  preencherSelectLocal();    // agora os terminais já existem
+  preencherSelectLocal();
   carregarRascunho();
   habilitarCamposSecundarios(false);
   anexosArray = [];
   atualizarListaAnexos();
   const input = getEl('input-arquivos');
-  if(input) input.value = '';
+  if(input) input.value = ''; // Zera o input real
 }
 
 function fecharModalEnvio() {
