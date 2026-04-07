@@ -603,7 +603,109 @@ function fecharModalListaEnvios() {
   const modal = getEl('modal-lista-envios');
   if (modal) modal.classList.remove('is-open');
 }
+// ====================================================================
+// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ (Versão Ajustada)
+// ====================================================================
+async function exportarParaPDF(envio) {
+  if (typeof jsPDF === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    document.head.appendChild(script);
+    await new Promise(resolve => { script.onload = resolve; });
+  }
 
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = 22;
+
+  // ==================== CABEÇALHO ====================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
+  
+  y += 7;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Avenida Presidente Médici nº 1.340 - Telefone: 3658-7777", pageWidth/2, y, { align: "center" });
+
+  y += 14;
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("RELATÓRIO À CHEFIA DO TRÁFEGO", pageWidth/2, y, { align: "center" });
+
+  y += 18;
+
+  // ==================== CAMPOS SUPERIORES ====================
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+
+  const leftCol = margin;
+  const rightCol = pageWidth / 2 + 12;
+
+  doc.text(`Carro: ${envio.carro || '________________'}`, leftCol, y);
+  doc.text(`Hora: ${formatarHora(envio.hora) || '________'}`, rightCol, y);
+  y += 9;
+
+  doc.text(`Mot.: ${envio.motorista || '________________'}`, leftCol, y);
+  doc.text(`Cob.: ${envio.cobrador || '________________'}`, rightCol, y);
+  y += 9;
+
+  doc.text(`Linha: ${envio.linha || '________________'}`, leftCol, y);
+  doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
+  y += 16;
+
+  // ==================== TEXTO PRINCIPAL (HISTÓRICO) ====================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Sr. Chefe", margin, y);
+  y += 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11.5);
+
+  const texto = (envio.historico || "").trim() || "Sem informações adicionais.";
+  const linhas = doc.splitTextToSize(texto, pageWidth - margin * 2);
+
+  linhas.forEach(linha => {
+    doc.text(linha, margin, y);
+    y += 7.5;
+  });
+
+  y += 12;
+
+  // ==================== RODAPÉ ====================
+  const dataFormatada = formatarData(envio.data) || '__/__/____';
+  const local = (envio.local || 'Osasco').trim();
+
+  // Local e Data (esquerda)
+  doc.text(`${local}, ${dataFormatada}`, margin, y);
+
+  // Responsável no lugar de "Visto" (direita)
+  const responsavel = envio.fiscal || '________________';
+  doc.text(responsavel, pageWidth - margin - 45, y);
+
+  // Linha para assinatura (apenas visual)
+  doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
+
+  y += 22;
+
+  // Rodapé inferior
+  doc.setFontSize(8);
+  doc.text("MOD. 058 - 500 Bls. 50x1 - 05/2025 - GRÁFICA COTRIM", pageWidth/2, y, { align: "center" });
+
+  // ==================== SALVAR ====================
+  const nomeArquivo = `Relatorio_Trafego_${envio.carro || 'SemCarro'}_${dataFormatada.replace(/\//g, '-')}.pdf`;
+  
+  doc.save(nomeArquivo);
+  alert('✅ PDF gerado com sucesso!\nO arquivo foi baixado automaticamente.');
+}
 // ====================================================================
 // FUNÇÕES AUXILIARES DE FORMATAÇÃO
 // ====================================================================
