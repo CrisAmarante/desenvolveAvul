@@ -43,8 +43,68 @@ function preencherResponsavel() {
   }
 }
 
-function preencherSelectLocal() {
-  // (mantenha sua lógica original de preenchimento de locais, se houver)
+// ====================================================================
+// PREENCHER CAMPO LOCAL COM TODOS OS TERMINAIS (listarTodosTerminais)
+// ====================================================================
+async function preencherSelectLocal() {
+  const selectLocal = getEl('envio-local');
+  if (!selectLocal) return;
+
+  // Limpa opções anteriores (exceto a primeira "Selecione...")
+  selectLocal.innerHTML = '<option value="">Selecione o Local / Terminal</option>';
+
+  try {
+    const callbackName = 'carregarTerminaisEnvio_' + Date.now();
+    
+    window[callbackName] = function(terminais) {
+      if (Array.isArray(terminais) && terminais.length > 0) {
+        terminais.forEach(terminal => {
+          const option = document.createElement('option');
+          option.value = terminal;
+          option.textContent = terminal;
+          selectLocal.appendChild(option);
+        });
+      } else {
+        // Fallback caso não consiga carregar
+        const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
+        fallback.forEach(t => {
+          const option = document.createElement('option');
+          option.value = t;
+          option.textContent = t;
+          selectLocal.appendChild(option);
+        });
+      }
+      delete window[callbackName];
+    };
+
+    const url = `${URL_PLANILHA}?acao=terminais_todos&callback=${callbackName}`;
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = () => {
+      delete window[callbackName];
+      console.warn('Falha ao carregar terminais via JSONP. Usando fallback.');
+      // Fallback em caso de erro
+      const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
+      fallback.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t;
+        option.textContent = t;
+        selectLocal.appendChild(option);
+      });
+    };
+    document.body.appendChild(script);
+
+  } catch (err) {
+    console.error('Erro ao preencher locais:', err);
+    // Fallback em caso de erro
+    const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
+    fallback.forEach(t => {
+      const option = document.createElement('option');
+      option.value = t;
+      option.textContent = t;
+      selectLocal.appendChild(option);
+    });
+  }
 }
 
 function habilitarCamposSecundarios(habilitar) {
