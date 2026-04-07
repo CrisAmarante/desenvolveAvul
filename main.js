@@ -95,29 +95,22 @@ async function inicializar() {
   mostrarBannerAviso(); 
   aplicarBloqueioDeDatas();
   
-  carregarTerminais().then(() => {
-  preencherSelectTerminais();   // já existente
-  if (typeof preencherSelectLocal === 'function') {
-    preencherSelectLocal();     // ← NOVO: atualiza o select do modal de envio
-  }
-});
+  carregarTerminais().then(() => preencherSelectTerminais());
   
-window.addEventListener('pageshow', async (e) => { 
-  if (e.persisted) { 
-    checkLoginStatus(); 
-    await carregarTerminais(true); 
-    preencherSelectTerminais();
-    if (typeof preencherSelectLocal === 'function') preencherSelectLocal(); // ← NOVO
-  } 
-});
-
-document.addEventListener('visibilitychange', async () => { 
-  if (document.visibilityState === 'visible') { 
-    checkLoginStatus(); 
-    await carregarTerminais(true); 
-    preencherSelectTerminais();
-    if (typeof preencherSelectLocal === 'function') preencherSelectLocal(); // ← NOVO
-  } 
-});
+  window.addEventListener('pageshow', async (e) => { 
+    if (e.persisted) { 
+      checkLoginStatus(); 
+      await carregarTerminais(true); 
+      preencherSelectTerminais(); 
+    } 
+  });
+  
+  document.addEventListener('visibilitychange', async () => { 
+    if (document.visibilityState === 'visible') { 
+      checkLoginStatus(); 
+      await carregarTerminais(true); 
+      preencherSelectTerminais(); 
+    } 
+  });
 }
 window.addEventListener('load', inicializar);
