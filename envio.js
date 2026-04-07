@@ -3,7 +3,7 @@
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
-let anexosArray = [];          // cada elemento: { base64, mimeType, nome }
+let anexosArray = []; // cada elemento: { base64, mimeType, nome }
 
 function getEl(id) { return document.getElementById(id); }
 
@@ -16,10 +16,12 @@ function abrirModalEnvio() {
   preencherSelectLocal();
   carregarRascunho();
   habilitarCamposSecundarios(false);
+  
   anexosArray = [];
   atualizarListaAnexos();
-  const input = getEl('input-arquivos');
-  if(input) input.value = ''; // Zera o input real
+  
+  const input = getEl('input-arquivos-multiplos');
+  if (input) input.value = ''; // Zera o input real
 }
 
 function fecharModalEnvio() {
@@ -45,7 +47,7 @@ function preencherResponsavel() {
 }
 
 function preencherSelectLocal() {
-  const select = getEl('envio-local'); // Seleciona o elemento pelo ID definido no HTML
+  const select = getEl('envio-local');
   if (!select) return;
 
   // Limpa as opções atuais, mantendo apenas a primeira ("Selecione...")
@@ -71,7 +73,7 @@ function habilitarCamposSecundarios(habilitar) {
 }
 
 // ====================================================================
-// REGRAS DE ÁREA, MOTIVO E VALIDAÇÕES (copiadas do seu arquivo original)
+// REGRAS DE ÁREA, MOTIVO E VALIDAÇÕES
 // ====================================================================
 function aplicarRegrasPorArea() {
   const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
@@ -181,18 +183,14 @@ function validarFormulario() {
 // ANEXOS MÚLTIPLOS (até 4) - COMPRESSÃO E BASE64
 // ====================================================================
 function anexarArquivos() {
-  const input = getEl('input-arquivos');
+  const input = getEl('input-arquivos-multiplos');
   if (input) {
-    // Garante que o arquivo será lido logo após o usuário selecionar a foto
-    input.onchange = processarArquivosSelecionados;
-    input.click(); // Abre a galeria
+    input.onchange = processarArquivosSelecionados; // Garante a vinculação do evento
+    input.click();
   } else {
     alert("Erro: Campo de anexo não encontrado na tela.");
   }
 }
-
-// Ouve as mudanças no input físico do HTML
-document.getElementById('input-arquivos')?.addEventListener('change', processarArquivosSelecionados);
 
 async function processarArquivosSelecionados(event) {
   const files = Array.from(event.target.files);
@@ -266,9 +264,9 @@ function atualizarListaAnexos() {
     return;
   }
   container.innerHTML = anexosArray.map((a, idx) => `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-      <span>📎 ${a.nome}</span>
-      <button type="button" onclick="removerAnexo(${idx})" style="background:#d11a2d; color:white; border:none; border-radius:4px; padding:2px 8px;">❌</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; background: var(--card-bg); padding: 5px 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+      <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%;">📎 ${a.nome}</span>
+      <button type="button" onclick="removerAnexo(${idx})" style="background:#d11a2d; color:white; border:none; border-radius:4px; padding:2px 8px; cursor: pointer;">❌</button>
     </div>
   `).join('');
 }
@@ -317,17 +315,21 @@ function carregarRascunho() {
   if (dados) {
     // Área de destino
     if (['FISCALIZAÇÃO','SAF','PLANTÃO'].includes(dados.areaDestino)) {
-      document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`).checked = true;
+      const areaRadio = document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`);
+      if(areaRadio) areaRadio.checked = true;
     } else {
-      document.querySelector(`input[name="areaDestino"][value="OUTRAS ÁREAS"]`).checked = true;
+      const outrasAreaRadio = document.querySelector(`input[name="areaDestino"][value="OUTRAS ÁREAS"]`);
+      if(outrasAreaRadio) outrasAreaRadio.checked = true;
       getEl('envio-outras-area').value = dados.areaDestino;
       getEl('campo-outras-area').style.display = 'block';
     }
     // Motivo
     if (['AVARIAS','PEDIDO DE FOLGAS','SOLICITAÇÃO DE MATERIAIS'].includes(dados.motivo)) {
-      document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
+      const motivoRadio = document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`);
+      if(motivoRadio) motivoRadio.checked = true;
     } else {
-      document.querySelector(`input[name="motivo"][value="OUTROS"]`).checked = true;
+      const outrosMotivoRadio = document.querySelector(`input[name="motivo"][value="OUTROS"]`);
+      if(outrosMotivoRadio) outrosMotivoRadio.checked = true;
       getEl('envio-outros-motivo').value = dados.motivo;
       getEl('campo-outros-motivo').style.display = 'block';
     }
@@ -385,9 +387,6 @@ function enviarRelatorio() {
     fiscal: localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName')
   };
 
-  console.log('📤 Enviando dados:', dadosEnvio);
-  console.log('📎 Número de anexos:', dadosEnvio.anexos.length);
-
   const formData = new FormData();
   formData.append('acao', 'envio_informacoes');
   formData.append('dados', JSON.stringify(dadosEnvio));
@@ -405,7 +404,7 @@ function enviarRelatorio() {
     })
     .catch((error) => {
       console.error('❌ Erro no fetch:', error);
-      alert('Erro ao enviar. Verifique o console.');
+      alert('Erro ao enviar. Verifique sua conexão de rede.');
     })
     .finally(() => {
       btnEnviar.innerHTML = textoBotaoOriginal;
@@ -507,7 +506,7 @@ function mostrarDetalheEnvio(envio) {
   let anexosHtml = 'Nenhum';
   if (envio.anexos && envio.anexos !== 'Nenhum') {
     const links = envio.anexos.split(' ; ');
-    anexosHtml = links.map(link => `<a href="${link}" target="_blank" style="color:#10b981; text-decoration:underline;">Anexo</a>`).join(' | ');
+    anexosHtml = links.map((link, i) => `<a href="${link}" target="_blank" style="color:#10b981; text-decoration:underline;">Anexo ${i+1}</a>`).join(' | ');
   }
   let html = `
     <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px;">
