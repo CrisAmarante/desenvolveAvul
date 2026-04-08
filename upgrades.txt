@@ -1,18 +1,18 @@
 1	Alterar de USB para limpeza
 2	Permitir uso de microfone para ditar o histórico; Habilitar o acesso à localização (GPS)
 3	Pré-vizualização de imagens (Thumbs)
-4	Permitir a exportação em pdf do documento de informação consolidado; Manter a cópia da informação e incremetar para cópia apenas do campo "Histórico"; Na exportação informar a quantidade de anexos;
-5	Colocar o botão de consultar inspeções embaixo da tela de informações
-6	Fazer os slices por perfil na área logada
+4	Permitir a exportação em pdf do documento de informação consolidado; Inserir hash de assinatura no rodapé (semelhante à assinatura gov); Manter a cópia da informação e incremetar para cópia apenas do campo "Histórico"; Na exportação informar a quantidade de anexos;
+5	Colocar o botão de consultar inspeções embaixo da tela de informações; Melhorar o botão de fechar
+6	Fazer os slices por perfil na área logada; verificar os acessos às informações (Pirâmide invertida)
 7	Melhorar o carregamento (tempo) - tornar mais leve, talvez removendo a imagem de fundo
-8	Melhorar o botão de fechar
-9	Inserir hash de assinatura no rodapé (semelhante à assinatura gov)
-10	É possível enviar a senha (pin) para o telefone particular do usuário caso ele a esqueça?
-11	Tornar os campos outros, sentido, carro e linha, quando aplicáveis, com mínimo (3) de caracteres (Mostrar o resultado em Texto exato)
-12	Tela envio: a rota obrigatória não funciona. è possível selecionar Motivo antes de àrea de destino
-13	Pedido de folgas - habilitar um campo pré preenchido bastando escrever as datas e os motivos para cada solicitação
-14	Incluir TIPTOE a mensagem "selecione a área de destino"
-15	Campo linha: Incluir lista pré carregada de linhas, e incluir nesta lista um campo para digitação (campo outros)
-	
+8	
+9	É possível enviar a senha (pin) para o telefone particular do usuário caso ele a esqueça?
+10	Tornar os campos outros, sentido, carro e linha, quando aplicáveis, com mínimo (3) de caracteres (Mostrar o resultado em Texto exato)
+11	Tela envio: a rota obrigatória não funciona. è possível selecionar Motivo antes de àrea de destino
+12	Pedido de folgas - habilitar um campo pré preenchido bastando escrever as datas e os motivos para cada solicitação
+13	Incluir TIPTOE a mensagem "selecione a área de destino"
+14	Campo linha: Incluir lista pré carregada de linhas, e incluir nesta lista um campo para digitação (campo outros)
+
+
 //https://myaccount.google.com/connections?filters=3,4&hl=pt-BR//
 
