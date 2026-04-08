@@ -1,12 +1,13 @@
+Mostrar área logada por pefil
+Melhorar o carregamento (tempo) - tornar mais leve, talvez removendo a imagem de fundo
 Na exportação informar a quantidade de anexos;
-Corrigir a informação Local;
-Corrigir o botão de anexar que está repetindo os anexos (duplicando)
 Permitir a exportação em pdf do documento de informação consolidado.
 Inserir hash de assinatura no rodapé (semelhante à ssinatira gov)
 Tela envio: a rota obrigatória não funciona. è possível selecionar Motivo antes de àrea de destino
   incluir a mensagem "selecione a área de destino"
   tornar os campos outros, sentido, carro e linha, quando aplicáveis, com mínimo de caracteres (3)
-é possível enviar a senha (pin) para o telefone particular do usuário caso ele a esqueça?
-Campo linha: Incluir lista pré carregada de linhas, e incluir nesta lista um campo para digitação (campo outros)
-Pedido de folgas - mostrar um calendário clicável (CALENDÁRIO EXEMPLO) e copiar os dados para o histórico , na exportação mostrar dentro do texto cada dia selecionado e uma linha, no formato: dia da semana, dia, motivo, fiscal
-Criar a funcionalidade de exportar a informação em formato PDF e de copiar apenas o histórico. Adicionar algum tipo de validação no rodapé da informação (como as hash utilizadas em assinaturas digitais)
+++é possível enviar a senha (pin) para o telefone particular do usuário caso ele a esqueça?
+++++Campo linha: Incluir lista pré carregada de linhas, e incluir nesta lista um campo para digitação (campo outros)
+Pedido de folgas - habilitar um campo pré preenchido bastando escrever as datas e os motivos para cada solicitação
++++++++Criar a funcionalidade de exportar a informação em formato PDF e de copiar apenas o histórico. Adicionar algum tipo de validação no rodapé da informação (como as hash utilizadas em assinaturas digitais)
+++++++++permitir uso de microfone para ditar o histórico
