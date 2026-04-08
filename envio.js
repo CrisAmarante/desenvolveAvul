@@ -545,38 +545,88 @@ function _executarConsultaEnvios(params) {
   });
 }
 
+// ====================================================================
+// MOSTRAR DETALHES DO ENVIO + BOTÕES (PDF + COPIAR) - VERSÃO CORRIGIDA
+// ====================================================================
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
-  if (!modal || !container) return;
+  if (!modal || !container) {
+    console.error("Modal ou container de detalhes não encontrado!");
+    return;
+  }
+
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
-  let anexosHtml = 'Nenhum';
-  if (envio.anexos && envio.anexos !== 'Nenhum') {
-    const links = envio.anexos.split(' ; ');
-    anexosHtml = links.map(link => `<a href="${link}" target="_blank" style="color:#10b981; text-decoration:underline;">Anexo</a>`).join(' | ');
+
+  let anexosHtml = 'Nenhum anexo';
+  if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
+    const links = envio.anexo.split(' ; ');
+    anexosHtml = links.map(link => 
+      `<a href="${link}" target="_blank" style="color:#10b981; text-decoration:underline;">📎 Anexo</a>`
+    ).join(' | ');
   }
-  let html = `
-    <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px;">
+
+  // Conteúdo principal
+  const conteudoHtml = `
+    <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px; line-height: 1.6; margin-bottom: 20px;">
       <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
-      <div><strong>HORA:</strong> ${horaFormatada} <strong>COB.:</strong> ${envio.cobrador || 'N/I'} <strong>SENT.:</strong> ${envio.sentido || 'N/I'}</div>
       <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
-      <div><strong>MOT.:</strong> ${envio.motorista || 'N/I'}</div>
-      <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
-      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>DATA:</strong> ${dataFormatada}</div>
+      <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
+      <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
+      <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>| HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
+      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
       <div><strong>ANEXOS:</strong> ${anexosHtml}</div>
       <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
   `;
-  container.innerHTML = html;
+
+  // Botões
+  const botoesHtml = `
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+      <button id="btn-gerar-pdf" class="btn-principal" style="flex: 1; min-width: 160px; padding: 14px; font-size: 1.02rem;">
+        📄 Gerar PDF (Modelo Oficial)
+      </button>
+      <button id="btn-copiar-texto" class="btn-secundario" style="flex: 1; min-width: 160px; padding: 14px; font-size: 1.02rem;">
+        📋 Copiar Texto Completo
+      </button>
+    </div>
+  `;
+
+  container.innerHTML = conteudoHtml + botoesHtml;
   modal.classList.add('is-open');
-  const btnExport = document.getElementById('btn-exportar-detalhe');
-  if (btnExport) {
-    btnExport.onclick = () => {
-      const texto = gerarTextoDetalheEnvio(envio);
-      navigator.clipboard.writeText(texto).then(() => alert('Detalhes copiados!'));
-    };
-  }
+
+  // === Eventos dos botões (com setTimeout maior e verificação) ===
+  setTimeout(() => {
+    const btnPDF = document.getElementById('btn-gerar-pdf');
+    const btnCopiar = document.getElementById('btn-copiar-texto');
+
+    if (btnPDF) {
+      btnPDF.addEventListener('click', () => {
+        console.log("✅ Botão PDF clicado");
+        exportarParaPDF(envio);
+      });
+    } else {
+      console.error("Botão PDF não encontrado no DOM!");
+    }
+
+    if (btnCopiar) {
+      btnCopiar.addEventListener('click', () => {
+        const texto = gerarTextoDetalheEnvio(envio);
+        navigator.clipboard.writeText(texto).then(() => {
+          const original = btnCopiar.innerHTML;
+          btnCopiar.innerHTML = '✅ Copiado!';
+          btnCopiar.style.background = '#10b981';
+          btnCopiar.style.color = 'white';
+          setTimeout(() => {
+            btnCopiar.innerHTML = original;
+            btnCopiar.style.background = '';
+            btnCopiar.style.color = '';
+          }, 2000);
+        }).catch(err => console.error("Erro ao copiar:", err));
+      });
+    }
+  }, 300); // Aumentado para dar tempo de renderização
 }
 
 function gerarTextoDetalheEnvio(envio) {
