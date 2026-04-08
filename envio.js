@@ -604,17 +604,27 @@ function fecharModalListaEnvios() {
   if (modal) modal.classList.remove('is-open');
 }
 // ====================================================================
-// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ (Versão Ajustada)
+// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ
 // ====================================================================
 async function exportarParaPDF(envio) {
-  if (typeof jsPDF === 'undefined') {
+  // Aguarda o carregamento da biblioteca jsPDF
+  if (typeof jsPDF === 'undefined' || typeof window.jspdf === 'undefined') {
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     document.head.appendChild(script);
-    await new Promise(resolve => { script.onload = resolve; });
+    
+    await new Promise((resolve, reject) => {
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
+    });
   }
 
-  const { jsPDF } = window.jspdf;
+  const { jsPDF } = window.jspdf || window;
+  if (!jsPDF) {
+    alert('Erro ao carregar a biblioteca de PDF. Tente novamente.');
+    return;
+  }
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -625,7 +635,7 @@ async function exportarParaPDF(envio) {
   const margin = 20;
   let y = 22;
 
-  // ==================== CABEÇALHO ====================
+  // Cabeçalho
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
@@ -642,10 +652,8 @@ async function exportarParaPDF(envio) {
 
   y += 18;
 
-  // ==================== CAMPOS SUPERIORES ====================
+  // Campos
   doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-
   const leftCol = margin;
   const rightCol = pageWidth / 2 + 12;
 
@@ -661,7 +669,7 @@ async function exportarParaPDF(envio) {
   doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
   y += 16;
 
-  // ==================== TEXTO PRINCIPAL (HISTÓRICO) ====================
+  // Texto principal
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("Sr. Chefe", margin, y);
@@ -678,32 +686,26 @@ async function exportarParaPDF(envio) {
     y += 7.5;
   });
 
-  y += 12;
+  y += 15;
 
-  // ==================== RODAPÉ ====================
+  // Rodapé
   const dataFormatada = formatarData(envio.data) || '__/__/____';
   const local = (envio.local || 'Osasco').trim();
-
-  // Local e Data (esquerda)
-  doc.text(`${local}, ${dataFormatada}`, margin, y);
-
-  // Responsável no lugar de "Visto" (direita)
   const responsavel = envio.fiscal || '________________';
-  doc.text(responsavel, pageWidth - margin - 45, y);
 
-  // Linha para assinatura (apenas visual)
+  doc.text(`${local}, ${dataFormatada}`, margin, y);
+  doc.text(responsavel, pageWidth - margin - 45, y);
   doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
 
-  y += 22;
+  y += 25;
 
-  // Rodapé inferior
   doc.setFontSize(8);
   doc.text("MOD. 058 - 500 Bls. 50x1 - 05/2025 - GRÁFICA COTRIM", pageWidth/2, y, { align: "center" });
 
-  // ==================== SALVAR ====================
+  // Salvar PDF
   const nomeArquivo = `Relatorio_Trafego_${envio.carro || 'SemCarro'}_${dataFormatada.replace(/\//g, '-')}.pdf`;
-  
   doc.save(nomeArquivo);
+  
   alert('✅ PDF gerado com sucesso!\nO arquivo foi baixado automaticamente.');
 }
 // ====================================================================
