@@ -546,12 +546,15 @@ function _executarConsultaEnvios(params) {
 }
 
 // ====================================================================
-// MOSTRAR DETALHES DO ENVIO + TRÊS BOTÕES
+// MOSTRAR DETALHES DO ENVIO - VERSÃO LIMPA (SEM BOTÃO FANTASMA)
 // ====================================================================
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
-  if (!modal || !container) return;
+  if (!modal || !container) {
+    console.error("❌ Modal ou container não encontrado!");
+    return;
+  }
 
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
@@ -564,8 +567,8 @@ function mostrarDetalheEnvio(envio) {
     ).join(' | ');
   }
 
-  const htmlConteudo = `
-    <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px; line-height: 1.6; margin-bottom: 20px;">
+  const conteudoHtml = `
+    <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px; line-height: 1.6; margin-bottom: 25px;">
       <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
       <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
       <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
@@ -577,51 +580,55 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Três botões
   const botoesHtml = `
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <button id="btn-gerar-pdf" class="btn-principal" style="padding: 14px; font-size: 1.02rem;">
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <button id="btn-gerar-pdf" class="btn-principal" style="padding: 15px; font-size: 1.05rem;">
         📄 Gerar PDF (Modelo Oficial)
       </button>
       
-      <button id="btn-copiar-completo" class="btn-secundario" style="padding: 14px; font-size: 1.02rem;">
+      <button id="btn-copiar-completo" class="btn-secundario" style="padding: 15px; font-size: 1.05rem;">
         📋 Copiar Texto Completo
       </button>
       
-      <button id="btn-copiar-historico" class="btn-secundario" style="padding: 14px; font-size: 1.02rem; background: #64748b;">
+      <button id="btn-copiar-historico" class="btn-secundario" style="padding: 15px; font-size: 1.05rem;">
         📋 Copiar apenas o Histórico
       </button>
     </div>
   `;
 
-  container.innerHTML = htmlConteudo + botoesHtml;
+  // Limpa tudo e insere apenas o que queremos
+  container.innerHTML = conteudoHtml + botoesHtml;
   modal.classList.add('is-open');
 
-  // Eventos dos botões
+  // Atribui eventos com segurança
   setTimeout(() => {
+    // Remover qualquer botão fantasma que possa ter sobrado
+    const todosBotoes = container.querySelectorAll('button');
+    todosBotoes.forEach(btn => {
+      if (btn.id !== 'btn-gerar-pdf' && 
+          btn.id !== 'btn-copiar-completo' && 
+          btn.id !== 'btn-copiar-historico') {
+        btn.remove(); // Remove botões que não são nossos
+      }
+    });
+
     const btnPDF = document.getElementById('btn-gerar-pdf');
-    const btnCopiarCompleto = document.getElementById('btn-copiar-completo');
-    const btnCopiarHistorico = document.getElementById('btn-copiar-historico');
+    const btnCompleto = document.getElementById('btn-copiar-completo');
+    const btnHistorico = document.getElementById('btn-copiar-historico');
 
-    // Botão PDF
-    if (btnPDF) {
-      btnPDF.addEventListener('click', () => exportarParaPDF(envio));
-    }
-
-    // Botão Copiar Texto Completo
-    if (btnCopiarCompleto) {
-      btnCopiarCompleto.addEventListener('click', () => {
+    if (btnPDF) btnPDF.addEventListener('click', () => exportarParaPDF(envio));
+    
+    if (btnCompleto) {
+      btnCompleto.addEventListener('click', () => {
         const texto = gerarTextoDetalheEnvio(envio);
-        copiarParaAreaDeTransferencia(texto, btnCopiarCompleto, "Texto completo copiado!");
+        copiarParaAreaDeTransferencia(texto, btnCompleto, "Texto completo copiado!");
       });
     }
 
-    // Novo Botão: Copiar apenas o Histórico
-    if (btnCopiarHistorico) {
-      btnCopiarHistorico.addEventListener('click', () => {
-        const historico = (envio.historico || "").trim();
-        const textoParaCopiar = historico ? historico : "Nenhum histórico informado.";
-        copiarParaAreaDeTransferencia(textoParaCopiar, btnCopiarHistorico, "Histórico copiado!");
+    if (btnHistorico) {
+      btnHistorico.addEventListener('click', () => {
+        const historico = (envio.historico || "").trim() || "Nenhum histórico informado.";
+        copiarParaAreaDeTransferencia(historico, btnHistorico, "Histórico copiado!");
       });
     }
   }, 300);
