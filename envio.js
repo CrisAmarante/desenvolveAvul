@@ -654,14 +654,12 @@ function fecharModalListaEnvios() {
   if (modal) modal.classList.remove('is-open');
 }
 // ====================================================================
-// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ (VERSÃO CORRIGIDA)
+// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ + HASH DE VALIDAÇÃO
 // ====================================================================
 async function exportarParaPDF(envio) {
   try {
-    // Carrega a biblioteca se ainda não estiver carregada
     if (typeof window.jspdf === 'undefined') {
-      console.log("🔄 Carregando jsPDF via CDN...");
-      
+      console.log("🔄 Carregando jsPDF...");
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
       document.head.appendChild(script);
@@ -670,16 +668,11 @@ async function exportarParaPDF(envio) {
         script.onload = resolve;
         script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
       });
-
-      // Pequeno delay para garantir que o objeto window.jspdf esteja disponível
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Acesso correto à biblioteca
     const { jsPDF } = window.jspdf;
-    if (!jsPDF) {
-      throw new Error('jsPDF não foi carregado corretamente');
-    }
+    if (!jsPDF) throw new Error('jsPDF não carregado');
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -691,7 +684,7 @@ async function exportarParaPDF(envio) {
     const margin = 20;
     let y = 22;
 
-    // Cabeçalho
+    // ==================== CABEÇALHO ====================
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
@@ -708,7 +701,7 @@ async function exportarParaPDF(envio) {
 
     y += 18;
 
-    // Campos superiores
+    // ==================== CAMPOS SUPERIORES ====================
     doc.setFontSize(12);
     const leftCol = margin;
     const rightCol = pageWidth / 2 + 12;
@@ -725,7 +718,7 @@ async function exportarParaPDF(envio) {
     doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
     y += 16;
 
-    // Texto principal
+    // ==================== TEXTO PRINCIPAL ====================
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Sr. Chefe", margin, y);
@@ -742,32 +735,79 @@ async function exportarParaPDF(envio) {
       y += 7.5;
     });
 
-    y += 15;
+    y += 18;
 
-    // Rodapé
+    // ==================== RODAPÉ COM HASH DE VALIDAÇÃO ====================
     const dataFormatada = formatarData(envio.data) || '__/__/____';
     const local = (envio.local || 'Osasco').trim();
     const responsavel = envio.fiscal || '________________';
+    const agora = Utilities ? Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss") 
+                           : new Date().toLocaleString('pt-BR');
 
+    // Geração do Hash de Validação
+    const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${agora}`;
+    const hashValidacao = gerarHashValidacao(dadosParaHash);
+
+    // Local + Data
     doc.text(`${local}, ${dataFormatada}`, margin, y);
+    
+    // Responsável
     doc.text(responsavel, pageWidth - margin - 45, y);
     doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
 
-    y += 25;
+    y += 18;
 
+    // ==================== HASH DE VALIDAÇÃO ====================
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Hash de Validação:", margin, y);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.text(hashValidacao, margin + 35, y);
+
+    y += 7;
     doc.setFontSize(8);
-    doc.text("MOD. 058 - 500 Bls. 50x1 - 05/2025 - GRÁFICA COTRIM", pageWidth/2, y, { align: "center" });
+    doc.text(`Gerado em: ${agora} | Responsável: ${responsavel}`, margin, y);
 
-    // Salvar
-    const nomeArquivo = `Relatorio_Trafego_${(envio.carro || 'SemCarro')}_${dataFormatada.replace(/\//g, '-')}.pdf`;
+    // Rodapé final pequeno
+    y += 12;
+    doc.setFontSize(7.5);
+    doc.text("Documento gerado eletronicamente • Valide o hash para verificar integridade", 
+             pageWidth/2, y, { align: "center" });
+
+    // ==================== SALVAR ====================
+    const nomeArquivo = `Relatorio_Trafego_${envio.carro || 'SemCarro'}_${dataFormatada.replace(/\//g, '-')}.pdf`;
     doc.save(nomeArquivo);
     
-    alert('✅ PDF gerado com sucesso!\nO arquivo foi baixado automaticamente.');
+    alert('✅ PDF gerado com sucesso!\nHash de validação incluído.');
 
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
-    alert('❌ Erro ao gerar o PDF: ' + error.message + '\n\nVerifique o console para mais detalhes.');
+    alert('❌ Erro ao gerar o PDF:\n' + error.message);
   }
+}
+// Gera hash SHA-256 simples (compatível com o Apps Script)
+function gerarHashValidacao(texto) {
+  // Web Crypto API 
+  return new Promise(async (resolve) => {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(texto);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      resolve(hashHex.toUpperCase());
+    } catch (e) {
+      // Fallback simples caso Web Crypto falhe
+      let hash = 0;
+      for (let i = 0; i < texto.length; i++) {
+        hash = (hash << 5) - hash + texto.charCodeAt(i);
+        hash |= 0;
+      }
+      resolve(Math.abs(hash).toString(16).toUpperCase().padStart(64, '0'));
+    }
+  });
 }
 // ====================================================================
 // FUNÇÕES AUXILIARES DE FORMATAÇÃO
