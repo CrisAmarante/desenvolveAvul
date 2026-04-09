@@ -546,15 +546,12 @@ function _executarConsultaEnvios(params) {
 }
 
 // ====================================================================
-// MOSTRAR DETALHES DO ENVIO + BOTÕES (PDF + COPIAR) - VERSÃO CORRIGIDA
+// MOSTRAR DETALHES DO ENVIO + TRÊS BOTÕES
 // ====================================================================
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
-  if (!modal || !container) {
-    console.error("Modal ou container de detalhes não encontrado!");
-    return;
-  }
+  if (!modal || !container) return;
 
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
@@ -567,8 +564,7 @@ function mostrarDetalheEnvio(envio) {
     ).join(' | ');
   }
 
-  // Conteúdo principal
-  const conteudoHtml = `
+  const htmlConteudo = `
     <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px; line-height: 1.6; margin-bottom: 20px;">
       <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
       <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
@@ -581,54 +577,55 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Botões
+  // Três botões
   const botoesHtml = `
-    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-      <button id="btn-gerar-pdf" class="btn-principal" style="flex: 1; min-width: 160px; padding: 14px; font-size: 1.02rem;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <button id="btn-gerar-pdf" class="btn-principal" style="padding: 14px; font-size: 1.02rem;">
         📄 Gerar PDF (Modelo Oficial)
       </button>
-      <button id="btn-copiar-texto" class="btn-secundario" style="flex: 1; min-width: 160px; padding: 14px; font-size: 1.02rem;">
+      
+      <button id="btn-copiar-completo" class="btn-secundario" style="padding: 14px; font-size: 1.02rem;">
         📋 Copiar Texto Completo
+      </button>
+      
+      <button id="btn-copiar-historico" class="btn-secundario" style="padding: 14px; font-size: 1.02rem; background: #64748b;">
+        📋 Copiar apenas o Histórico
       </button>
     </div>
   `;
 
-  container.innerHTML = conteudoHtml + botoesHtml;
+  container.innerHTML = htmlConteudo + botoesHtml;
   modal.classList.add('is-open');
 
-  // === Eventos dos botões (com setTimeout maior e verificação) ===
+  // Eventos dos botões
   setTimeout(() => {
     const btnPDF = document.getElementById('btn-gerar-pdf');
-    const btnCopiar = document.getElementById('btn-copiar-texto');
+    const btnCopiarCompleto = document.getElementById('btn-copiar-completo');
+    const btnCopiarHistorico = document.getElementById('btn-copiar-historico');
 
+    // Botão PDF
     if (btnPDF) {
-      btnPDF.addEventListener('click', () => {
-        console.log("✅ Botão PDF clicado");
-        exportarParaPDF(envio);
-      });
-    } else {
-      console.error("Botão PDF não encontrado no DOM!");
+      btnPDF.addEventListener('click', () => exportarParaPDF(envio));
     }
 
-    if (btnCopiar) {
-      btnCopiar.addEventListener('click', () => {
+    // Botão Copiar Texto Completo
+    if (btnCopiarCompleto) {
+      btnCopiarCompleto.addEventListener('click', () => {
         const texto = gerarTextoDetalheEnvio(envio);
-        navigator.clipboard.writeText(texto).then(() => {
-          const original = btnCopiar.innerHTML;
-          btnCopiar.innerHTML = '✅ Copiado!';
-          btnCopiar.style.background = '#10b981';
-          btnCopiar.style.color = 'white';
-          setTimeout(() => {
-            btnCopiar.innerHTML = original;
-            btnCopiar.style.background = '';
-            btnCopiar.style.color = '';
-          }, 2000);
-        }).catch(err => console.error("Erro ao copiar:", err));
+        copiarParaAreaDeTransferencia(texto, btnCopiarCompleto, "Texto completo copiado!");
       });
     }
-  }, 300); // Aumentado para dar tempo de renderização
-}
 
+    // Novo Botão: Copiar apenas o Histórico
+    if (btnCopiarHistorico) {
+      btnCopiarHistorico.addEventListener('click', () => {
+        const historico = (envio.historico || "").trim();
+        const textoParaCopiar = historico ? historico : "Nenhum histórico informado.";
+        copiarParaAreaDeTransferencia(textoParaCopiar, btnCopiarHistorico, "Histórico copiado!");
+      });
+    }
+  }, 300);
+}
 function gerarTextoDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
@@ -826,4 +823,27 @@ async function gerarHashValidacao(texto) {
     }
     return Math.abs(hash).toString(16).toUpperCase().padStart(64, '0');
   }
+}
+// Função auxiliar para copiar texto com feedback visual
+function copiarParaAreaDeTransferencia(texto, botaoElemento, mensagemSucesso = "Copiado!") {
+  if (!texto || texto.trim() === "") {
+    alert("Não há texto para copiar.");
+    return;
+  }
+
+  navigator.clipboard.writeText(texto).then(() => {
+    const textoOriginal = botaoElemento.innerHTML;
+    botaoElemento.innerHTML = `✅ ${mensagemSucesso}`;
+    botaoElemento.style.background = '#10b981';
+    botaoElemento.style.color = 'white';
+
+    setTimeout(() => {
+      botaoElemento.innerHTML = textoOriginal;
+      botaoElemento.style.background = '';
+      botaoElemento.style.color = '';
+    }, 2500);
+  }).catch(err => {
+    console.error("Erro ao copiar:", err);
+    alert("Não foi possível copiar o texto.");
+  });
 }
