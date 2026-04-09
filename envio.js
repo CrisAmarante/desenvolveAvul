@@ -654,10 +654,11 @@ function fecharModalListaEnvios() {
   if (modal) modal.classList.remove('is-open');
 }
 // ====================================================================
-// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ + HASH DE VALIDAÇÃO
+// EXPORTAÇÃO PARA PDF - COM HASH DE VALIDAÇÃO (VERSÃO CORRIGIDA)
 // ====================================================================
 async function exportarParaPDF(envio) {
   try {
+    // Carregar jsPDF se necessário
     if (typeof window.jspdf === 'undefined') {
       console.log("🔄 Carregando jsPDF...");
       const script = document.createElement('script');
@@ -668,11 +669,11 @@ async function exportarParaPDF(envio) {
         script.onload = resolve;
         script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
       });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
 
     const { jsPDF } = window.jspdf;
-    if (!jsPDF) throw new Error('jsPDF não carregado');
+    if (!jsPDF) throw new Error('jsPDF não foi carregado');
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -701,7 +702,7 @@ async function exportarParaPDF(envio) {
 
     y += 18;
 
-    // ==================== CAMPOS SUPERIORES ====================
+    // ==================== CAMPOS ====================
     doc.setFontSize(12);
     const leftCol = margin;
     const rightCol = pageWidth / 2 + 12;
@@ -735,18 +736,28 @@ async function exportarParaPDF(envio) {
       y += 7.5;
     });
 
-    y += 18;
+    y += 20;
 
-    // ==================== RODAPÉ COM HASH DE VALIDAÇÃO ====================
+    // ==================== RODAPÉ + HASH ====================
     const dataFormatada = formatarData(envio.data) || '__/__/____';
     const local = (envio.local || 'Osasco').trim();
     const responsavel = envio.fiscal || '________________';
-    const agora = Utilities ? Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss") 
-                           : new Date().toLocaleString('pt-BR');
+
+    // Data e hora atual no formato brasileiro
+    const agora = new Date();
+    const dataGeracao = agora.toLocaleDateString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    }) + ' ' + agora.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
 
     // Geração do Hash de Validação
-    const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${agora}`;
-    const hashValidacao = gerarHashValidacao(dadosParaHash);
+    const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${Date.now()}`;
+    const hashValidacao = await gerarHashValidacao(dadosParaHash);
 
     // Local + Data
     doc.text(`${local}, ${dataFormatada}`, margin, y);
@@ -755,29 +766,28 @@ async function exportarParaPDF(envio) {
     doc.text(responsavel, pageWidth - margin - 45, y);
     doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
 
-    y += 18;
+    y += 20;
 
-    // ==================== HASH DE VALIDAÇÃO ====================
-    doc.setFontSize(9);
+    // Hash de Validação
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Hash de Validação:", margin, y);
+    doc.text("HASH DE VALIDAÇÃO:", margin, y);
     
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(hashValidacao, margin + 35, y);
+    doc.setFontSize(9);
+    doc.text(hashValidacao, margin + 42, y);
 
-    y += 7;
+    y += 8;
     doc.setFontSize(8);
-    doc.text(`Gerado em: ${agora} | Responsável: ${responsavel}`, margin, y);
+    doc.text(`Gerado em: ${dataGeracao} • Responsável: ${responsavel}`, margin, y);
 
-    // Rodapé final pequeno
-    y += 12;
+    y += 10;
     doc.setFontSize(7.5);
     doc.text("Documento gerado eletronicamente • Valide o hash para verificar integridade", 
              pageWidth/2, y, { align: "center" });
 
-    // ==================== SALVAR ====================
-    const nomeArquivo = `Relatorio_Trafego_${envio.carro || 'SemCarro'}_${dataFormatada.replace(/\//g, '-')}.pdf`;
+    // ==================== SALVAR PDF ====================
+    const nomeArquivo = `Relatorio_Trafego_${(envio.carro || 'SemCarro')}_${dataFormatada.replace(/\//g, '-')}.pdf`;
     doc.save(nomeArquivo);
     
     alert('✅ PDF gerado com sucesso!\nHash de validação incluído.');
@@ -786,28 +796,6 @@ async function exportarParaPDF(envio) {
     console.error("Erro ao gerar PDF:", error);
     alert('❌ Erro ao gerar o PDF:\n' + error.message);
   }
-}
-// Gera hash SHA-256 simples (compatível com o Apps Script)
-function gerarHashValidacao(texto) {
-  // Web Crypto API 
-  return new Promise(async (resolve) => {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(texto);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      resolve(hashHex.toUpperCase());
-    } catch (e) {
-      // Fallback simples caso Web Crypto falhe
-      let hash = 0;
-      for (let i = 0; i < texto.length; i++) {
-        hash = (hash << 5) - hash + texto.charCodeAt(i);
-        hash |= 0;
-      }
-      resolve(Math.abs(hash).toString(16).toUpperCase().padStart(64, '0'));
-    }
-  });
 }
 // ====================================================================
 // FUNÇÕES AUXILIARES DE FORMATAÇÃO
