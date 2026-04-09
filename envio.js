@@ -814,3 +814,20 @@ function formatarHora(horaStr) {
   if (horaStr.includes('T')) return horaStr.split('T')[1].substring(0,5);
   return horaStr;
 }
+async function gerarHashValidacao(texto) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(texto);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  } catch (e) {
+    // Fallback simples
+    let hash = 0;
+    for (let i = 0; i < texto.length; i++) {
+      hash = ((hash << 5) - hash) + texto.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16).toUpperCase().padStart(64, '0');
+  }
+}
