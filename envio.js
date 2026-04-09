@@ -654,109 +654,120 @@ function fecharModalListaEnvios() {
   if (modal) modal.classList.remove('is-open');
 }
 // ====================================================================
-// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ
+// EXPORTAÇÃO PARA PDF - MODELO URUBUPUNGÁ (VERSÃO CORRIGIDA)
 // ====================================================================
 async function exportarParaPDF(envio) {
-  // Aguarda o carregamento da biblioteca jsPDF
-  if (typeof jsPDF === 'undefined' || typeof window.jspdf === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    document.head.appendChild(script);
-    
-    await new Promise((resolve, reject) => {
-      script.onload = resolve;
-      script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
+  try {
+    // Carrega a biblioteca se ainda não estiver carregada
+    if (typeof window.jspdf === 'undefined') {
+      console.log("🔄 Carregando jsPDF via CDN...");
+      
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      document.head.appendChild(script);
+
+      await new Promise((resolve, reject) => {
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
+      });
+
+      // Pequeno delay para garantir que o objeto window.jspdf esteja disponível
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Acesso correto à biblioteca
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) {
+      throw new Error('jsPDF não foi carregado corretamente');
+    }
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
     });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 22;
+
+    // Cabeçalho
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
+    
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Avenida Presidente Médici nº 1.340 - Telefone: 3658-7777", pageWidth/2, y, { align: "center" });
+
+    y += 14;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("RELATÓRIO À CHEFIA DO TRÁFEGO", pageWidth/2, y, { align: "center" });
+
+    y += 18;
+
+    // Campos superiores
+    doc.setFontSize(12);
+    const leftCol = margin;
+    const rightCol = pageWidth / 2 + 12;
+
+    doc.text(`Carro: ${envio.carro || '________________'}`, leftCol, y);
+    doc.text(`Hora: ${formatarHora(envio.hora) || '________'}`, rightCol, y);
+    y += 9;
+
+    doc.text(`Mot.: ${envio.motorista || '________________'}`, leftCol, y);
+    doc.text(`Cob.: ${envio.cobrador || '________________'}`, rightCol, y);
+    y += 9;
+
+    doc.text(`Linha: ${envio.linha || '________________'}`, leftCol, y);
+    doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
+    y += 16;
+
+    // Texto principal
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Sr. Chefe", margin, y);
+    y += 10;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11.5);
+
+    const texto = (envio.historico || "").trim() || "Sem informações adicionais.";
+    const linhas = doc.splitTextToSize(texto, pageWidth - margin * 2);
+
+    linhas.forEach(linha => {
+      doc.text(linha, margin, y);
+      y += 7.5;
+    });
+
+    y += 15;
+
+    // Rodapé
+    const dataFormatada = formatarData(envio.data) || '__/__/____';
+    const local = (envio.local || 'Osasco').trim();
+    const responsavel = envio.fiscal || '________________';
+
+    doc.text(`${local}, ${dataFormatada}`, margin, y);
+    doc.text(responsavel, pageWidth - margin - 45, y);
+    doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
+
+    y += 25;
+
+    doc.setFontSize(8);
+    doc.text("MOD. 058 - 500 Bls. 50x1 - 05/2025 - GRÁFICA COTRIM", pageWidth/2, y, { align: "center" });
+
+    // Salvar
+    const nomeArquivo = `Relatorio_Trafego_${(envio.carro || 'SemCarro')}_${dataFormatada.replace(/\//g, '-')}.pdf`;
+    doc.save(nomeArquivo);
+    
+    alert('✅ PDF gerado com sucesso!\nO arquivo foi baixado automaticamente.');
+
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    alert('❌ Erro ao gerar o PDF: ' + error.message + '\n\nVerifique o console para mais detalhes.');
   }
-
-  const { jsPDF } = window.jspdf || window;
-  if (!jsPDF) {
-    alert('Erro ao carregar a biblioteca de PDF. Tente novamente.');
-    return;
-  }
-
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 20;
-  let y = 22;
-
-  // Cabeçalho
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
-  
-  y += 7;
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("Avenida Presidente Médici nº 1.340 - Telefone: 3658-7777", pageWidth/2, y, { align: "center" });
-
-  y += 14;
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("RELATÓRIO À CHEFIA DO TRÁFEGO", pageWidth/2, y, { align: "center" });
-
-  y += 18;
-
-  // Campos
-  doc.setFontSize(12);
-  const leftCol = margin;
-  const rightCol = pageWidth / 2 + 12;
-
-  doc.text(`Carro: ${envio.carro || '________________'}`, leftCol, y);
-  doc.text(`Hora: ${formatarHora(envio.hora) || '________'}`, rightCol, y);
-  y += 9;
-
-  doc.text(`Mot.: ${envio.motorista || '________________'}`, leftCol, y);
-  doc.text(`Cob.: ${envio.cobrador || '________________'}`, rightCol, y);
-  y += 9;
-
-  doc.text(`Linha: ${envio.linha || '________________'}`, leftCol, y);
-  doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
-  y += 16;
-
-  // Texto principal
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("Sr. Chefe", margin, y);
-  y += 10;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11.5);
-
-  const texto = (envio.historico || "").trim() || "Sem informações adicionais.";
-  const linhas = doc.splitTextToSize(texto, pageWidth - margin * 2);
-
-  linhas.forEach(linha => {
-    doc.text(linha, margin, y);
-    y += 7.5;
-  });
-
-  y += 15;
-
-  // Rodapé
-  const dataFormatada = formatarData(envio.data) || '__/__/____';
-  const local = (envio.local || 'Osasco').trim();
-  const responsavel = envio.fiscal || '________________';
-
-  doc.text(`${local}, ${dataFormatada}`, margin, y);
-  doc.text(responsavel, pageWidth - margin - 45, y);
-  doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
-
-  y += 25;
-
-  doc.setFontSize(8);
-  doc.text("MOD. 058 - 500 Bls. 50x1 - 05/2025 - GRÁFICA COTRIM", pageWidth/2, y, { align: "center" });
-
-  // Salvar PDF
-  const nomeArquivo = `Relatorio_Trafego_${envio.carro || 'SemCarro'}_${dataFormatada.replace(/\//g, '-')}.pdf`;
-  doc.save(nomeArquivo);
-  
-  alert('✅ PDF gerado com sucesso!\nO arquivo foi baixado automaticamente.');
 }
 // ====================================================================
 // FUNÇÕES AUXILIARES DE FORMATAÇÃO
