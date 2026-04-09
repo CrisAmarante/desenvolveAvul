@@ -654,32 +654,20 @@ function fecharModalListaEnvios() {
   if (modal) modal.classList.remove('is-open');
 }
 // ====================================================================
-// EXPORTAÇÃO PARA PDF - COM HASH DE VALIDAÇÃO (VERSÃO CORRIGIDA)
+// EXPORTAÇÃO PARA PDF - COM HASH DE VALIDAÇÃO (AJUSTES SOLICITADOS)
 // ====================================================================
 async function exportarParaPDF(envio) {
   try {
-    // Carregar jsPDF se necessário
     if (typeof window.jspdf === 'undefined') {
-      console.log("🔄 Carregando jsPDF...");
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
       document.head.appendChild(script);
-
-      await new Promise((resolve, reject) => {
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
-      });
+      await new Promise(resolve => { script.onload = resolve; });
       await new Promise(resolve => setTimeout(resolve, 150));
     }
 
     const { jsPDF } = window.jspdf;
-    if (!jsPDF) throw new Error('jsPDF não foi carregado');
-
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -702,7 +690,7 @@ async function exportarParaPDF(envio) {
 
     y += 18;
 
-    // ==================== CAMPOS ====================
+    // ==================== CAMPOS SUPERIORES ====================
     doc.setFontSize(12);
     const leftCol = margin;
     const rightCol = pageWidth / 2 + 12;
@@ -736,61 +724,69 @@ async function exportarParaPDF(envio) {
       y += 7.5;
     });
 
-    y += 20;
+    y += 22;
 
-    // ==================== RODAPÉ + HASH ====================
+    // ==================== RODAPÉ PRINCIPAL ====================
     const dataFormatada = formatarData(envio.data) || '__/__/____';
-    const local = (envio.local || 'Osasco').trim();
     const responsavel = envio.fiscal || '________________';
+    const localSelecionado = envio.local || 'Não informado';
 
-    // Data e hora atual no formato brasileiro
+    // Data e hora de geração
     const agora = new Date();
     const dataGeracao = agora.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
+      day: '2-digit', month: '2-digit', year: 'numeric' 
     }) + ' ' + agora.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      second: '2-digit' 
+      hour: '2-digit', minute: '2-digit', second: '2-digit' 
     });
 
-    // Geração do Hash de Validação
+    // Geração do Hash
     const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${Date.now()}`;
     const hashValidacao = await gerarHashValidacao(dadosParaHash);
 
-    // Local + Data
-    doc.text(`${local}, ${dataFormatada}`, margin, y);
+    // Local fixo = Osasco + Data
+    doc.text(`Osasco, ${dataFormatada}`, margin, y);
     
-    // Responsável
+    // Responsável (sem linha embaixo)
     doc.text(responsavel, pageWidth - margin - 45, y);
-    doc.line(pageWidth - margin - 70, y + 6, pageWidth - margin, y + 6);
 
-    y += 20;
+    y += 18;
 
-    // Hash de Validação
-    doc.setFontSize(10);
+    // ==================== HASH DE VALIDAÇÃO (fonte menor e mais clara) ====================
+    doc.setFontSize(9);                    // ≈ 20% menor que o texto normal
+    doc.setTextColor(100, 100, 100);       // Cinza claro
+
     doc.setFont("helvetica", "bold");
     doc.text("HASH DE VALIDAÇÃO:", margin, y);
     
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
     doc.text(hashValidacao, margin + 42, y);
 
-    y += 8;
+    y += 7;
     doc.setFontSize(8);
-    doc.text(`Gerado em: ${dataGeracao} • Responsável: ${responsavel}`, margin, y);
+    doc.text(`Gerado em: ${dataGeracao} • Responsável: ${responsavel} • Local: ${localSelecionado}`, 
+             margin, y);
 
     y += 10;
     doc.setFontSize(7.5);
+    doc.setTextColor(80, 80, 80);
     doc.text("Documento gerado eletronicamente • Valide o hash para verificar integridade", 
              pageWidth/2, y, { align: "center" });
 
-    // ==================== SALVAR PDF ====================
-    const nomeArquivo = `Relatorio_Trafego_${(envio.carro || 'SemCarro')}_${dataFormatada.replace(/\//g, '-')}.pdf`;
+    // Restaurar cor padrão
+    doc.setTextColor(0);
+
+    // ==================== NOME DO ARQUIVO ====================
+    const motoristaNome = (envio.motorista || 'SemMotorista')
+      .replace(/[^a-zA-Z0-9]/g, '')   // remove caracteres especiais
+      .substring(0, 15);              // limita tamanho
+
+    const dataArquivo = dataFormatada.replace(/\//g, '_'); // dd_mm_aaaa
+
+    const nomeArquivo = `${envio.carro || 'SemCarro'}_${dataArquivo}_${motoristaNome}.pdf`;
+
     doc.save(nomeArquivo);
     
-    alert('✅ PDF gerado com sucesso!\nHash de validação incluído.');
+    alert('✅ PDF gerado com sucesso!\n\nNome do arquivo: ' + nomeArquivo);
 
   } catch (error) {
     console.error("Erro ao gerar PDF:", error);
