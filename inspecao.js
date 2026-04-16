@@ -1,6 +1,5 @@
-
 // ====================================================================
-// INSPEÇÃO VEICULAR
+// INSPEÇÃO VEICULAR - VERSÃO ATUALIZADA
 // ====================================================================
 class InspecaoVeicular {
   constructor() { this.modal = new ModalController('modal-inspecao-veicular'); this.initEventListeners(); }
@@ -14,17 +13,14 @@ initEventListeners() {
       const obsInput = row.querySelector('.obs-input');
       const posBtns = row.querySelectorAll('.pos-btn');
 
-      // Nova regra: Atualiza o bloqueio dos campos da linha
       const atualizarEstadoLinha = () => {
         const isDefective = cbDef.checked;
         
-        // Bloqueia e limpa o input de observação se não estiver com defeito
         if (obsInput) {
           obsInput.disabled = !isDefective;
           if (!isDefective) obsInput.value = ''; 
         }
         
-        // Bloqueia e limpa os botões de posição (F, M, T) se não estiver com defeito
         if (posBtns) {
           posBtns.forEach(btn => {
             btn.disabled = !isDefective;
@@ -36,18 +32,17 @@ initEventListeners() {
       if (cbOk && cbDef) {
         cbOk.addEventListener('change', () => { 
           if (cbOk.checked) cbDef.checked = false; 
-          atualizarEstadoLinha(); // Chama a regra ao clicar
+          atualizarEstadoLinha();
         });
         cbDef.addEventListener('change', () => { 
           if (cbDef.checked) cbOk.checked = false; 
-          atualizarEstadoLinha(); // Chama a regra ao clicar
+          atualizarEstadoLinha();
         });
       }
     });
 
     document.querySelectorAll('.pos-btn').forEach(btn => btn.addEventListener('click', (e) => { 
       e.stopPropagation(); 
-      // Só deixa ativar o botão se ele não estiver bloqueado
       if (!btn.disabled) {
         btn.classList.toggle('active'); 
       }
@@ -87,13 +82,11 @@ initEventListeners() {
     if (getEl('carro')) getEl('carro').value = ''; 
     document.querySelectorAll('#tabela-inspecao tbody tr .ok, #tabela-inspecao tbody tr .defeito').forEach(cb => cb.checked = false); 
     
-    // Agora limpa e BLOQUEIA os inputs de texto por padrão
     document.querySelectorAll('.obs-input').forEach(inp => { 
       inp.value = ''; 
       inp.disabled = true; 
     }); 
     
-    // Agora limpa e BLOQUEIA os botões F, M, T por padrão
     document.querySelectorAll('.pos-btn').forEach(btn => { 
       btn.classList.remove('active'); 
       btn.disabled = true; 
@@ -126,7 +119,6 @@ initEventListeners() {
     } catch (err) { console.error(err); alert('❌ Erro ao enviar. Tente novamente.'); }
   }
   conferirInspecoes() {
-    // Por padrão, pega a data exata de hoje no formato YYYY-MM-DD
     const hoje = new Date().toISOString().split('T')[0];
     this.conferirInspecoesComFiltro(hoje, hoje, null, null);
   }
@@ -149,8 +141,6 @@ initEventListeners() {
         if (dados && dados.erro) {
           alert('Erro ao consultar: ' + dados.erro);
         } else {
-          // Em vez de bloquear com um alert, sempre abre o modal
-          // O modal cuidará de exibir a mensagem de "vazio" na tela
           mostrarModalConferir(dados || [], currentUserRole, params);
         }
         delete window[callbackName];
@@ -165,12 +155,19 @@ initEventListeners() {
     });
   }
 }
+
+// ====================================================================
+// FUNÇÕES GLOBAIS DO MODAL DE CONSULTA (ATUALIZADAS)
+// ====================================================================
+
 function mostrarModalConferir(inspecoes, role, params) {
-  const modal = getEl('modal-conferir-inspecoes'), container = getEl('lista-inspecoes');
+  const modal = getEl('modal-conferir-inspecoes');
+  const container = getEl('lista-inspecoes');
   if (!modal || !container) return;
   
   const hoje = new Date().toISOString().split('T')[0];
-
+  const isFiscal = (role === 'FISCAL');
+  
   // Monta o painel de filtros se ele ainda não existir
   if (!document.getElementById('filtros-inspecao')) {
     const filtrosDiv = document.createElement('div');
@@ -180,39 +177,137 @@ function mostrarModalConferir(inspecoes, role, params) {
     filtrosDiv.style.background = 'var(--card-bg)';
     filtrosDiv.style.borderRadius = '8px';
     
-    // Injeta os inputs de Data Início e Fim já preenchidos com o dia de hoje
-    filtrosDiv.innerHTML = `
+    let htmlFiltros = `
       <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
         <div><label>Data Início</label><input type="date" id="filtro-inspecao-data-inicio" value="${hoje}"></div>
         <div><label>Data Fim</label><input type="date" id="filtro-inspecao-data-fim" value="${hoje}"></div>
         <div><label>Carro</label><input type="text" id="filtro-inspecao-carro" placeholder="Placa/Identificação"></div>
-        ${role !== 'FISCAL' ? `<div><label>Fiscal</label><input type="text" id="filtro-inspecao-fiscal" placeholder="Apelido"></div>` : ''}
+    `;
+    
+    // Se NÃO for fiscal, adiciona o seletor de visualização
+    if (!isFiscal) {
+      htmlFiltros += `
+        <div><label>Visualizar</label>
+          <select id="filtro-inspecao-visualizar" style="padding: 6px 8px; border-radius: 6px;">
+            <option value="TODOS">✅ Todas as inspeções</option>
+            <option value="APENAS_DEFEITOS">⚠️ Apenas com defeitos</option>
+          </select>
+        </div>
+      `;
+    }
+    
+    if (role !== 'FISCAL') {
+      htmlFiltros += `<div><label>Fiscal</label><input type="text" id="filtro-inspecao-fiscal" placeholder="Apelido"></div>`;
+    }
+    
+    htmlFiltros += `
         <div><button id="btn-aplicar-filtros-inspecao" class="btn-secundario">🔍 Aplicar</button></div>
         <div><button id="btn-limpar-filtros-inspecao" class="btn-secundario">🗑️ Limpar</button></div>
       </div>
     `;
+    
+    filtrosDiv.innerHTML = htmlFiltros;
     container.parentNode.insertBefore(filtrosDiv, container);
     
+    // Evento do botão Aplicar
     document.getElementById('btn-aplicar-filtros-inspecao').addEventListener('click', () => {
       const dataInicio = document.getElementById('filtro-inspecao-data-inicio').value;
       const dataFim = document.getElementById('filtro-inspecao-data-fim').value;
       const carro = document.getElementById('filtro-inspecao-carro').value;
       const fiscalFiltro = role !== 'FISCAL' ? document.getElementById('filtro-inspecao-fiscal').value : null;
+      const visualizarSelect = document.getElementById('filtro-inspecao-visualizar');
+      const visualizar = visualizarSelect ? visualizarSelect.value : 'TODOS';
+      
+      window.filtroExibicaoInspecao = visualizar;
+      
       window.modals.inspecaoVeicular.conferirInspecoesComFiltro(dataInicio, dataFim, carro, fiscalFiltro);
     });
     
+    // Evento do botão Limpar
     document.getElementById('btn-limpar-filtros-inspecao').addEventListener('click', () => {
       document.getElementById('filtro-inspecao-data-inicio').value = hoje;
       document.getElementById('filtro-inspecao-data-fim').value = hoje;
       document.getElementById('filtro-inspecao-carro').value = '';
       if (role !== 'FISCAL') document.getElementById('filtro-inspecao-fiscal').value = '';
+      const visualizarSelect = document.getElementById('filtro-inspecao-visualizar');
+      if (visualizarSelect) visualizarSelect.value = 'TODOS';
+      window.filtroExibicaoInspecao = 'TODOS';
       window.modals.inspecaoVeicular.conferirInspecoes();
     });
   }
-
-  // --- TRATAMENTO: O QUE ACONTECE SE A LISTA VIER VAZIA ---
-  if (!inspecoes || inspecoes.length === 0) {
-    // Confere se o usuário pesquisou só "hoje" ou usou outros filtros
+  
+  // Recupera o filtro de exibição atual
+  const visualizarSelect = document.getElementById('filtro-inspecao-visualizar');
+  let filtroExibicaoAtual = 'TODOS';
+  if (visualizarSelect) {
+    filtroExibicaoAtual = visualizarSelect.value;
+  } else if (window.filtroExibicaoInspecao) {
+    filtroExibicaoAtual = window.filtroExibicaoInspecao;
+  }
+  
+  // Se for fiscal, sempre vê TODAS as inspeções
+  if (isFiscal) {
+    filtroExibicaoAtual = 'TODOS';
+  }
+  
+  // Função auxiliar: verifica se há defeito
+  function temDefeitos(inspecao) {
+    return (inspecao.thoreb?.status === 'DEFEITO' ||
+            inspecao.elevador?.status === 'DEFEITO' ||
+            inspecao.limpeza?.status === 'DEFEITO' ||
+            inspecao.ventilador?.status === 'DEFEITO');
+  }
+  
+  // Função para gerar o HTML de um item
+  function gerarItemInspecao(ins, role, isFiscal) {
+    const itensDefeito = [];
+    let temAlgumDefeito = false;
+    
+    if (ins.thoreb?.status === 'DEFEITO') {
+      temAlgumDefeito = true;
+      itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
+    }
+    if (ins.elevador?.status === 'DEFEITO') {
+      temAlgumDefeito = true;
+      itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
+    }
+    if (ins.limpeza?.status === 'DEFEITO') {
+      temAlgumDefeito = true;
+      itensDefeito.push(`LIMPEZA: ${ins.limpeza.obs || 'sem obs'}`);
+    }
+    if (ins.ventilador?.status === 'DEFEITO') {
+      temAlgumDefeito = true;
+      let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`;
+      if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`;
+      itensDefeito.push(d);
+    }
+    
+    let defeitosHtml = '';
+    if (itensDefeito.length === 0) {
+      defeitosHtml = `<li style="color: #10b981;">✅ Nenhum defeito apresentado</li>`;
+    } else {
+      defeitosHtml = itensDefeito.map(i => `<li style="color: #f59e0b;">⚠️ ${i}</li>`).join('');
+    }
+    
+    let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid ${itensDefeito.length === 0 ? '#10b981' : 'var(--accent)'};">`;
+    linha += `<strong>${ins.carro} - ${ins.terminal}</strong><br>`;
+    if (role !== 'FISCAL' && !isFiscal) {
+      linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
+    }
+    linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">${defeitosHtml}</ul>`;
+    linha += `</div>`;
+    
+    return { html: linha, temDefeito: temAlgumDefeito };
+  }
+  
+  // Aplica o filtro de visualização
+  let inspecoesFiltradas = inspecoes;
+  if (!isFiscal && filtroExibicaoAtual === 'APENAS_DEFEITOS') {
+    inspecoesFiltradas = inspecoes.filter(ins => temDefeitos(ins));
+  }
+  
+  // Verifica se a lista filtrada está vazia
+  if (!inspecoesFiltradas || inspecoesFiltradas.length === 0) {
     let isDefaultToday = true;
     if (params) {
       const pIn = params.get('dataInicio');
@@ -224,52 +319,84 @@ function mostrarModalConferir(inspecoes, role, params) {
       }
     }
     
-    const msg = isDefaultToday ? 'Nenhuma inspeção nesta data.' : 'Nenhuma inspeção encontrada para estes filtros.';
+    let msg = isDefaultToday 
+      ? 'Nenhuma inspeção encontrada nesta data.' 
+      : 'Nenhuma inspeção encontrada para estes filtros.';
+    
+    if (!isFiscal && filtroExibicaoAtual === 'APENAS_DEFEITOS' && inspecoes.length > 0) {
+      msg = 'Nenhum veículo com defeito encontrado para esta data.';
+    }
     
     container.innerHTML = `<div style="text-align: center; padding: 30px 10px; font-weight: 500;">${msg}</div>`;
     modal.classList.add('is-open');
     return;
   }
-
-  // --- SE TIVER RESULTADO, MONTA A LISTA NORMALMENTE ---
+  
+  // Monta a lista
   let html = '<div style="margin-bottom: 12px; text-align: right;"><button id="exportar-lista" class="btn-secundario">📋 Exportar para texto</button></div><div id="lista-inspecoes-conteudo">';
   
-  inspecoes.forEach(ins => {
-    const itensDefeito = [];
-    if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
-    if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
-    if (ins.limpeza.status === 'DEFEITO') itensDefeito.push(`LIMPEZA: ${ins.limpeza.obs || 'sem obs'}`);
-    if (ins.ventilador.status === 'DEFEITO') { let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`; if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`; itensDefeito.push(d); }
-    
-    if (itensDefeito.length === 0) return;
-    
-    let linha = `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);"><strong>${ins.carro} - ${ins.terminal}</strong><br>`;
-    if (role !== 'FISCAL') linha += `<small>Responsável: ${ins.fiscal}</small><br>`;
-    linha += `<ul style="margin-top: 8px; list-style: none; padding-left: 0;">${itensDefeito.map(i => `<li>⚠️ ${i}</li>`).join('')}</ul></div>`;
-    html += linha;
+  inspecoesFiltradas.forEach(ins => {
+    const resultado = gerarItemInspecao(ins, role, isFiscal);
+    html += resultado.html;
   });
   
   html += '</div>';
   container.innerHTML = html;
   
-  document.getElementById('exportar-lista')?.addEventListener('click', () => { 
-    const texto = gerarTextoExportacao(inspecoes, role); 
-    navigator.clipboard.writeText(texto).then(() => alert('Lista copiada!')).catch(() => alert('Erro ao copiar.')); 
-  });
+  // Evento de exportação
+  const exportBtn = document.getElementById('exportar-lista');
+  if (exportBtn) {
+    const novoExportBtn = exportBtn.cloneNode(true);
+    exportBtn.parentNode.replaceChild(novoExportBtn, exportBtn);
+    novoExportBtn.addEventListener('click', () => {
+      const texto = gerarTextoExportacaoComFiltro(inspecoesFiltradas, role, isFiscal);
+      navigator.clipboard.writeText(texto).then(() => alert('Lista copiada!')).catch(() => alert('Erro ao copiar.'));
+    });
+  }
   
   modal.classList.add('is-open');
 }
-function gerarTextoExportacao(inspecoes, role) {
-  let texto = `=== INSPEÇÕES DO DIA ${new Date().toLocaleDateString('pt-BR')} ===\n\n`;
+
+// Função de exportação atualizada
+function gerarTextoExportacaoComFiltro(inspecoes, role, isFiscal) {
+  const dataAtual = new Date().toLocaleDateString('pt-BR');
+  let texto = `=== INSPEÇÕES DO DIA ${dataAtual} ===\n\n`;
+  
   inspecoes.forEach(ins => {
     const itensDefeito = [];
-    if (ins.thoreb.status === 'DEFEITO') itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
-    if (ins.elevador.status === 'DEFEITO') itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
-    if (ins.limpeza.status === 'DEFEITO') itensDefeito.push(`LIMPEZA: ${ins.usb.obs || 'sem obs'}`);
-    if (ins.ventilador.status === 'DEFEITO') { let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`; if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`; itensDefeito.push(d); }
-    if (itensDefeito.length === 0) return;
-    texto += `CARRO: ${ins.carro} (${ins.terminal})\n` + (role !== 'FISCAL' ? `Responsável: ${ins.fiscal}\n` : '') + `Defeitos:\n${itensDefeito.map(d => `- ${d}`).join('\n')}\n\n`;
+    
+    if (ins.thoreb?.status === 'DEFEITO') {
+      itensDefeito.push(`THOREB: ${ins.thoreb.obs || 'sem obs'}`);
+    }
+    if (ins.elevador?.status === 'DEFEITO') {
+      itensDefeito.push(`ELEVADOR: ${ins.elevador.obs || 'sem obs'}`);
+    }
+    if (ins.limpeza?.status === 'DEFEITO') {
+      itensDefeito.push(`LIMPEZA: ${ins.limpeza.obs || 'sem obs'}`);
+    }
+    if (ins.ventilador?.status === 'DEFEITO') {
+      let d = `VENTILADOR: ${ins.ventilador.obs || 'sem obs'}`;
+      if (ins.ventilador.posicao) d += ` (Pos: ${ins.ventilador.posicao})`;
+      itensDefeito.push(d);
+    }
+    
+    texto += `CARRO: ${ins.carro} (${ins.terminal})\n`;
+    if (role !== 'FISCAL' && !isFiscal) {
+      texto += `Responsável: ${ins.fiscal}\n`;
+    }
+    
+    if (itensDefeito.length === 0) {
+      texto += `Status: ✅ Nenhum defeito apresentado\n`;
+    } else {
+      texto += `Defeitos encontrados:\n${itensDefeito.map(d => `- ${d}`).join('\n')}\n`;
+    }
+    texto += `\n`;
   });
+  
   return texto;
 }
-function fecharModalConferir() { const m = getEl('modal-conferir-inspecoes'); if (m) m.classList.remove('is-open'); }
+
+function fecharModalConferir() { 
+  const m = getEl('modal-conferir-inspecoes'); 
+  if (m) m.classList.remove('is-open'); 
+}
