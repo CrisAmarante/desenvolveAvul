@@ -14,6 +14,24 @@
     <meta http-equiv="Expires" content="0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
+<!-- vConsole - Console móvel para depuração -->
+<script src="https://cdn.jsdelivr.net/npm/vconsole@3.15.1/dist/vconsole.min.js"></script>
+<script>
+  // Inicializa apenas se estiver em modo de teste (pode ativar por URL)
+  if (window.location.search.includes('debug=true') || localStorage.getItem('debugMode') === 'true') {
+    var vConsole = new VConsole();
+    console.log('🐛 Modo debug ativado!');
+  }
+  
+  // Para ativar sem recarregar, pode usar este atalho:
+  window.ativarDebug = function() {
+    if (typeof VConsole !== 'undefined' && !window.vConsoleInstance) {
+      window.vConsoleInstance = new VConsole();
+      localStorage.setItem('debugMode', 'true');
+      console.log('🐛 Console ativado!');
+    }
+  };
+</script>
 <body>
 
 <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
