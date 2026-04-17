@@ -1,4 +1,4 @@
-const CACHE_NAME = 'penso-cache-v2.1.03';
+const CACHE_NAME = 'penso-cache-v2.1.02';
 
 // Lista de arquivos para cache imediato (estáticos)
 const ASSETS_TO_CACHE = [
@@ -45,27 +45,47 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Estratégia: Stale-While-Revalidate (Usa o cache mas atualiza em segundo plano)
-// Ideal para o PENSO, pois carrega rápido e busca mudanças nos scripts
+// Estratégia: Stale-While-Revalidate + cache específico para thumbnails do Drive
 self.addEventListener('fetch', (event) => {
-  // Ignorar requisições de API (Planilha Google) para não travar os dados em cache
+  // Ignorar requisições de API (Planilha Google)
   if (event.request.url.includes('script.google.com')) {
     return;
   }
 
+  // Cache específico para thumbnails do Google Drive (pré-visualização de imagens)
+  if (event.request.url.includes('drive.google.com/thumbnail')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(cache => {
+        return cache.match(event.request).then(response => {
+          const fetchPromise = fetch(event.request).then(networkResponse => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => {
+            // Em caso de erro (offline), retorna uma imagem placeholder em base64
+            return new Response(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="#999"><path d="M4 4h16v16H4z"/></svg>',
+              { headers: { 'Content-Type': 'image/svg+xml' } }
+            );
+          });
+          return response || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+
+  // Demais assets: Stale-While-Revalidate
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((response) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          // Se a resposta for válida, atualiza o cache
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.match(event.request).then(response => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
           if (networkResponse && networkResponse.status === 200) {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
-        }).catch(() => {
-            // Se falhar a rede (offline), já retornamos o cache abaixo
-        });
-
+        }).catch(() => {});
         return response || fetchPromise;
       });
     })
