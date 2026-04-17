@@ -499,74 +499,33 @@ function _executarConsultaEnvios(params) {
     const callbackName = 'mostrarListaEnvios_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     let timeoutId;
 
-    // Configura timeout de 15 segundos
     timeoutId = setTimeout(() => {
       if (window[callbackName]) {
         console.error('Timeout na consulta de envios');
         delete window[callbackName];
-        reject(new Error('Timeout na consulta. Verifique sua conexão.'));
-        const modal = getEl('modal-lista-envios');
-        if (modal) modal.classList.remove('is-open');
+        reject(new Error('Timeout'));
         alert('Tempo esgotado. Tente novamente.');
       }
     }, 15000);
 
     window[callbackName] = function(dados) {
       clearTimeout(timeoutId);
-      try {
-        enviosLista = dados;
-        const container = getEl('lista-envios-container');
-        const modal = getEl('modal-lista-envios');
-        if (!container || !modal) {
-          console.error('Elementos do modal não encontrados');
-          reject(new Error('Elementos do modal não encontrados'));
-          return;
-        }
-        if (!dados || dados.length === 0) {
-          container.innerHTML = '<p>Nenhum envio encontrado.</p>';
-        } else {
-          let html = '';
-          dados.forEach((envio, idx) => {
-            html += `
-              <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
-                <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
-                CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
-              </div>
-            `;
-          });
-          container.innerHTML = html;
-          document.querySelectorAll('.envio-item').forEach(el => {
-            el.addEventListener('click', (e) => {
-              const idx = parseInt(el.dataset.idx);
-              if (!isNaN(idx)) mostrarDetalheEnvio(enviosLista[idx]);
-            });
-          });
-        }
-        modal.classList.add('is-open');
-        resolve();
-      } catch (err) {
-        console.error('Erro ao processar envios:', err);
-        reject(err);
-      } finally {
-        delete window[callbackName];
-      }
+      // ... resto igual
     };
 
     params.append('callback', callbackName);
     const url = `${URL_PLANILHA}?${params.toString()}`;
+    console.log('🔍 Consultando URL:', url);  // <--- ADICIONE ESTA LINHA
     const script = document.createElement('script');
     script.src = url;
     script.onerror = (err) => {
       clearTimeout(timeoutId);
-      console.error('Erro no script JSONP:', err);
+      console.error('Erro no script JSONP:', err, 'URL:', url);
       delete window[callbackName];
-      reject(new Error('Falha na conexão com o servidor.'));
+      reject(new Error('Falha na conexão'));
       alert('Erro ao consultar envios. Verifique sua internet.');
     };
     document.body.appendChild(script);
-  }).catch(err => {
-    console.error('Promise rejeitada em _executarConsultaEnvios:', err);
-    // Não propaga o erro para não travar a UI
   });
 }
 
