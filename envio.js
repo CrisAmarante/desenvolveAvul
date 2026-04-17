@@ -1,5 +1,5 @@
 // ====================================================================
-// ENVIO DE INFORMAÇÕES (com até 4 anexos, rascunho, upload)
+// ENVIO DE INFORMAÇÕES (com até 4 anexos, rascunho, upload, preview com lazy loading)
 // ====================================================================
 let rascunhoAtualId = null;
 let enviosLista = [];
@@ -50,12 +50,10 @@ async function preencherSelectLocal() {
   const selectLocal = getEl('envio-local');
   if (!selectLocal) return;
 
-  // Limpa opções anteriores (exceto a primeira "Selecione...")
   selectLocal.innerHTML = '<option value="">Selecione o Local / Terminal</option>';
 
   try {
     const callbackName = 'carregarTerminaisEnvio_' + Date.now();
-    
     window[callbackName] = function(terminais) {
       if (Array.isArray(terminais) && terminais.length > 0) {
         terminais.forEach(terminal => {
@@ -65,7 +63,6 @@ async function preencherSelectLocal() {
           selectLocal.appendChild(option);
         });
       } else {
-        // Fallback caso não consiga carregar
         const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
         fallback.forEach(t => {
           const option = document.createElement('option');
@@ -83,7 +80,6 @@ async function preencherSelectLocal() {
     script.onerror = () => {
       delete window[callbackName];
       console.warn('Falha ao carregar terminais via JSONP. Usando fallback.');
-      // Fallback em caso de erro
       const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
       fallback.forEach(t => {
         const option = document.createElement('option');
@@ -93,10 +89,8 @@ async function preencherSelectLocal() {
       });
     };
     document.body.appendChild(script);
-
   } catch (err) {
     console.error('Erro ao preencher locais:', err);
-    // Fallback em caso de erro
     const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
     fallback.forEach(t => {
       const option = document.createElement('option');
@@ -116,7 +110,7 @@ function habilitarCamposSecundarios(habilitar) {
 }
 
 // ====================================================================
-// REGRAS DE ÁREA, MOTIVO E VALIDAÇÕES (copiadas do seu arquivo original)
+// REGRAS DE ÁREA, MOTIVO E VALIDAÇÕES
 // ====================================================================
 function aplicarRegrasPorArea() {
   const areaSelecionada = document.querySelector('input[name="areaDestino"]:checked')?.value;
@@ -362,7 +356,6 @@ function carregarRascunho() {
   }
   const dados = JSON.parse(localStorage.getItem(`rascunho_${rascunhoAtualId}`));
   if (dados) {
-    // Área de destino
     if (['FISCALIZAÇÃO','SAF','PLANTÃO'].includes(dados.areaDestino)) {
       document.querySelector(`input[name="areaDestino"][value="${dados.areaDestino}"]`).checked = true;
     } else {
@@ -370,7 +363,6 @@ function carregarRascunho() {
       getEl('envio-outras-area').value = dados.areaDestino;
       getEl('campo-outras-area').style.display = 'block';
     }
-    // Motivo
     if (['AVARIAS','PEDIDO DE FOLGAS','SOLICITAÇÃO DE MATERIAIS'].includes(dados.motivo)) {
       document.querySelector(`input[name="motivo"][value="${dados.motivo}"]`).checked = true;
     } else {
@@ -546,7 +538,7 @@ function _executarConsultaEnvios(params) {
 }
 
 // ====================================================================
-// MOSTRAR DETALHES DO ENVIO - VERSÃO LIMPA (SEM BOTÃO FANTASMA)
+// MOSTRAR DETALHES DO ENVIO - COM PRÉ-VISUALIZAÇÃO DE IMAGENS E LAZY LOADING
 // ====================================================================
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
@@ -559,12 +551,12 @@ function mostrarDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
 
+  // Processa os anexos, gerando thumbnails para imagens (com data-src para lazy loading)
   let anexosHtml = 'Nenhum anexo';
   if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
     const links = envio.anexo.split(' ; ');
-    anexosHtml = links.map(link => 
-      `<a href="${link}" target="_blank" style="color:#10b981; text-decoration:underline;">📎 Anexo</a>`
-    ).join(' | ');
+    const anexosProcessados = links.map(link => processarLinkAnexo(link));
+    anexosHtml = anexosProcessados.join('<br>');
   }
 
   const conteudoHtml = `
@@ -575,7 +567,8 @@ function mostrarDetalheEnvio(envio) {
       <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
       <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>| HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
       <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
-      <div><strong>ANEXOS:</strong> ${anexosHtml}</div>
+      <div><strong>ANEXOS:</strong></div>
+      <div id="anexos-container" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px;">${anexosHtml}</div>
       <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
   `;
@@ -596,19 +589,21 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Limpa tudo e insere apenas o que queremos
   container.innerHTML = conteudoHtml + botoesHtml;
   modal.classList.add('is-open');
 
-  // Atribui eventos com segurança
+  // Inicia o lazy loading para as imagens recém-adicionadas
+  iniciarLazyLoadingImagens();
+
+  // Configura eventos dos botões
   setTimeout(() => {
-    // Remover qualquer botão fantasma que possa ter sobrado
+    // Remove botões fantasmas
     const todosBotoes = container.querySelectorAll('button');
     todosBotoes.forEach(btn => {
       if (btn.id !== 'btn-gerar-pdf' && 
           btn.id !== 'btn-copiar-completo' && 
           btn.id !== 'btn-copiar-historico') {
-        btn.remove(); // Remove botões que não são nossos
+        btn.remove();
       }
     });
 
@@ -621,18 +616,208 @@ function mostrarDetalheEnvio(envio) {
     if (btnCompleto) {
       btnCompleto.addEventListener('click', () => {
         const texto = gerarTextoDetalheEnvio(envio);
-        copiarParaAreaDeTransferencia(texto, btnCompleto, "Texto completo copiado!");
+        copiarParaAreaDeTransferencia(btnCompleto, texto, "Texto completo copiado!");
       });
     }
 
     if (btnHistorico) {
       btnHistorico.addEventListener('click', () => {
         const historico = (envio.historico || "").trim() || "Nenhum histórico informado.";
-        copiarParaAreaDeTransferencia(historico, btnHistorico, "Histórico copiado!");
+        copiarParaAreaDeTransferencia(btnHistorico, historico, "Histórico copiado!");
       });
     }
-  }, 300);
+  }, 100);
 }
+
+// ====================================================================
+// FUNÇÃO AUXILIAR: Processa link do anexo, gerando thumbnail com data-src
+// ====================================================================
+function processarLinkAnexo(link) {
+  link = link.trim();
+  if (!link) return '';
+  
+  // Tenta extrair ID do Google Drive
+  const driveMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || 
+                     link.match(/id=([a-zA-Z0-9_-]+)/) ||
+                     link.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+  
+  if (driveMatch && driveMatch[1]) {
+    const fileId = driveMatch[1];
+    const extensao = link.split('.').pop().toLowerCase();
+    const isImagem = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extensao);
+    
+    if (isImagem) {
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+      const originalUrl = `https://drive.google.com/uc?id=${fileId}`;
+      
+      // Usa data-src para lazy loading
+      return `
+        <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top;">
+          <a href="${originalUrl}" target="_blank" style="text-decoration: none;">
+            <img data-src="${thumbnailUrl}" 
+                 alt="Pré-visualização" 
+                 style="max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: #f0f0f0;"
+                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22 viewBox=%220 0 24 24%22 fill=%22%23999%22%3E%3Cpath d=%22M4 4h16v16H4z%22/%3E%3C/svg%3E';">
+          </a>
+          <div><small><a href="${originalUrl}" target="_blank" style="color: #10b981;">Abrir original</a></small></div>
+        </div>
+      `;
+    } else {
+      return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo (${extensao.toUpperCase()})</a></div>`;
+    }
+  }
+  
+  return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo</a></div>`;
+}
+
+// ====================================================================
+// LAZY LOADING VIA INTERSECTION OBSERVER
+// ====================================================================
+function iniciarLazyLoadingImagens() {
+  const imagens = document.querySelectorAll('#detalhe-envio-conteudo img[data-src]');
+  if (imagens.length === 0) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        const dataSrc = img.getAttribute('data-src');
+        if (dataSrc) {
+          img.src = dataSrc;
+          img.removeAttribute('data-src');
+        }
+        observer.unobserve(img);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  imagens.forEach(img => observer.observe(img));
+}
+
+// ====================================================================
+// EXPORTAÇÃO PARA PDF E TEXTOS (já existentes)
+// ====================================================================
+async function exportarParaPDF(envio) {
+  try {
+    if (typeof window.jspdf === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      document.head.appendChild(script);
+      await new Promise(resolve => { script.onload = resolve; });
+      await new Promise(resolve => setTimeout(resolve, 150));
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    let y = 22;
+
+    // Cabeçalho
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
+    
+    y += 7;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Avenida Presidente Médici nº 1.340 - Telefone: 3658-7777", pageWidth/2, y, { align: "center" });
+
+    y += 14;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("RELATÓRIO À CHEFIA DO TRÁFEGO", pageWidth/2, y, { align: "center" });
+
+    y += 18;
+
+    // Campos superiores
+    doc.setFontSize(12);
+    const leftCol = margin;
+    const rightCol = pageWidth / 2 + 12;
+
+    doc.text(`Carro: ${envio.carro || '________________'}`, leftCol, y);
+    doc.text(`Hora: ${formatarHora(envio.hora) || '________'}`, rightCol, y);
+    y += 9;
+
+    doc.text(`Mot.: ${envio.motorista || '________________'}`, leftCol, y);
+    doc.text(`Cob.: ${envio.cobrador || '________________'}`, rightCol, y);
+    y += 9;
+
+    doc.text(`Linha: ${envio.linha || '________________'}`, leftCol, y);
+    doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
+    y += 16;
+
+    // Texto principal
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Sr. Chefe", margin, y);
+    y += 10;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11.5);
+
+    const texto = (envio.historico || "").trim() || "Sem informações adicionais.";
+    const linhas = doc.splitTextToSize(texto, pageWidth - margin * 2);
+
+    linhas.forEach(linha => {
+      doc.text(linha, margin, y);
+      y += 7.5;
+    });
+
+    y += 22;
+
+    // Rodapé com hash
+    const dataFormatada = formatarData(envio.data) || '__/__/____';
+    const responsavel = envio.fiscal || '________________';
+    const localSelecionado = envio.local || 'Não informado';
+
+    const agora = new Date();
+    const dataGeracao = agora.toLocaleDateString('pt-BR', { 
+      day: '2-digit', month: '2-digit', year: 'numeric' 
+    }) + ' ' + agora.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', minute: '2-digit', second: '2-digit' 
+    });
+
+    const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${Date.now()}`;
+    const hashValidacao = await gerarHashValidacao(dadosParaHash);
+
+    doc.text(`Osasco, ${dataFormatada}`, margin, y);
+    doc.text(responsavel, pageWidth - margin - 45, y);
+    y += 18;
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "bold");
+    doc.text("HASH DE VALIDAÇÃO:", margin, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(hashValidacao, margin + 42, y);
+
+    y += 7;
+    doc.setFontSize(8);
+    doc.text(`Gerado em: ${dataGeracao} • Responsável: ${responsavel} • Local: ${localSelecionado}`, margin, y);
+
+    y += 10;
+    doc.setFontSize(7.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text("Documento gerado eletronicamente • Valide o hash para verificar integridade", pageWidth/2, y, { align: "center" });
+
+    doc.setTextColor(0);
+
+    const motoristaNome = (envio.motorista || 'SemMotorista')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .substring(0, 15);
+    const dataArquivo = dataFormatada.replace(/\//g, '_');
+    const nomeArquivo = `${envio.carro || 'SemCarro'}_${dataArquivo}_${motoristaNome}.pdf`;
+
+    doc.save(nomeArquivo);
+    alert('✅ PDF gerado com sucesso!\n\nNome do arquivo: ' + nomeArquivo);
+  } catch (error) {
+    console.error("Erro ao gerar PDF:", error);
+    alert('❌ Erro ao gerar o PDF:\n' + error.message);
+  }
+}
+
 function gerarTextoDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
@@ -657,148 +842,9 @@ function fecharModalListaEnvios() {
   const modal = getEl('modal-lista-envios');
   if (modal) modal.classList.remove('is-open');
 }
+
 // ====================================================================
-// EXPORTAÇÃO PARA PDF - COM HASH DE VALIDAÇÃO (AJUSTES SOLICITADOS)
-// ====================================================================
-async function exportarParaPDF(envio) {
-  try {
-    if (typeof window.jspdf === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      document.head.appendChild(script);
-      await new Promise(resolve => { script.onload = resolve; });
-      await new Promise(resolve => setTimeout(resolve, 150));
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    let y = 22;
-
-    // ==================== CABEÇALHO ====================
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
-    
-    y += 7;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Avenida Presidente Médici nº 1.340 - Telefone: 3658-7777", pageWidth/2, y, { align: "center" });
-
-    y += 14;
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("RELATÓRIO À CHEFIA DO TRÁFEGO", pageWidth/2, y, { align: "center" });
-
-    y += 18;
-
-    // ==================== CAMPOS SUPERIORES ====================
-    doc.setFontSize(12);
-    const leftCol = margin;
-    const rightCol = pageWidth / 2 + 12;
-
-    doc.text(`Carro: ${envio.carro || '________________'}`, leftCol, y);
-    doc.text(`Hora: ${formatarHora(envio.hora) || '________'}`, rightCol, y);
-    y += 9;
-
-    doc.text(`Mot.: ${envio.motorista || '________________'}`, leftCol, y);
-    doc.text(`Cob.: ${envio.cobrador || '________________'}`, rightCol, y);
-    y += 9;
-
-    doc.text(`Linha: ${envio.linha || '________________'}`, leftCol, y);
-    doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
-    y += 16;
-
-    // ==================== TEXTO PRINCIPAL ====================
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Sr. Chefe", margin, y);
-    y += 10;
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11.5);
-
-    const texto = (envio.historico || "").trim() || "Sem informações adicionais.";
-    const linhas = doc.splitTextToSize(texto, pageWidth - margin * 2);
-
-    linhas.forEach(linha => {
-      doc.text(linha, margin, y);
-      y += 7.5;
-    });
-
-    y += 22;
-
-    // ==================== RODAPÉ PRINCIPAL ====================
-    const dataFormatada = formatarData(envio.data) || '__/__/____';
-    const responsavel = envio.fiscal || '________________';
-    const localSelecionado = envio.local || 'Não informado';
-
-    // Data e hora de geração
-    const agora = new Date();
-    const dataGeracao = agora.toLocaleDateString('pt-BR', { 
-      day: '2-digit', month: '2-digit', year: 'numeric' 
-    }) + ' ' + agora.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', minute: '2-digit', second: '2-digit' 
-    });
-
-    // Geração do Hash
-    const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${Date.now()}`;
-    const hashValidacao = await gerarHashValidacao(dadosParaHash);
-
-    // Local fixo = Osasco + Data
-    doc.text(`Osasco, ${dataFormatada}`, margin, y);
-    
-    // Responsável (sem linha embaixo)
-    doc.text(responsavel, pageWidth - margin - 45, y);
-
-    y += 18;
-
-    // ==================== HASH DE VALIDAÇÃO (fonte menor e mais clara) ====================
-    doc.setFontSize(9);                    // ≈ 20% menor que o texto normal
-    doc.setTextColor(100, 100, 100);       // Cinza claro
-
-    doc.setFont("helvetica", "bold");
-    doc.text("HASH DE VALIDAÇÃO:", margin, y);
-    
-    doc.setFont("helvetica", "normal");
-    doc.text(hashValidacao, margin + 42, y);
-
-    y += 7;
-    doc.setFontSize(8);
-    doc.text(`Gerado em: ${dataGeracao} • Responsável: ${responsavel} • Local: ${localSelecionado}`, 
-             margin, y);
-
-    y += 10;
-    doc.setFontSize(7.5);
-    doc.setTextColor(80, 80, 80);
-    doc.text("Documento gerado eletronicamente • Valide o hash para verificar integridade", 
-             pageWidth/2, y, { align: "center" });
-
-    // Restaurar cor padrão
-    doc.setTextColor(0);
-
-    // ==================== NOME DO ARQUIVO ====================
-    const motoristaNome = (envio.motorista || 'SemMotorista')
-      .replace(/[^a-zA-Z0-9]/g, '')   // remove caracteres especiais
-      .substring(0, 15);              // limita tamanho
-
-    const dataArquivo = dataFormatada.replace(/\//g, '_'); // dd_mm_aaaa
-
-    const nomeArquivo = `${envio.carro || 'SemCarro'}_${dataArquivo}_${motoristaNome}.pdf`;
-
-    doc.save(nomeArquivo);
-    
-    alert('✅ PDF gerado com sucesso!\n\nNome do arquivo: ' + nomeArquivo);
-
-  } catch (error) {
-    console.error("Erro ao gerar PDF:", error);
-    alert('❌ Erro ao gerar o PDF:\n' + error.message);
-  }
-}
-// ====================================================================
-// FUNÇÕES AUXILIARES DE FORMATAÇÃO
+// FUNÇÕES AUXILIARES (formatação, hash, copiar)
 // ====================================================================
 function formatarData(dataStr) {
   if (!dataStr) return '';
@@ -814,6 +860,7 @@ function formatarHora(horaStr) {
   if (horaStr.includes('T')) return horaStr.split('T')[1].substring(0,5);
   return horaStr;
 }
+
 async function gerarHashValidacao(texto) {
   try {
     const encoder = new TextEncoder();
@@ -822,7 +869,6 @@ async function gerarHashValidacao(texto) {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   } catch (e) {
-    // Fallback simples
     let hash = 0;
     for (let i = 0; i < texto.length; i++) {
       hash = ((hash << 5) - hash) + texto.charCodeAt(i);
@@ -831,8 +877,8 @@ async function gerarHashValidacao(texto) {
     return Math.abs(hash).toString(16).toUpperCase().padStart(64, '0');
   }
 }
-// Função auxiliar para copiar texto com feedback visual
-function copiarParaAreaDeTransferencia(texto, botaoElemento, mensagemSucesso = "Copiado!") {
+
+function copiarParaAreaDeTransferencia(botaoElemento, texto, mensagemSucesso = "Copiado!") {
   if (!texto || texto.trim() === "") {
     alert("Não há texto para copiar.");
     return;
