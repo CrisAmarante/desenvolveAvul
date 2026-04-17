@@ -44,14 +44,12 @@ function preencherResponsavel() {
 }
 
 // ====================================================================
-// PREENCHER CAMPO LOCAL COM TODOS OS TERMINAIS (listarTodosTerminais)
+// PREENCHER CAMPO LOCAL COM TODOS OS TERMINAIS
 // ====================================================================
 async function preencherSelectLocal() {
   const selectLocal = getEl('envio-local');
   if (!selectLocal) return;
-
   selectLocal.innerHTML = '<option value="">Selecione o Local / Terminal</option>';
-
   try {
     const callbackName = 'carregarTerminaisEnvio_' + Date.now();
     window[callbackName] = function(terminais) {
@@ -73,14 +71,13 @@ async function preencherSelectLocal() {
       }
       delete window[callbackName];
     };
-
     const url = `${URL_PLANILHA}?acao=terminais_todos&callback=${callbackName}`;
     const script = document.createElement('script');
     script.src = url;
     script.onerror = () => {
       delete window[callbackName];
       console.warn('Falha ao carregar terminais via JSONP. Usando fallback.');
-      const fallback = ["Terminal A", "Terminal B", "Terminal C", "Terminal D"];
+      const fallback = ["Terminal A", "terminal B", "Terminal C", "Terminal D"];
       fallback.forEach(t => {
         const option = document.createElement('option');
         option.value = t;
@@ -477,7 +474,7 @@ function limparFormularioEnvio() {
 }
 
 // ====================================================================
-// CONSULTAS DE ENVIOS (com suporte a múltiplos anexos)
+// CONSULTAS DE ENVIOS (com suporte a múltiplos anexos) - CORRIGIDO
 // ====================================================================
 function consultarEnvios() {
   consultarEnviosComFiltro(null, null, null, null, null);
@@ -499,41 +496,77 @@ function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFilt
 
 function _executarConsultaEnvios(params) {
   return new Promise((resolve, reject) => {
-    const callbackName = 'mostrarListaEnvios_' + Date.now();
-    window[callbackName] = function(dados) {
-      enviosLista = dados;
-      const container = getEl('lista-envios-container'), modal = getEl('modal-lista-envios');
-      if (!container || !modal) return;
-      if (dados.length === 0) {
-        container.innerHTML = '<p>Nenhum envio encontrado.</p>';
-      } else {
-        let html = '';
-        dados.forEach((envio, idx) => {
-          html += `
-            <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
-              <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
-              CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
-            </div>
-          `;
-        });
-        container.innerHTML = html;
-        document.querySelectorAll('.envio-item').forEach(el => {
-          el.addEventListener('click', (e) => {
-            const idx = parseInt(el.dataset.idx);
-            if (!isNaN(idx)) mostrarDetalheEnvio(enviosLista[idx]);
-          });
-        });
+    const callbackName = 'mostrarListaEnvios_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    let timeoutId;
+
+    // Configura timeout de 15 segundos
+    timeoutId = setTimeout(() => {
+      if (window[callbackName]) {
+        console.error('Timeout na consulta de envios');
+        delete window[callbackName];
+        reject(new Error('Timeout na consulta. Verifique sua conexão.'));
+        const modal = getEl('modal-lista-envios');
+        if (modal) modal.classList.remove('is-open');
+        alert('Tempo esgotado. Tente novamente.');
       }
-      modal.classList.add('is-open');
-      delete window[callbackName];
-      resolve();
+    }, 15000);
+
+    window[callbackName] = function(dados) {
+      clearTimeout(timeoutId);
+      try {
+        enviosLista = dados;
+        const container = getEl('lista-envios-container');
+        const modal = getEl('modal-lista-envios');
+        if (!container || !modal) {
+          console.error('Elementos do modal não encontrados');
+          reject(new Error('Elementos do modal não encontrados'));
+          return;
+        }
+        if (!dados || dados.length === 0) {
+          container.innerHTML = '<p>Nenhum envio encontrado.</p>';
+        } else {
+          let html = '';
+          dados.forEach((envio, idx) => {
+            html += `
+              <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
+                <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
+                CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+          document.querySelectorAll('.envio-item').forEach(el => {
+            el.addEventListener('click', (e) => {
+              const idx = parseInt(el.dataset.idx);
+              if (!isNaN(idx)) mostrarDetalheEnvio(enviosLista[idx]);
+            });
+          });
+        }
+        modal.classList.add('is-open');
+        resolve();
+      } catch (err) {
+        console.error('Erro ao processar envios:', err);
+        reject(err);
+      } finally {
+        delete window[callbackName];
+      }
     };
+
     params.append('callback', callbackName);
     const url = `${URL_PLANILHA}?${params.toString()}`;
     const script = document.createElement('script');
     script.src = url;
-    script.onerror = () => { delete window[callbackName]; alert('Erro ao consultar.'); reject(); };
+    script.onerror = (err) => {
+      clearTimeout(timeoutId);
+      console.error('Erro no script JSONP:', err);
+      delete window[callbackName];
+      reject(new Error('Falha na conexão com o servidor.'));
+      alert('Erro ao consultar envios. Verifique sua internet.');
+    };
     document.body.appendChild(script);
+  }).catch(err => {
+    console.error('Promise rejeitada em _executarConsultaEnvios:', err);
+    // Não propaga o erro para não travar a UI
   });
 }
 
@@ -636,7 +669,6 @@ function processarLinkAnexo(link) {
   link = link.trim();
   if (!link) return '';
   
-  // Tenta extrair ID do Google Drive
   const driveMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || 
                      link.match(/id=([a-zA-Z0-9_-]+)/) ||
                      link.match(/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -650,7 +682,6 @@ function processarLinkAnexo(link) {
       const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
       const originalUrl = `https://drive.google.com/uc?id=${fileId}`;
       
-      // Usa data-src para lazy loading
       return `
         <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top;">
           <a href="${originalUrl}" target="_blank" style="text-decoration: none;">
@@ -695,7 +726,7 @@ function iniciarLazyLoadingImagens() {
 }
 
 // ====================================================================
-// EXPORTAÇÃO PARA PDF E TEXTOS (já existentes)
+// EXPORTAÇÃO PARA PDF E TEXTOS
 // ====================================================================
 async function exportarParaPDF(envio) {
   try {
@@ -714,7 +745,6 @@ async function exportarParaPDF(envio) {
     const margin = 20;
     let y = 22;
 
-    // Cabeçalho
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
@@ -731,7 +761,6 @@ async function exportarParaPDF(envio) {
 
     y += 18;
 
-    // Campos superiores
     doc.setFontSize(12);
     const leftCol = margin;
     const rightCol = pageWidth / 2 + 12;
@@ -748,7 +777,6 @@ async function exportarParaPDF(envio) {
     doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
     y += 16;
 
-    // Texto principal
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Sr. Chefe", margin, y);
@@ -767,7 +795,6 @@ async function exportarParaPDF(envio) {
 
     y += 22;
 
-    // Rodapé com hash
     const dataFormatada = formatarData(envio.data) || '__/__/____';
     const responsavel = envio.fiscal || '________________';
     const localSelecionado = envio.local || 'Não informado';
