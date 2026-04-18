@@ -714,42 +714,58 @@ console.log('Campo anexo:', envio.anexo);
 // FUNÇÃO AUXILIAR: Processa link do anexo, gerando thumbnail com data-src
 // ====================================================================
 function processarLinkAnexo(link) {
-   console.log('Processando link:', link);
   link = link.trim();
   if (!link) return '';
   
-  const driveMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/) || 
-                     link.match(/id=([a-zA-Z0-9_-]+)/) ||
-                     link.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+  // Tenta extrair ID do Google Drive de diferentes formatos de URL
+  let fileId = null;
+  const patterns = [
+    /\/d\/([a-zA-Z0-9_-]+)/,
+    /id=([a-zA-Z0-9_-]+)/,
+    /file\/d\/([a-zA-Z0-9_-]+)/,
+    /uc\?id=([a-zA-Z0-9_-]+)/,
+    /open\?id=([a-zA-Z0-9_-]+)/
+  ];
   
-  if (driveMatch && driveMatch[1]) {
-    const fileId = driveMatch[1];
+  for (const pattern of patterns) {
+    const match = link.match(pattern);
+    if (match && match[1]) {
+      fileId = match[1];
+      break;
+    }
+  }
+  
+  if (fileId) {
+    // Tenta adivinhar se é imagem pela extensão ou pela presença de "thumbnail" na URL original
     const extensao = link.split('.').pop().toLowerCase();
     const isImagem = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extensao);
     
     if (isImagem) {
-      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w200`;
+      // Usa tamanho maior para garantir visibilidade (300px)
+      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w300`;
       const originalUrl = `https://drive.google.com/uc?id=${fileId}`;
       
       return `
-        <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top;">
+        <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top; width: 130px;">
           <a href="${originalUrl}" target="_blank" style="text-decoration: none;">
-            <img data-src="${thumbnailUrl}" 
+            <img src="${thumbnailUrl}" 
                  alt="Pré-visualização" 
-                 style="max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: #f0f0f0;"
-                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22 viewBox=%220 0 24 24%22 fill=%22%23999%22%3E%3Cpath d=%22M4 4h16v16H4z%22/%3E%3C/svg%3E';">
+                 style="max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: #f0f0f0; object-fit: cover;"
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120?text=Erro+imagem'; this.style.objectFit='contain';">
           </a>
           <div><small><a href="${originalUrl}" target="_blank" style="color: #10b981;">Abrir original</a></small></div>
         </div>
       `;
     } else {
-      return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo (${extensao.toUpperCase()})</a></div>`;
+      // Para PDFs ou outros tipos, apenas link
+      const tipo = extensao.toUpperCase() || 'ARQUIVO';
+      return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo (${tipo})</a></div>`;
     }
   }
   
+  // Fallback: link genérico (não-Drive)
   return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo</a></div>`;
 }
-
 // ====================================================================
 // LAZY LOADING VIA INTERSECTION OBSERVER
 // ====================================================================
