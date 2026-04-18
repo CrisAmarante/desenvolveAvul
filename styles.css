@@ -175,3 +175,87 @@ textarea { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius:
     padding: 12px;
   }
 }
+/* Container Principal das Ações */
+.action-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.action-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Botões Estilo Quadrado (Anexar, Salvar, Consultar) */
+.grid-btn-anexo, .grid-btn-secundario {
+  flex: 1;
+  min-height: 80px;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 2px solid #64748b;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  transition: all 0.2s;
+}
+
+.grid-btn-anexo i, .grid-btn-secundario i {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+/* Botão Enviar (Destaque Central) */
+.grid-btn-principal {
+  flex: 1.5; /* Um pouco mais largo que os outros */
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(209, 26, 45, 0.3);
+}
+
+/* Espaço para mostrar os anexos (Preview) */
+.grid-anexos-preview {
+  flex: 2;
+  background: rgba(0,0,0,0.05);
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 8px;
+  min-height: 80px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+/* Ajuste Dark Mode */
+body.dark .grid-anexos-preview {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Hover Effects */
+.grid-btn-anexo:hover, .grid-btn-secundario:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+}
+
+.grid-btn-principal:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
