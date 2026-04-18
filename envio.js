@@ -633,6 +633,7 @@ console.log('Campo anexo:', envio.anexo);
   const dataFormatada = formatarData(envio.data);
 
   // Processa os anexos, gerando thumbnails para imagens (com data-src para lazy loading)
+  console.log('Conteúdo bruto de envio.anexo:', envio.anexo);
   let anexosHtml = 'Nenhum anexo';
   if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
     const links = envio.anexo.split(' ; ');
