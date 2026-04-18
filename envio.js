@@ -626,38 +626,33 @@ function mostrarDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
 
-  // Processa anexos (sua função existente)
+  // Processa anexos (use sua função processarLinkAnexo existente)
   let anexosHtml = 'Nenhum anexo';
   if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
     const links = envio.anexo.split(' ; ');
     const anexosProcessados = links.map(link => processarLinkAnexo(link));
-    anexosHtml = `<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">${anexosProcessados.join('')}</div>`;
+    anexosHtml = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">${anexosProcessados.join('')}</div>`;
   }
 
-  // Área de informações fixas (tudo antes do Histórico)
-  const infoFixaHtml = `
-    <div class="info-fixa">
-      <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
-      <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
-      <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
-      <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
-      <div><strong>LINHA:</strong> ${envio.linha || 'N/I'}</div>
-      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
-      <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
+  // Corpo rolável
+  const corpoHtml = `
+    <div class="modal-body-scroll">
+      <div style="font-family: monospace; line-height: 1.6;">
+        <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
+        <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
+        <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
+        <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
+        <div><strong>LINHA:</strong> ${envio.linha || 'N/I'}</div>
+        <div><strong>HISTÓRICO:</strong></div>
+        <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin: 8px 0; white-space: pre-wrap;">${envio.historico || 'N/I'}</div>
+        <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
+        <div><strong>ANEXOS:</strong></div>
+        <div>${anexosHtml}</div>
+        <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
+      </div>
     </div>
   `;
 
-  // Área rolável (Histórico + Anexos)
-  const areaRolavelHtml = `
-    <div class="area-rolavel">
-      <div><strong>HISTÓRICO:</strong></div>
-      <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin: 8px 0; white-space: pre-wrap;">${envio.historico || 'N/I'}</div>
-      <div><strong>ANEXOS:</strong></div>
-      <div>${anexosHtml}</div>
-    </div>
-  `;
-
-  // Rodapé com botões
   const rodapeHtml = `
     <div class="modal-footer">
       <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -668,11 +663,11 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Monta o conteúdo completo
-  container.innerHTML = infoFixaHtml + areaRolavelHtml + rodapeHtml;
+  // Limpa o container e adiciona corpo + rodapé
+  container.innerHTML = corpoHtml + rodapeHtml;
   modal.classList.add('is-open');
 
-  // Eventos dos botões (mesmo código existente)
+  // Eventos dos botões (mesmo código que você já tem)
   setTimeout(() => {
     const btnPDF = document.getElementById('btn-gerar-pdf');
     const btnCompleto = document.getElementById('btn-copiar-completo');
@@ -692,6 +687,55 @@ function mostrarDetalheEnvio(envio) {
       });
     }
   }, 100);
+}
+// ====================================================================
+// FUNÇÃO AUXILIAR: Processa link do anexo, gerando thumbnail com data-src
+// ====================================================================
+function processarLinkAnexo(link) {
+  link = link.trim();
+  if (!link) return '';
+
+  // Extrai o ID do Google Drive
+  let fileId = null;
+  const patterns = [
+    /\/d\/([a-zA-Z0-9_-]+)/,               // /d/ID
+    /id=([a-zA-Z0-9_-]+)/,                 // ?id=ID
+    /file\/d\/([a-zA-Z0-9_-]+)/,           // /file/d/ID
+    /uc\?id=([a-zA-Z0-9_-]+)/,             // /uc?id=ID
+    /open\?id=([a-zA-Z0-9_-]+)/,           // /open?id=ID
+    /\/u\/\d\/d\/([a-zA-Z0-9_-]+)/         // /u/0/d/ID
+  ];
+  
+  for (const pattern of patterns) {
+    const match = link.match(pattern);
+    if (match && match[1]) {
+      fileId = match[1];
+      break;
+    }
+  }
+
+  if (fileId) {
+    // Para qualquer arquivo do Drive, tenta gerar thumbnail (funciona para imagens e PDFs)
+    // O tamanho 300 é bom para visualização
+    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w300`;
+    const originalUrl = `https://drive.google.com/uc?id=${fileId}`;
+    
+    // Retorna o bloco com a thumbnail, mas com fallback para link se a imagem não carregar
+    return `
+      <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top; width: 130px;">
+        <a href="${originalUrl}" target="_blank" style="text-decoration: none;">
+          <img src="${thumbnailUrl}" 
+               alt="Pré-visualização" 
+               style="max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: #f0f0f0; object-fit: cover;"
+               onerror="this.onerror=null; this.parentElement.parentElement.innerHTML='<a href=\\'${originalUrl}\\' target=\\'_blank\\' style=\\'color:#10b981; text-decoration:underline;\\'>📎 Anexo (imagem não disponível)</a>'">
+        </a>
+        <div><small><a href="${originalUrl}" target="_blank" style="color: #10b981;">Abrir original</a></small></div>
+      </div>
+    `;
+  }
+
+  // Fallback: link genérico (não-Drive)
+  return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo</a></div>`;
 }
 // ====================================================================
 // LAZY LOADING VIA INTERSECTION OBSERVER
