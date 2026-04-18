@@ -626,33 +626,38 @@ function mostrarDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
 
-  // Processa anexos (use sua função processarLinkAnexo existente)
+  // Processa anexos (sua função processarLinkAnexo existente)
   let anexosHtml = 'Nenhum anexo';
   if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
     const links = envio.anexo.split(' ; ');
     const anexosProcessados = links.map(link => processarLinkAnexo(link));
-    anexosHtml = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">${anexosProcessados.join('')}</div>`;
+    anexosHtml = `<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;">${anexosProcessados.join('')}</div>`;
   }
 
-  // Corpo rolável
-  const corpoHtml = `
-    <div class="modal-body-scroll">
-      <div style="font-family: monospace; line-height: 1.6;">
-        <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
-        <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
-        <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
-        <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
-        <div><strong>LINHA:</strong> ${envio.linha || 'N/I'}</div>
-        <div><strong>HISTÓRICO:</strong></div>
-        <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin: 8px 0; white-space: pre-wrap;">${envio.historico || 'N/I'}</div>
-        <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
-        <div><strong>ANEXOS:</strong></div>
-        <div>${anexosHtml}</div>
-        <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
-      </div>
+  // ========== 1. INFORMAÇÕES FIXAS (tudo acima do HISTÓRICO) ==========
+  const infoFixaHtml = `
+    <div class="info-fixa">
+      <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
+      <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
+      <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
+      <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
+      <div><strong>LINHA:</strong> ${envio.linha || 'N/I'}</div>
+      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
+      <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
     </div>
   `;
 
+  // ========== 2. ÁREA ROLÁVEL (HISTÓRICO + ANEXOS) ==========
+  const areaRolavelHtml = `
+    <div class="area-rolavel">
+      <div><strong>HISTÓRICO:</strong></div>
+      <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin: 8px 0 16px 0; white-space: pre-wrap;">${(envio.historico || 'N/I').replace(/\n/g, '<br>')}</div>
+      <div><strong>ANEXOS:</strong></div>
+      <div>${anexosHtml}</div>
+    </div>
+  `;
+
+  // ========== 3. RODAPÉ COM BOTÕES (fixo) ==========
   const rodapeHtml = `
     <div class="modal-footer">
       <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -663,27 +668,39 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Limpa o container e adiciona corpo + rodapé
-  container.innerHTML = corpoHtml + rodapeHtml;
+  // Monta o conteúdo no container (sem sobrescrever o cabeçalho original do modal)
+  container.innerHTML = infoFixaHtml + areaRolavelHtml + rodapeHtml;
   modal.classList.add('is-open');
 
-  // Eventos dos botões (mesmo código que você já tem)
+  // ========== REATRIBUIR EVENTOS DOS BOTÕES (mesmo código original) ==========
+  // Usamos setTimeout para garantir que os elementos já existam no DOM
   setTimeout(() => {
     const btnPDF = document.getElementById('btn-gerar-pdf');
     const btnCompleto = document.getElementById('btn-copiar-completo');
     const btnHistorico = document.getElementById('btn-copiar-historico');
 
-    if (btnPDF) btnPDF.addEventListener('click', () => exportarParaPDF(envio));
+    if (btnPDF) {
+      // Remove eventos antigos para evitar duplicação
+      const novoBtnPDF = btnPDF.cloneNode(true);
+      btnPDF.parentNode.replaceChild(novoBtnPDF, btnPDF);
+      novoBtnPDF.addEventListener('click', () => exportarParaPDF(envio));
+    }
+    
     if (btnCompleto) {
-      btnCompleto.addEventListener('click', () => {
+      const novoBtnCompleto = btnCompleto.cloneNode(true);
+      btnCompleto.parentNode.replaceChild(novoBtnCompleto, btnCompleto);
+      novoBtnCompleto.addEventListener('click', () => {
         const texto = gerarTextoDetalheEnvio(envio);
-        copiarParaAreaDeTransferencia(btnCompleto, texto, "Texto completo copiado!");
+        copiarParaAreaDeTransferencia(novoBtnCompleto, texto, "Texto completo copiado!");
       });
     }
+    
     if (btnHistorico) {
-      btnHistorico.addEventListener('click', () => {
+      const novoBtnHistorico = btnHistorico.cloneNode(true);
+      btnHistorico.parentNode.replaceChild(novoBtnHistorico, btnHistorico);
+      novoBtnHistorico.addEventListener('click', () => {
         const historico = (envio.historico || "").trim() || "Nenhum histórico informado.";
-        copiarParaAreaDeTransferencia(btnHistorico, historico, "Histórico copiado!");
+        copiarParaAreaDeTransferencia(novoBtnHistorico, historico, "Histórico copiado!");
       });
     }
   }, 100);
