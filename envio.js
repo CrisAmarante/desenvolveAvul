@@ -714,6 +714,7 @@ console.log('Campo anexo:', envio.anexo);
 // FUNÇÃO AUXILIAR: Processa link do anexo, gerando thumbnail com data-src
 // ====================================================================
 function processarLinkAnexo(link) {
+   console.log('Processando link:', link);
   link = link.trim();
   if (!link) return '';
   
