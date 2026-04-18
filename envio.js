@@ -619,6 +619,9 @@ function mostrarListaEnvios(dados) {
 // MOSTRAR DETALHES DO ENVIO - COM PRÉ-VISUALIZAÇÃO DE IMAGENS E LAZY LOADING
 // ====================================================================
 function mostrarDetalheEnvio(envio) {
+  console.log('Envio recebido:', envio);
+console.log('Campo anexo:', envio.anexo);
+  
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
   if (!modal || !container) {
