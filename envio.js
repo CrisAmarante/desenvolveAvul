@@ -623,13 +623,10 @@ function mostrarDetalheEnvio(envio) {
   const container = getEl('detalhe-envio-conteudo');
   if (!modal || !container) return;
 
-  // Aplica a classe específica para este modal
-  modal.classList.add('modal-detalhe-envio');
-
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
 
-  // Processa anexos (mesma lógica já existente)
+  // Processa anexos (use sua função processarLinkAnexo existente)
   let anexosHtml = 'Nenhum anexo';
   if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
     const links = envio.anexo.split(' ; ');
@@ -637,9 +634,9 @@ function mostrarDetalheEnvio(envio) {
     anexosHtml = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">${anexosProcessados.join('')}</div>`;
   }
 
-  // Corpo rolável com os detalhes
+  // Corpo rolável
   const corpoHtml = `
-    <div class="modal-body">
+    <div class="modal-body-scroll">
       <div style="font-family: monospace; line-height: 1.6;">
         <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
         <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
@@ -656,7 +653,6 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Rodapé com os botões
   const rodapeHtml = `
     <div class="modal-footer">
       <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -667,7 +663,7 @@ function mostrarDetalheEnvio(envio) {
     </div>
   `;
 
-  // Monta o conteúdo completo (cabeçalho já existe no HTML, então injetamos corpo e rodapé)
+  // Limpa o container e adiciona corpo + rodapé
   container.innerHTML = corpoHtml + rodapeHtml;
   modal.classList.add('is-open');
 
