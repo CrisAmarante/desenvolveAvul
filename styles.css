@@ -94,105 +94,70 @@ textarea { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius:
 #lista-envios-container { max-height: 60vh; overflow-y: auto; padding: 8px; }
 .envio-item { background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent); }
 .envio-item strong { display: block; margin-bottom: 6px; }
-.envio-detalhe-modal-content {
-  max-width: 500px;
-  width: 90%;
-}
-.envio-detalhe-modal-content {
-  max-width: 500px;
-  width: 90%;
-}
-/* Estilos para campos obrigatórios */
-.required {
-  color: #d11a2d;
-  font-weight: bold;
+.envio-detalhe-modal-content { max-width: 500px; width: 90%; }
+.envio-detalhe-modal-content { max-width: 500px; width: 90%; }
+.required { color: #d11a2d; font-weight: bold; }
+#filtros-envio, #filtros-inspecao { width: 100%; box-sizing: border-box; }
+#filtros-envio > div, #filtros-inspecao > div { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: flex-start; }
+#filtros-envio label, #filtros-inspecao label { font-size: 0.7rem; font-weight: 600; display: block; margin-bottom: 2px; }
+#filtros-envio input, #filtros-envio select, #filtros-inspecao input { padding: 6px 8px; border-radius: 6px; border: 1px solid #cbd5e1; background: var(--card-bg); color: var(--text); }
+#filtros-envio button, #filtros-inspecao button { padding: 6px 12px; font-size: 0.8rem; }
+.pos-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: #cbd5e1; color: #cbd5e1; }
+
+/* ========== NOVAS REGRAS PARA O MODAL DE DETALHE DE ENVIO ========== */
+/* Garante que o modal de detalhe tenha altura limitada e scroll interno */
+#modal-detalhe-envio {
+  z-index: 100000 !important;
 }
 
-/* Ajuste do painel de filtros para ficar justificado */
-#filtros-envio,
-#filtros-inspecao {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-#filtros-envio > div,
-#filtros-inspecao > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-  justify-content: flex-start;
-}
-
-#filtros-envio label,
-#filtros-inspecao label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  display: block;
-  margin-bottom: 2px;
-}
-
-#filtros-envio input,
-#filtros-envio select,
-#filtros-inspecao input {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: var(--card-bg);
-  color: var(--text);
-}
-
-/* Botões dentro dos filtros */
-#filtros-envio button,
-#filtros-inspecao button {
-  padding: 6px 12px;
-  font-size: 0.8rem;
-}
-/* Efeito visual para os botões de posição quando estão bloqueados */
-.pos-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  border-color: #cbd5e1;
-  color: #cbd5e1;
-}
-/* Modal de detalhe do envio - com cabeçalho fixo e rodapé fixo */
-.modal-detalhe-envio {
+#modal-detalhe-envio .modal-content {
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
-  max-width: 500px;
+  max-height: 85vh;
+  max-width: 550px;
   width: 90%;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 20px;
 }
 
-.modal-detalhe-envio .modal-header {
+#modal-detalhe-envio .modal-header {
   flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background: var(--modal-bg);
   position: sticky;
   top: 0;
-  background: var(--modal-bg);
-  z-index: 1;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
+  z-index: 2;
+  margin-bottom: 0;
 }
 
-.modal-detalhe-envio .modal-content {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  max-height: 90vh;
-  overflow: hidden;
-  padding: 0;
-}
-
-.modal-detalhe-envio .modal-body {
+#modal-detalhe-envio .modal-body-scroll {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
 }
 
-.modal-detalhe-envio .modal-footer {
+#modal-detalhe-envio .modal-footer {
   flex-shrink: 0;
   padding: 16px 20px;
   border-top: 1px solid rgba(0,0,0,0.1);
   background: var(--modal-bg);
   position: sticky;
   bottom: 0;
+  z-index: 2;
+}
+
+/* Ajuste para telas muito pequenas */
+@media (max-width: 480px) {
+  #modal-detalhe-envio .modal-content {
+    max-height: 90vh;
+    width: 95%;
+  }
+  #modal-detalhe-envio .modal-body-scroll {
+    padding: 12px;
+  }
+  #modal-detalhe-envio .modal-footer {
+    padding: 12px;
+  }
 }
