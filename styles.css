@@ -131,6 +131,13 @@ textarea { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius:
   z-index: 2;
   margin-bottom: 0;
 }
+/* Área de informações fixas (acima do histórico) */
+#modal-detalhe-envio .info-fixa {
+  flex-shrink: 0;
+  padding: 16px 20px 8px 20px;
+  background: var(--modal-bg);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
 
 #modal-detalhe-envio .modal-body-scroll {
   flex: 1;
