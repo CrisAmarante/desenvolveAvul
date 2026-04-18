@@ -649,7 +649,7 @@ function mostrarDetalheEnvio(envio) {
 
   // ========== 2. ÁREA ROLÁVEL (HISTÓRICO + ANEXOS) ==========
   const areaRolavelHtml = `
-    <div class="area-rolavel">
+    <div class="area-rolavel" style="overflow-y: auto; max-height: 300px;">
       <div><strong>HISTÓRICO:</strong></div>
       <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin: 8px 0 16px 0; white-space: pre-wrap;">${(envio.historico || 'N/I').replace(/\n/g, '<br>')}</div>
       <div><strong>ANEXOS:</strong></div>
