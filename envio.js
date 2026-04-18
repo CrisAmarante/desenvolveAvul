@@ -717,15 +717,16 @@ console.log('Campo anexo:', envio.anexo);
 function processarLinkAnexo(link) {
   link = link.trim();
   if (!link) return '';
-  
-  // Tenta extrair ID do Google Drive de diferentes formatos de URL
+
+  // Extrai o ID do Google Drive
   let fileId = null;
   const patterns = [
-    /\/d\/([a-zA-Z0-9_-]+)/,
-    /id=([a-zA-Z0-9_-]+)/,
-    /file\/d\/([a-zA-Z0-9_-]+)/,
-    /uc\?id=([a-zA-Z0-9_-]+)/,
-    /open\?id=([a-zA-Z0-9_-]+)/
+    /\/d\/([a-zA-Z0-9_-]+)/,               // /d/ID
+    /id=([a-zA-Z0-9_-]+)/,                 // ?id=ID
+    /file\/d\/([a-zA-Z0-9_-]+)/,           // /file/d/ID
+    /uc\?id=([a-zA-Z0-9_-]+)/,             // /uc?id=ID
+    /open\?id=([a-zA-Z0-9_-]+)/,           // /open?id=ID
+    /\/u\/\d\/d\/([a-zA-Z0-9_-]+)/         // /u/0/d/ID
   ];
   
   for (const pattern of patterns) {
@@ -735,35 +736,27 @@ function processarLinkAnexo(link) {
       break;
     }
   }
-  
+
   if (fileId) {
-    // Tenta adivinhar se é imagem pela extensão ou pela presença de "thumbnail" na URL original
-    const extensao = link.split('.').pop().toLowerCase();
-    const isImagem = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extensao);
+    // Para qualquer arquivo do Drive, tenta gerar thumbnail (funciona para imagens e PDFs)
+    // O tamanho 300 é bom para visualização
+    const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w300`;
+    const originalUrl = `https://drive.google.com/uc?id=${fileId}`;
     
-    if (isImagem) {
-      // Usa tamanho maior para garantir visibilidade (300px)
-      const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w300`;
-      const originalUrl = `https://drive.google.com/uc?id=${fileId}`;
-      
-      return `
-        <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top; width: 130px;">
-          <a href="${originalUrl}" target="_blank" style="text-decoration: none;">
-            <img src="${thumbnailUrl}" 
-                 alt="Pré-visualização" 
-                 style="max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: #f0f0f0; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='https://via.placeholder.com/120x120?text=Erro+imagem'; this.style.objectFit='contain';">
-          </a>
-          <div><small><a href="${originalUrl}" target="_blank" style="color: #10b981;">Abrir original</a></small></div>
-        </div>
-      `;
-    } else {
-      // Para PDFs ou outros tipos, apenas link
-      const tipo = extensao.toUpperCase() || 'ARQUIVO';
-      return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo (${tipo})</a></div>`;
-    }
+    // Retorna o bloco com a thumbnail, mas com fallback para link se a imagem não carregar
+    return `
+      <div style="display: inline-block; margin: 5px; text-align: center; vertical-align: top; width: 130px;">
+        <a href="${originalUrl}" target="_blank" style="text-decoration: none;">
+          <img src="${thumbnailUrl}" 
+               alt="Pré-visualização" 
+               style="max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: #f0f0f0; object-fit: cover;"
+               onerror="this.onerror=null; this.parentElement.parentElement.innerHTML='<a href=\\'${originalUrl}\\' target=\\'_blank\\' style=\\'color:#10b981; text-decoration:underline;\\'>📎 Anexo (imagem não disponível)</a>'">
+        </a>
+        <div><small><a href="${originalUrl}" target="_blank" style="color: #10b981;">Abrir original</a></small></div>
+      </div>
+    `;
   }
-  
+
   // Fallback: link genérico (não-Drive)
   return `<div style="margin: 5px;"><a href="${link}" target="_blank" style="color: #10b981; text-decoration: underline;">📎 Anexo</a></div>`;
 }
