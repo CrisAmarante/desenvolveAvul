@@ -151,19 +151,17 @@
         <div class="field"><label>RESPONSÁVEL:</label><input type="text" id="envio-responsavel" readonly></div>
         <div class="field"><label>DATA:</label><input type="date" id="envio-data" max=""></div>
       </div>
-     <div class="action-buttons">
-        <input type="file" id="input-arquivos" multiple accept="image/*,application/pdf" style="display:none">
-        
-        <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
-        <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
-        
-        <button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button>
-        
-        <div id="lista-anexos" style="margin: 10px 0; font-size: 14px;"></div>
-        
-        <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
-      </div>
-    </form>
+     <div class="action-grid-container">
+  <div class="action-row">
+    <button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button>
+    <div id="lista-anexos" class="grid-anexos-preview">
+      <small>Nenhum anexo selecionado (máx. 4)</small>
+    </div>
+  </div>
+  <div class="action-row">
+    <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
+    <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
+    <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
   </div>
 </div>
 
