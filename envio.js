@@ -619,89 +619,71 @@ function mostrarListaEnvios(dados) {
 // MOSTRAR DETALHES DO ENVIO - COM PRÉ-VISUALIZAÇÃO DE IMAGENS E LAZY LOADING
 // ====================================================================
 function mostrarDetalheEnvio(envio) {
-  console.log('Envio recebido:', envio);
-console.log('Campo anexo:', envio.anexo);
-  
   const modal = getEl('modal-detalhe-envio');
   const container = getEl('detalhe-envio-conteudo');
-  if (!modal || !container) {
-    console.error("❌ Modal ou container não encontrado!");
-    return;
-  }
+  if (!modal || !container) return;
+
+  // Aplica a classe específica para este modal
+  modal.classList.add('modal-detalhe-envio');
 
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
 
-  // Processa os anexos, gerando thumbnails para imagens (com data-src para lazy loading)
-  console.log('Conteúdo bruto de envio.anexo:', envio.anexo);
+  // Processa anexos (mesma lógica já existente)
   let anexosHtml = 'Nenhum anexo';
   if (envio.anexo && envio.anexo !== 'Nenhum' && envio.anexo.trim() !== '') {
     const links = envio.anexo.split(' ; ');
     const anexosProcessados = links.map(link => processarLinkAnexo(link));
-    anexosHtml = anexosProcessados.join('<br>');
+    anexosHtml = `<div style="display: flex; flex-wrap: wrap; gap: 10px;">${anexosProcessados.join('')}</div>`;
   }
 
-  const conteudoHtml = `
-    <div style="font-family: monospace; background: var(--card-bg); padding: 20px; border-radius: 12px; line-height: 1.6; margin-bottom: 25px;">
-      <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
-      <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
-      <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
-      <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
-      <div><strong>LINHA:</strong> ${envio.linha || 'N/I'} <strong>| HISTÓRICO:</strong> ${envio.historico || 'N/I'}</div>
-      <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
-      <div><strong>ANEXOS:</strong></div>
-      <div id="anexos-container" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px;">${anexosHtml}</div>
-      <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
+  // Corpo rolável com os detalhes
+  const corpoHtml = `
+    <div class="modal-body">
+      <div style="font-family: monospace; line-height: 1.6;">
+        <div><strong>MOTIVO:</strong> ${envio.motivo || 'N/I'}</div>
+        <div><strong>CARRO:</strong> ${envio.carro || 'N/I'}</div>
+        <div><strong>HORA:</strong> ${horaFormatada} <strong>| COB.:</strong> ${envio.cobrador || 'N/I'} <strong>| SENT.:</strong> ${envio.sentido || 'N/I'}</div>
+        <div><strong>MOTORISTA:</strong> ${envio.motorista || 'N/I'}</div>
+        <div><strong>LINHA:</strong> ${envio.linha || 'N/I'}</div>
+        <div><strong>HISTÓRICO:</strong></div>
+        <div style="background: rgba(0,0,0,0.05); padding: 12px; border-radius: 8px; margin: 8px 0; white-space: pre-wrap;">${envio.historico || 'N/I'}</div>
+        <div><strong>LOCAL:</strong> ${envio.local || 'N/I'} <strong>| DATA:</strong> ${dataFormatada}</div>
+        <div><strong>ANEXOS:</strong></div>
+        <div>${anexosHtml}</div>
+        <div><strong>RESPONSÁVEL:</strong> ${envio.fiscal || 'N/I'}</div>
+      </div>
     </div>
   `;
 
-  const botoesHtml = `
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <button id="btn-gerar-pdf" class="btn-principal" style="padding: 15px; font-size: 1.05rem;">
-        📄 Gerar PDF (Modelo Oficial)
-      </button>
-      
-      <button id="btn-copiar-completo" class="btn-secundario" style="padding: 15px; font-size: 1.05rem;">
-        📋 Copiar Texto Completo
-      </button>
-      
-      <button id="btn-copiar-historico" class="btn-secundario" style="padding: 15px; font-size: 1.05rem;">
-        📋 Copiar apenas o Histórico
-      </button>
+  // Rodapé com os botões
+  const rodapeHtml = `
+    <div class="modal-footer">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button id="btn-gerar-pdf" class="btn-principal">📄 Gerar PDF (Modelo Oficial)</button>
+        <button id="btn-copiar-completo" class="btn-secundario">📋 Copiar Texto Completo</button>
+        <button id="btn-copiar-historico" class="btn-secundario">📋 Copiar apenas o Histórico</button>
+      </div>
     </div>
   `;
 
-  container.innerHTML = conteudoHtml + botoesHtml;
+  // Monta o conteúdo completo (cabeçalho já existe no HTML, então injetamos corpo e rodapé)
+  container.innerHTML = corpoHtml + rodapeHtml;
   modal.classList.add('is-open');
 
-  // Inicia o lazy loading para as imagens recém-adicionadas
-  iniciarLazyLoadingImagens();
-
-  // Configura eventos dos botões
+  // Eventos dos botões (mesmo código que você já tem)
   setTimeout(() => {
-    // Remove botões fantasmas
-    const todosBotoes = container.querySelectorAll('button');
-    todosBotoes.forEach(btn => {
-      if (btn.id !== 'btn-gerar-pdf' && 
-          btn.id !== 'btn-copiar-completo' && 
-          btn.id !== 'btn-copiar-historico') {
-        btn.remove();
-      }
-    });
-
     const btnPDF = document.getElementById('btn-gerar-pdf');
     const btnCompleto = document.getElementById('btn-copiar-completo');
     const btnHistorico = document.getElementById('btn-copiar-historico');
 
     if (btnPDF) btnPDF.addEventListener('click', () => exportarParaPDF(envio));
-    
     if (btnCompleto) {
       btnCompleto.addEventListener('click', () => {
         const texto = gerarTextoDetalheEnvio(envio);
         copiarParaAreaDeTransferencia(btnCompleto, texto, "Texto completo copiado!");
       });
     }
-
     if (btnHistorico) {
       btnHistorico.addEventListener('click', () => {
         const historico = (envio.historico || "").trim() || "Nenhum histórico informado.";
@@ -710,7 +692,6 @@ console.log('Campo anexo:', envio.anexo);
     }
   }, 100);
 }
-
 // ====================================================================
 // FUNÇÃO AUXILIAR: Processa link do anexo, gerando thumbnail com data-src
 // ====================================================================
