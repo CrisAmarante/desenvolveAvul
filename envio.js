@@ -922,6 +922,64 @@ function fecharModalListaEnvios() {
   const modal = getEl('modal-lista-envios');
   if (modal) modal.classList.remove('is-open');
 }
+// ====================================================================
+// MICROFONE (Reconhecimento de Voz)
+// ====================================================================
+let reconhecimentoVoz = null;
+
+function iniciarReconhecimentoVoz() {
+  // Verifica suporte do navegador
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Seu navegador não suporta reconhecimento de voz. Use Chrome, Edge ou Safari.');
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  reconhecimentoVoz = new SpeechRecognition();
+  reconhecimentoVoz.lang = 'pt-BR';
+  reconhecimentoVoz.continuous = false;
+  reconhecimentoVoz.interimResults = false;
+  reconhecimentoVoz.maxAlternatives = 1;
+
+  reconhecimentoVoz.onstart = function() {
+    const btn = getEl('btn-microfone');
+    if (btn) {
+      btn.style.background = '#10b981';
+      btn.style.color = 'white';
+      btn.textContent = '🎤 Ouvindo...';
+    }
+  };
+
+  reconhecimentoVoz.onend = function() {
+    const btn = getEl('btn-microfone');
+    if (btn) {
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.textContent = '🎤';
+    }
+  };
+
+  reconhecimentoVoz.onresult = function(event) {
+    const texto = event.results[0][0].transcript;
+    const historicoField = getEl('envio-historico');
+    if (historicoField) {
+      const textoAtual = historicoField.value;
+      if (textoAtual.trim() === '') {
+        historicoField.value = texto;
+      } else {
+        historicoField.value = textoAtual + '\n' + texto;
+      }
+    }
+  };
+
+  reconhecimentoVoz.onerror = function(event) {
+    console.error('Erro no reconhecimento de voz:', event.error);
+    alert('Erro ao capturar áudio: ' + event.error);
+    reconhecimentoVoz.stop();
+  };
+
+  reconhecimentoVoz.start();
+}
 
 // ====================================================================
 // FUNÇÕES AUXILIARES (formatação, hash, copiar)
