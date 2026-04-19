@@ -966,8 +966,12 @@ function iniciarReconhecimentoVoz() {
     }
   };
 
-  reconhecimentoVoz.onresult = function(event) {
-    const texto = event.results[0][0].transcript;
+    reconhecimentoVoz.onresult = function(event) {
+    let texto = event.results[0][0].transcript;
+    // Capitaliza a primeira letra da string
+    if (texto && texto.length > 0) {
+      texto = texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
     const historicoField = getEl('envio-historico');
     if (historicoField) {
       const textoAtual = historicoField.value;
