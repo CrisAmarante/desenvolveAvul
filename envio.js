@@ -20,7 +20,14 @@ function abrirModalEnvio() {
   atualizarListaAnexos();
   if (!getEl('input-arquivos-multiplos')) criarInputMultiploAnexos();
 }
-
+// ========== ADICIONAR EVENTOS DOS NOVOS BOTÕES ==========
+  const btnMicrofone = getEl('btn-microfone');
+  if (btnMicrofone) {
+    // Remove evento anterior para evitar duplicação
+    const novoBtn = btnMicrofone.cloneNode(true);
+    btnMicrofone.parentNode.replaceChild(novoBtn, btnMicrofone);
+    novoBtn.addEventListener('click', iniciarReconhecimentoVoz);
+  }
 function fecharModalEnvio() {
   const m = getEl('modal-envio-informacoes');
   if (m) m.classList.remove('is-open');
