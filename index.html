@@ -142,10 +142,10 @@
         <div class="field"><label>HORA</label><input type="time" id="envio-hora"></div>
         <div class="field"><label>SENT.</label><input type="text" id="envio-sentido" placeholder="Ex: IDA, VOLTA. Garagem, etc..."></div>
       </div>
-     <div class="form-section">
-  <label>HISTÓRICO:</label>
+    <div class="form-section">
+  <label>HISTÓRICO: <span id="historico-contador" style="font-size: 0.7rem; font-weight: normal;">(0/1200)</span></label>
   <div style="display: flex; gap: 8px; align-items: flex-start;">
-    <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..." style="flex: 1;"></textarea>
+    <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..." style="flex: 1;" maxlength="1200"></textarea>
     <button type="button" id="btn-microfone" class="btn-icon" title="Ditar histórico (microfone)">🎤</button>
   </div>
 </div>
