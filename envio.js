@@ -19,6 +19,26 @@ function abrirModalEnvio() {
   anexosArray = [];
   atualizarListaAnexos();
   if (!getEl('input-arquivos-multiplos')) criarInputMultiploAnexos();
+  function iniciarContadorHistorico() {
+  const historicoField = getEl('envio-historico');
+  const contadorSpan = getEl('historico-contador');
+  if (!historicoField || !contadorSpan) return;
+  
+  const atualizarContador = () => {
+    const len = historicoField.value.length;
+    contadorSpan.textContent = `(${len}/1200)`;
+    if (len > 1100) {
+      contadorSpan.style.color = '#f59e0b';
+    } else if (len > 1200) {
+      contadorSpan.style.color = '#ef4444';
+    } else {
+      contadorSpan.style.color = '';
+    }
+  };
+  
+  historicoField.addEventListener('input', atualizarContador);
+  atualizarContador();
+}
 }
 // ========== ADICIONAR EVENTOS DOS NOVOS BOTÕES ==========
   const btnMicrofone = getEl('btn-microfone');
