@@ -784,7 +784,29 @@ function iniciarLazyLoadingImagens() {
 
   imagens.forEach(img => observer.observe(img));
 }
-
+// ====================================================================
+// UTILITÁRIO PARA LIMITAR TEXTO DO HISTÓRICO
+// ====================================================================
+function limitarHistorico(texto, limiteCaracteres = 1200) {
+  if (!texto) return { texto: '', foiTruncado: false };
+  
+  if (texto.length <= limiteCaracteres) {
+    return { texto: texto, foiTruncado: false };
+  }
+  
+  // Trunca no último espaço dentro do limite
+  let textoTruncado = texto.substring(0, limiteCaracteres);
+  const ultimoEspaco = textoTruncado.lastIndexOf(' ');
+  if (ultimoEspaco > 0) {
+    textoTruncado = textoTruncado.substring(0, ultimoEspaco);
+  }
+  
+  return {
+    texto: textoTruncado + '... [TEXTO TRUNCADO - Limite de ' + limiteCaracteres + ' caracteres]',
+    foiTruncado: true,
+    textoOriginal: texto
+  };
+}
 // ====================================================================
 // EXPORTAÇÃO PARA PDF E TEXTOS
 // ====================================================================
@@ -805,6 +827,7 @@ async function exportarParaPDF(envio) {
     const margin = 20;
     let y = 22;
 
+    // Cabeçalho (mesmo código)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("AUTO VIAÇÃO URUBUPUNGÁ LTDA.", pageWidth/2, y, { align: "center" });
@@ -821,6 +844,7 @@ async function exportarParaPDF(envio) {
 
     y += 18;
 
+    // Campos fixos
     doc.setFontSize(12);
     const leftCol = margin;
     const rightCol = pageWidth / 2 + 12;
@@ -837,24 +861,55 @@ async function exportarParaPDF(envio) {
     doc.text(`Sent.: ${envio.sentido || '________'}`, rightCol, y);
     y += 16;
 
+    // Título "Sr. Chefe"
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Sr. Chefe", margin, y);
     y += 10;
 
+    // ========== HISTÓRICO COM LIMITE DE CARACTERES ==========
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11.5);
 
-    const texto = (envio.historico || "").trim() || "Sem informações adicionais.";
-    const linhas = doc.splitTextToSize(texto, pageWidth - margin * 2);
-
+    // Aplica limite de 1200 caracteres no histórico
+    const historicoOriginal = (envio.historico || "").trim() || "Sem informações adicionais.";
+    const { texto: historicoLimitado, foiTruncado } = limitarHistorico(historicoOriginal, 1200);
+    
+    // Divide o texto em linhas para o PDF
+    const linhas = doc.splitTextToSize(historicoLimitado, pageWidth - margin * 2);
+    
+    // Verifica se o texto cabe na página atual
+    const alturaRestante = doc.internal.pageSize.getHeight() - y - 40; // 40mm reservado para rodapé
+    
+    if (linhas.length * 7.5 > alturaRestante) {
+      // Se não couber, adiciona nova página
+      doc.addPage();
+      y = 22; // Reinicia Y no topo da nova página
+    }
+    
+    // Escreve o histórico
     linhas.forEach(linha => {
+      // Verifica se precisa de nova página
+      if (y > doc.internal.pageSize.getHeight() - 25) {
+        doc.addPage();
+        y = 22;
+      }
       doc.text(linha, margin, y);
       y += 7.5;
     });
 
+    // Adiciona aviso de truncamento se necessário
+    if (foiTruncado) {
+      y += 5;
+      doc.setFontSize(9);
+      doc.setTextColor(150, 100, 0);
+      doc.text("⚠️ ATENÇÃO: Este histórico foi truncado para fins de impressão.", margin, y);
+      doc.setTextColor(0);
+    }
+
     y += 22;
 
+    // ========== RODAPÉ ==========
     const dataFormatada = formatarData(envio.data) || '__/__/____';
     const responsavel = envio.fiscal || '________________';
     const localSelecionado = envio.local || 'Não informado';
@@ -868,6 +923,12 @@ async function exportarParaPDF(envio) {
 
     const dadosParaHash = `${envio.carro || ''}|${envio.data || ''}|${envio.hora || ''}|${responsavel}|${Date.now()}`;
     const hashValidacao = await gerarHashValidacao(dadosParaHash);
+
+    // Verifica se há espaço para o rodapé na página atual
+    if (y > doc.internal.pageSize.getHeight() - 35) {
+      doc.addPage();
+      y = 22;
+    }
 
     doc.text(`Osasco, ${dataFormatada}`, margin, y);
     doc.text(responsavel, pageWidth - margin - 45, y);
@@ -891,6 +952,7 @@ async function exportarParaPDF(envio) {
 
     doc.setTextColor(0);
 
+    // Nome do arquivo
     const motoristaNome = (envio.motorista || 'SemMotorista')
       .replace(/[^a-zA-Z0-9]/g, '')
       .substring(0, 15);
@@ -904,7 +966,6 @@ async function exportarParaPDF(envio) {
     alert('❌ Erro ao gerar o PDF:\n' + error.message);
   }
 }
-
 function gerarTextoDetalheEnvio(envio) {
   const horaFormatada = formatarHora(envio.hora);
   const dataFormatada = formatarData(envio.data);
