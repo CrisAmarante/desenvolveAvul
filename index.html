@@ -100,7 +100,7 @@
   </div>
 </div>
 
-<!-- MODAL CONSULTA INSPEÇÕES (com novo seletor "Visualizar" inserido dinamicamente via JS, mas mantemos a estrutura base) -->
+<!-- MODAL CONSULTA INSPEÇÕES -->
 <div id="modal-conferir-inspecoes" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Minhas Inspeções</h2><button class="modal-close" onclick="fecharModalConferir()">×</button></div><div id="lista-inspecoes"></div></div></div>
 
 <!-- MODAL ENVIO DE INFORMAÇÕES -->
@@ -142,29 +142,32 @@
         <div class="field"><label>HORA</label><input type="time" id="envio-hora"></div>
         <div class="field"><label>SENT.</label><input type="text" id="envio-sentido" placeholder="Ex: IDA, VOLTA. Garagem, etc..."></div>
       </div>
-    <div class="form-section">
-  <label>HISTÓRICO: <span id="historico-contador" style="font-size: 0.7rem; font-weight: normal;">(0/1200)</span></label>
-  <div style="display: flex; gap: 8px; align-items: flex-start;">
-    <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..." style="flex: 1;" maxlength="1200"></textarea>
-    <button type="button" id="btn-microfone" class="btn-icon" title="Ditar histórico (microfone)">🎤</button>
-  </div>
-</div>
+      <div class="form-section">
+        <label>HISTÓRICO: <span id="historico-contador" style="font-size: 0.7rem; font-weight: normal;">(0/1400)</span></label>
+        <div style="display: flex; gap: 8px; align-items: flex-start;">
+          <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..." style="flex: 1;"></textarea>
+          <button type="button" id="btn-microfone" class="btn-icon" title="Ditar histórico (microfone)">🎤</button>
+        </div>
+      </div>
       <div class="form-row">
         <div class="field"><label>LOCAL:</label><select id="envio-local"><option value="">Selecione...</option></select></div>
         <div class="field"><label>RESPONSÁVEL:</label><input type="text" id="envio-responsavel" readonly></div>
         <div class="field"><label>DATA:</label><input type="date" id="envio-data" max=""></div>
       </div>
-     <div class="action-grid-container">
-  <div class="action-row">
-    <button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button>
-    <div id="lista-anexos" class="grid-anexos-preview">
-      <small>Nenhum anexo selecionado (máx. 4)</small>
-    </div>
-  </div>
-  <div class="action-row">
-    <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
-    <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
-    <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
+      <div class="action-grid-container">
+        <div class="action-row">
+          <button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button>
+          <div id="lista-anexos" class="grid-anexos-preview">
+            <small>Nenhum anexo selecionado (máx. 4)</small>
+          </div>
+        </div>
+        <div class="action-row">
+          <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
+          <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
+          <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 
