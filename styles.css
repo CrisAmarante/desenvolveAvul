@@ -70,7 +70,7 @@ body.dark::before { filter: blur(10px) brightness(0.85); }
 .checkmark:after { content: "✔"; position: absolute; display: none; color: white; font-size: 14px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .custom-checkbox input:checked + .checkmark:after { display: block; }
 .custom-checkbox input.defeito:checked + .checkmark { background: #ef4444; }
-.obs-input { width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; }
+.obs-input { width: 100%; padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; }
 .posicao-container { margin-top: 6px; text-align: center; }
 .posicao-buttons { display: flex; gap: 6px; justify-content: center; }
 .pos-btn { width: 36px; height: 36px; border: 2px solid #64748b; background: var(--card-bg); color: var(--accent); font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
