@@ -22,6 +22,7 @@ class InspecaoVeicular {
       const cbOk = row.querySelector('.ok');
       const cbDef = row.querySelector('.defeito');
       const obsInput = row.querySelector('.obs-input');
+      //const obsInputVen = row.querySelector('.obs-input-ven');
       const posBtns = row.querySelectorAll('.pos-btn');
 
       const atualizarEstadoLinha = () => {
