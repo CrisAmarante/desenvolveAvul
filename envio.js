@@ -286,6 +286,21 @@ function validarFormulario() {
   if (!data) { alert('Preencha a Data.'); return false; }
   const hoje = new Date().toISOString().split('T')[0];
   if (data > hoje) { alert('A data não pode ser maior que a data atual.'); return false; }
+  // Nova validação do histórico
+  const historico = getEl('envio-historico').value;
+  const MAX_CARACTERES = 1400;
+  const MAX_LINHAS = 16;
+  const linhas = historico.split(/\r?\n/).length;
+  
+  if (historico.length > MAX_CARACTERES) {
+    alert(`O histórico excede o limite de ${MAX_CARACTERES} caracteres.`);
+    return false;
+  }
+  
+  if (linhas > MAX_LINHAS) {
+    alert(`O histórico excede o limite de ${MAX_LINHAS} linhas.`);
+    return false;
+  }
   return true;
 }
 
