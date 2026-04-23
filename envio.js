@@ -44,24 +44,61 @@ function fecharModalEnvio() {
 // ====================================================================
 // CONTADOR DE CARACTERES DO HISTÓRICO
 // ====================================================================
+// Substitua a função iniciarContadorHistorico por esta versão
 function iniciarContadorHistorico() {
   const historicoField = getEl('envio-historico');
   const contadorSpan = getEl('historico-contador');
   if (!historicoField || !contadorSpan) return;
   
+  const MAX_CARACTERES = 1400;
+  const MAX_LINHAS = 16;
+  
   const atualizarContador = () => {
+    let texto = historicoField.value;
+    let linhas = texto.split(/\r?\n/);
+    let ultrapassouLinhas = linhas.length > MAX_LINHAS;
+    let ultrapassouCaracteres = texto.length > MAX_CARACTERES;
+    
+    if (ultrapassouLinhas) {
+      // Trunca para o máximo de linhas
+      const novasLinhas = linhas.slice(0, MAX_LINHAS);
+      historicoField.value = novasLinhas.join('\n');
+      texto = historicoField.value;
+      linhas = texto.split(/\r?\n/);
+      ultrapassouLinhas = false;
+    }
+    
+    if (ultrapassouCaracteres) {
+      // Trunca para o máximo de caracteres
+      historicoField.value = texto.substring(0, MAX_CARACTERES);
+      texto = historicoField.value;
+      ultrapassouCaracteres = false;
+    }
+    
     const len = historicoField.value.length;
-    contadorSpan.textContent = `(${len}/1400)`;
-    if (len > 1300) {
+    const linhasAtuais = historicoField.value.split(/\r?\n/).length;
+    contadorSpan.textContent = `(${len}/${MAX_CARACTERES} | ${linhasAtuais}/${MAX_LINHAS} linhas)`;
+    
+    if (len > MAX_CARACTERES * 0.9 || linhasAtuais > MAX_LINHAS - 2) {
       contadorSpan.style.color = '#f59e0b';
-    } else if (len > 1400) {
-      contadorSpan.style.color = '#ef4444';
     } else {
       contadorSpan.style.color = '';
     }
   };
   
   historicoField.addEventListener('input', atualizarContador);
+  historicoField.addEventListener('keydown', function(e) {
+    // Impede nova linha se já atingiu o limite de linhas
+    if (e.key === 'Enter') {
+      const linhasAtuais = historicoField.value.split(/\r?\n/).length;
+      if (linhasAtuais >= MAX_LINHAS) {
+        e.preventDefault();
+        alert(`Limite de ${MAX_LINHAS} linhas atingido.`);
+        return false;
+      }
+    }
+  });
+  
   atualizarContador();
 }
 
