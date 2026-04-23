@@ -1,5 +1,5 @@
 1- Habilitar o acesso à localização (GPS)
-2- Fazer os slices por perfil na área logada; verificar os acessos às informações (Pirâmide invertida)
+*****2- Fazer os slices por perfil na área logada; verificar os acessos às informações (Pirâmide invertida)
 3- Melhorar o carregamento (tempo) - tornar mais leve, talvez removendo a imagem de fundo
 4- É possível enviar a senha (pin) para o telefone particular do usuário caso ele a esqueça?
 5- Tornar os campos outros, sentido, carro e linha, quando aplicáveis, com mínimo (3) de caracteres (Mostrar o resultado em Texto exato)
