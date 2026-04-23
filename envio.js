@@ -1081,23 +1081,40 @@ function iniciarReconhecimentoVoz() {
     }
   };
 
-  reconhecimentoVoz.onresult = function(event) {
-    let texto = event.results[0][0].transcript;
-    if (texto && texto.length > 0) {
-      texto = texto.charAt(0).toUpperCase() + texto.slice(1);
+ reconhecimentoVoz.onresult = function(event) {
+  let texto = event.results[0][0].transcript;
+  if (texto && texto.length > 0) {
+    texto = texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+  const historicoField = getEl('envio-historico');
+  if (historicoField) {
+    const textoAtual = historicoField.value;
+    let novoTexto;
+    if (textoAtual.trim() === '') {
+      novoTexto = texto;
+    } else {
+      novoTexto = textoAtual + '\n' + texto;
     }
-    const historicoField = getEl('envio-historico');
-    if (historicoField) {
-      const textoAtual = historicoField.value;
-      if (textoAtual.trim() === '') {
-        historicoField.value = texto;
-      } else {
-        historicoField.value = textoAtual + '\n' + texto;
-      }
-      // Dispara o evento input para atualizar o contador
-      historicoField.dispatchEvent(new Event('input'));
+    
+    // Verifica limites antes de aplicar
+    const MAX_CARACTERES = 1400;
+    const MAX_LINHAS = 16;
+    const linhas = novoTexto.split(/\r?\n/).length;
+    
+    if (novoTexto.length > MAX_CARACTERES) {
+      alert(`Limite de ${MAX_CARACTERES} caracteres atingido. Texto não adicionado.`);
+      return;
     }
-  };
+    
+    if (linhas > MAX_LINHAS) {
+      alert(`Limite de ${MAX_LINHAS} linhas atingido. Texto não adicionado.`);
+      return;
+    }
+    
+    historicoField.value = novoTexto;
+    historicoField.dispatchEvent(new Event('input'));
+  }
+};
 
   reconhecimentoVoz.onerror = function(event) {
     console.error('Erro no reconhecimento de voz:', event.error);
