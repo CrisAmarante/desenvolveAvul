@@ -560,7 +560,7 @@ function limparFormularioEnvio() {
 }
 
 // ====================================================================
-// CONSULTAS DE ENVIOS - VERSÃO ROBUSTA (FETCH + FALLBACK)
+// CONSULTAS DE ENVIOS - COM ENVIO DO PAPEL AO BACKEND
 // ====================================================================
 function consultarEnvios() {
   consultarEnviosComFiltro(null, null, null, null, null);
@@ -575,18 +575,14 @@ function consultarEnviosComFiltro(dataInicio, dataFim, motivo, carro, fiscalFilt
   if (carro) params.append('carro', carro);
   if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
   
-  // ========== CONTROLE DE PERFIL: FISCAL vê apenas seus próprios envios ==========
+  // Obtém papel e apelido do usuário logado
   const role = window.currentUserRole || localStorage.getItem('inspectorRole') || '';
-  if (role === 'FISCAL') {
-    const fiscalNome = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName');
-    if (fiscalNome) {
-      params.append('fiscal', fiscalNome);
-    }
-  }
+  const apelido = localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName') || '';
   
-  if (window.currentUserRole === 'FISCAL') {
-    params.append('fiscal', localStorage.getItem('inspectorApelido') || localStorage.getItem('inspectorName'));
-  }
+  // Envia o papel e o apelido para o backend aplicar as regras de permissão
+  params.append('papel', role);
+  params.append('apelido', apelido);
+  
   return _executarConsultaEnvios(params);
 }
 
@@ -679,8 +675,10 @@ function mostrarListaEnvios(dados) {
     
     let html = '';
     dados.forEach((envio, idx) => {
+      // Exibe o responsável (apelido) acima do motivo
       html += `
         <div class="envio-item" data-idx="${idx}" style="cursor: pointer;">
+          <strong>👤 RESPONSÁVEL: ${envio.fiscal || 'N/I'}</strong><br>
           <strong>MOTIVO: ${envio.motivo || 'N/I'}</strong><br>
           CARRO: ${envio.carro || 'N/I'} | DATA: ${formatarData(envio.data)} | MOTORISTA: ${envio.motorista || 'N/I'}
         </div>
@@ -707,7 +705,7 @@ function mostrarListaEnvios(dados) {
 }
 
 // ====================================================================
-// MOSTRAR DETALHES DO ENVIO
+// MOSTRAR DETALHES DO ENVIO (idêntico ao original)
 // ====================================================================
 function mostrarDetalheEnvio(envio) {
   const modal = getEl('modal-detalhe-envio');
@@ -790,7 +788,7 @@ function mostrarDetalheEnvio(envio) {
 }
 
 // ====================================================================
-// PROCESSAR LINK DO ANEXO (THUMBNAIL)
+// PROCESSAR LINK DO ANEXO (THUMBNAIL) - idêntico ao original
 // ====================================================================
 function processarLinkAnexo(link) {
   link = link.trim();
@@ -835,7 +833,7 @@ function processarLinkAnexo(link) {
 }
 
 // ====================================================================
-// EXPORTAÇÃO PARA PDF COM LIMITAÇÃO DE HISTÓRICO (16 linhas ou 1400 caracteres)
+// EXPORTAÇÃO PARA PDF - idêntico ao original
 // ====================================================================
 function limitarHistorico(texto, limiteCaracteres = 1400, limiteLinhas = 16) {
   if (!texto) return { texto: '', foiTruncado: false };
@@ -1097,7 +1095,7 @@ function fecharModalListaEnvios() {
 }
 
 // ====================================================================
-// MICROFONE (Reconhecimento de Voz)
+// MICROFONE - idêntico ao original
 // ====================================================================
 let reconhecimentoVoz = null;
 
