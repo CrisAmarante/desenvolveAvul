@@ -34,7 +34,7 @@ async function checkLoginStatus() {
     
     showWelcomeToast(apelido);
     const logoutBtn = insp.querySelector('.logout-btn');
-    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${apelido}</small>`;
+    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>${apelido}</small>`;
   } else {
     localStorage.removeItem('inspectorLoggedIn');
     localStorage.removeItem('inspectorName');
