@@ -1,14 +1,14 @@
 {
   "name": "Testes de campo",
   "short_name": "PENSO",
-  "description": "Prancheta eletrônica -Testes de campo",
+  "description": "Prancheta eletrônica -Desenvolvimento",
   "id": "/testesavul/",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#d11a2d",
   "theme_color": "#d11a2d",
   "orientation": "portrait-primary",
-  "version": "2026.04.25-vs03.0.0",
+  "version": "2026.04.25-vs03.0.1",
   "icons": [
     {
       "src": "icon.png",
