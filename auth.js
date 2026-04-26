@@ -5,43 +5,47 @@ const ROLES_ALLOWED_INSPECTION = ['INSPETOR', 'ENCARREGADO', 'ADMIN', 'GERENTE',
 let currentUserRole = '';
 let canCreateInspection = false;
 // ====================================================================
-// LOGIN/LOGOUT
+// VERIFICAR STATUS DE LOGIN (MODIFICADA)
 // ====================================================================
 async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
   const nome = localStorage.getItem('inspectorName');
   const apelido = localStorage.getItem('inspectorApelido');
-  const role = localStorage.getItem('inspectorRole'); // Pega a função direto do que o Google aprovou
-
   const main = getEl('main-screen');
   const insp = getEl('inspector-screen');
   const btnInspecao = getEl('btn-inspecao-veicular');
   const btnEnvio = getEl('btn-envio-informacoes');
   
-  // Agora não checamos mais o INSPETORES[apelido]
-  if (logado === 'true' && nome && apelido && role) {
+  if (logado === 'true' && nome && apelido && INSPETORES[apelido]) {
+    const role = INSPETORES[apelido].funcao;
     currentUserRole = role;
     canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
+    localStorage.setItem('inspectorRole', role);
     
+    // Lógica existente para mostrar/ocultar os cards especiais (baseada no MONITOR)
     if (btnInspecao && role !== 'MONITOR') btnInspecao.style.display = 'flex';
     else if (btnInspecao) btnInspecao.style.display = 'none';
     
     if (btnEnvio && role !== 'MONITOR') btnEnvio.style.display = 'flex';
     else if (btnEnvio) btnEnvio.style.display = 'none';
     
-    if (main) main.style.display = 'none';
-    if (insp) insp.style.display = 'flex';
+    // NOVA CHAMADA: ajusta todos os cards conforme o perfil
+    ajustarCardsPorPerfil(role);
     
+    main.style.display = 'none';
+    insp.style.display = 'flex';
     showWelcomeToast(apelido);
+    
     const logoutBtn = insp.querySelector('.logout-btn');
-    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>${apelido}</small>`;
+    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${apelido}</small>`;
   } else {
+    // Usuário não logado: garante que a tela principal apareça e a de inspetor suma
     localStorage.removeItem('inspectorLoggedIn');
     localStorage.removeItem('inspectorName');
     localStorage.removeItem('inspectorApelido');
     localStorage.removeItem('inspectorRole');
-    if (main) main.style.display = 'flex';
-    if (insp) insp.style.display = 'none';
+    main.style.display = 'flex';
+    insp.style.display = 'none';
   }
 }
 async function login(e) {
