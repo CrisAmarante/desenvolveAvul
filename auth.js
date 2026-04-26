@@ -129,3 +129,25 @@ function mostrarBannerAviso() {
   const banner = getEl('aviso-temporario');
   if (banner) banner.style.display = (agora >= DATA_INICIO_BANNER && agora < DATA_FIM_BANNER) ? 'flex' : 'none';
 }
+// ====================================================================
+// AJUSTAR VISIBILIDADE DOS CARDS CONFORME PERFIL
+// ====================================================================
+function ajustarCardsPorPerfil(role) {
+  const todosCards = document.querySelectorAll('#inspector-screen .inspector-card');
+  const cardInspecao = document.getElementById('btn-inspecao-veicular');
+  const cardEnvio = document.getElementById('btn-envio-informacoes');
+  
+  if (role === 'FISCAL') {
+    todosCards.forEach(card => {
+      if (card === cardInspecao || card === cardEnvio) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  } else {
+    todosCards.forEach(card => {
+      card.style.display = 'flex';
+    });
+  }
+}
