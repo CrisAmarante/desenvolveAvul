@@ -89,9 +89,17 @@ function applyTheme(theme) { if (theme === "dark") { document.body.classList.add
 function initTheme() { const tt = getEl('theme-toggle'); if (!tt) return; const saved = localStorage.getItem("theme") || "light"; applyTheme(saved); tt.addEventListener("click", () => { const cur = localStorage.getItem("theme") === "dark" ? "light" : "dark"; localStorage.setItem("theme", cur); applyTheme(cur); }); }
 function registerServiceWorker() { if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').then(r => console.log('SW registrado:', r.scope)).catch(e => console.error('Falha no SW:', e)); }
 async function inicializar() {
-  initModals(); initEventListeners(); initTheme(); registerServiceWorker();
+  initModals(); 
+  initEventListeners(); 
+  initTheme(); 
+  registerServiceWorker();
   
-  checkLoginStatus(); // Tiramos o await refreshInspetores() daqui
+  // PRIMEIRO carrega os dados dos inspetores (necessário para validar login)
+  await refreshInspetores();
+  
+  // Depois verifica se já existe usuário logado
+  checkLoginStatus();
+  
   mostrarBannerAviso(); 
   aplicarBloqueioDeDatas();
   
@@ -99,6 +107,7 @@ async function inicializar() {
   
   window.addEventListener('pageshow', async (e) => { 
     if (e.persisted) { 
+      await refreshInspetores();  // recarrega ao voltar à página
       checkLoginStatus(); 
       await carregarTerminais(true); 
       preencherSelectTerminais(); 
@@ -107,6 +116,7 @@ async function inicializar() {
   
   document.addEventListener('visibilitychange', async () => { 
     if (document.visibilityState === 'visible') { 
+      await refreshInspetores();
       checkLoginStatus(); 
       await carregarTerminais(true); 
       preencherSelectTerminais(); 
