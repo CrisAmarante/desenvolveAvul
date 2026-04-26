@@ -55,7 +55,7 @@ async function checkLoginStatus() {
     showWelcomeToast(apelido);
     
     const logoutBtn = insp.querySelector('.logout-btn');
-    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>Inspetor ${apelido}</small>`;
+    if (logoutBtn) logoutBtn.innerHTML = `Sair<small>${apelido}</small>`;
   } else {
     // Usuário não logado: garante que a tela principal apareça e a de inspetor suma
     localStorage.removeItem('inspectorLoggedIn');
