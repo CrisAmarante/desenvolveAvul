@@ -35,7 +35,7 @@
 <body>
 
 <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
-
+<div id="aviso-comum-container" style="position: relative;"></div>
 <div id="aviso-temporario" class="banner">
     <div><strong>ATENÇÃO</strong><br>Período de inspeções 5S da frota Osasco iniciado.</div>
     <button id="btn-fechar-banner" class="banner-close">×</button>
@@ -60,6 +60,7 @@
 
 <!-- TELA DE INSPETORES (LOGADA) -->
 <div id="inspector-screen" class="screen-container" style="display: none;">
+    <div id="aviso-logado-container" style="margin-top: 10px; margin-bottom: 15px;"></div>
     <div class="grid-panel">
         <div class="cards-grid">
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>Relatório Diário</a>
