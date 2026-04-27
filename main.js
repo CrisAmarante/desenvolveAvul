@@ -99,7 +99,10 @@ async function inicializar() {
   
   // Depois verifica se já existe usuário logado
   checkLoginStatus();
-  
+  // Dentro de inicializar(), após checkLoginStatus()
+if (typeof inicializarAdmin === 'function') {
+  inicializarAdmin();
+}
   mostrarBannerAviso(); 
   aplicarBloqueioDeDatas();
   
