@@ -56,6 +56,9 @@ async function checkLoginStatus() {
     
     const logoutBtn = insp.querySelector('.logout-btn');
     if (logoutBtn) logoutBtn.innerHTML = `Sair<small>${apelido}</small>`;
+    // ========== AQUI: depois que a tela do inspetor está visível ==========
+    if (typeof carregarAvisosPublicos === 'function') {
+      carregarAvisosPublicos();
   } else {
     // Usuário não logado: garante que a tela principal apareça e a de inspetor suma
     localStorage.removeItem('inspectorLoggedIn');
