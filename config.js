@@ -5,4 +5,4 @@
 
 //=======================COMENTE SE NÃO ESTIVER EM USO====REMOVA O COMENTÁRIO SE FOR USAR=================================================
 //ambiente de testes de campo
-const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbzMd0TfR1YQTRCKRZQGZwuecvq8JkKg_pbHilZD-o1bp6hiLWHJ1Q2I-oHe3wqPhnpJ/exec";
+const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbyAIzgbB5WDx4G8HciCxMnIGNyndT6GJyBprKRUWGE8XM07jmArjYeiYea9ZqwNyc6e/exec";
