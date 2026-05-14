@@ -17,13 +17,10 @@
 <!-- vConsole - Console móvel para depuração -->
 <script src="https://cdn.jsdelivr.net/npm/vconsole@3.15.1/dist/vconsole.min.js"></script>
 <script>
-  // Inicializa apenas se estiver em modo de teste (pode ativar por URL)
   if (window.location.search.includes('debug=true') || localStorage.getItem('debugMode') === 'true') {
     var vConsole = new VConsole();
     console.log('🐛 Modo debug ativado!');
   }
-  
-  // Para ativar sem recarregar, pode usar este atalho:
   window.ativarDebug = function() {
     if (typeof VConsole !== 'undefined' && !window.vConsoleInstance) {
       window.vConsoleInstance = new VConsole();
@@ -35,7 +32,7 @@
 <body>
 
 <button id="theme-toggle" class="theme-toggle" aria-label="Alternar tema">🌙</button>
-<div id="aviso-comum-container" style="position: relative;"></div>
+
 <div id="aviso-temporario" class="banner">
     <div><strong>ATENÇÃO</strong><br>Período de inspeções 5S da frota Osasco iniciado.</div>
     <button id="btn-fechar-banner" class="banner-close">×</button>
@@ -60,15 +57,15 @@
 
 <!-- TELA DE INSPETORES (LOGADA) -->
 <div id="inspector-screen" class="screen-container" style="display: none;">
-    <div id="aviso-logado-container" style="margin-top: 10px; margin-bottom: 15px;"></div>
     <div class="grid-panel">
         <div class="cards-grid">
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>Relatório Diário</a>
-            <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-bus"></i></div>Consulta Placas</a>
-            <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card"><div class="card-icon"><i class="fas fa-clipboard-check"></i></div>5S - Guaritas</a>
-            <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-video"></i></div>Solicitação Imagem</a>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw/viewform?usp=dialog" id="btn-relatorio-diario" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-circle-user"></i></div>Relatório Diário</a>
+            <a href="https://app.powerbi.com/view?r=eyJrIjoiODA5NzA4ODctZThjZS00NWNhLWJhMTYtODM4MTJjNzRkMzkwIiwidCI6ImU2NzEzZjA1LWM5OGUtNDE2OS05ODU2LWE3YjMwNDJlNTk3MSJ9&pageName=a127c120c151acc21e2d" id="btn-consulta-placas" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-bus"></i></div>Consulta Placas</a>
+            <a href="https://forms.office.com/r/XDdEFdBwrC" id="btn-5s-guaritas" class="inspector-card"><div class="card-icon"><i class="fas fa-clipboard-check"></i></div>5S - Guaritas</a>
+            <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" id="btn-solicitacao-imagem" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-video"></i></div>Solicitação Imagem</a>
             <a href="#" id="btn-inspecao-veicular" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fa-solid fa-bus"></i></div>Inspeção Veicular<br>Diária</a>
             <a href="#" id="btn-envio-informacoes" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fas fa-paper-plane"></i></div>Envio de Informações</a>
+            <a href="#" id="btn-ocorrencia" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fas fa-file-alt"></i></div>Registro de Ocorrência</a>
         </div>
     </div>
     <button onclick="logoutInspector()" class="logout-btn">Sair</button>
@@ -109,65 +106,13 @@
   <div class="modal-content envio-modal-content">
     <div class="modal-header"><h2 class="modal-title">📋 RELATÓRIO À CHEFIA DO TRÁFEGO</h2><button class="modal-close" onclick="fecharModalEnvio()">×</button></div>
     <form id="form-envio">
-      <div class="form-section">
-        <label>ÁREA DE DESTINO: <span class="required">*</span></label>
-        <div class="radio-group" id="area-destino-group">
-          <label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label>
-          <label><input type="radio" name="areaDestino" value="SAF"> SAF</label>
-          <label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label>
-          <label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label>
-        </div>
-        <div id="campo-outras-area" style="display: none; margin-top: 10px;">
-          <input type="text" id="envio-outras-area" placeholder="Digite a área de destino (ex: Manutenção, Portaria, Seleção...)" style="width: 100%;">
-        </div>
-      </div>
-      <div class="form-section">
-        <label>MOTIVO: <span class="required">*</span></label>
-        <div class="radio-group" id="motivo-group">
-          <label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label>
-          <label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label>
-          <label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label>
-          <label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label>
-        </div>
-        <div id="campo-outros-motivo" style="display: none; margin-top: 10px;">
-          <input type="text" id="envio-outros-motivo" placeholder="Descreva o motivo resumidamente" style="width: 100%;">
-        </div>
-      </div>
-      <div class="form-row" id="dados-veiculo">
-        <div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div>
-        <div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div>
-        <div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div>
-        <div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div>
-      </div>
-      <div class="form-row" id="dados-hora-sentido">
-        <div class="field"><label>HORA</label><input type="time" id="envio-hora"></div>
-        <div class="field"><label>SENT.</label><input type="text" id="envio-sentido" placeholder="Ex: IDA, VOLTA. Garagem, etc..."></div>
-      </div>
-      <div class="form-section">
-        <label>HISTÓRICO: <span id="historico-contador" style="font-size: 0.7rem; font-weight: normal;">(0/1400)</span></label>
-        <div style="display: flex; gap: 8px; align-items: flex-start;">
-         <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..." style="flex: 1;" maxlength="1400"></textarea>
-          <button type="button" id="btn-microfone" class="btn-icon" title="Ditar histórico (microfone)">🎤</button>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>LOCAL:</label><select id="envio-local"><option value="">Selecione...</option></select></div>
-        <div class="field"><label>RESPONSÁVEL:</label><input type="text" id="envio-responsavel" readonly></div>
-        <div class="field"><label>DATA:</label><input type="date" id="envio-data" max=""></div>
-      </div>
-      <div class="action-grid-container">
-        <div class="action-row">
-          <button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button>
-          <div id="lista-anexos" class="grid-anexos-preview">
-            <small>Nenhum anexo selecionado (máx. 4)</small>
-          </div>
-        </div>
-        <div class="action-row">
-          <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
-          <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
-          <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
-        </div>
-      </div>
+      <div class="form-section"><label>ÁREA DE DESTINO: <span class="required">*</span></label><div class="radio-group" id="area-destino-group"><label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label><label><input type="radio" name="areaDestino" value="SAF"> SAF</label><label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label><label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label></div><div id="campo-outras-area" style="display:none"><input type="text" id="envio-outras-area" placeholder="Digite a área de destino"></div></div>
+      <div class="form-section"><label>MOTIVO: <span class="required">*</span></label><div class="radio-group" id="motivo-group"><label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label><label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label><label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label><label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label></div><div id="campo-outros-motivo" style="display:none"><input type="text" id="envio-outros-motivo" placeholder="Descreva o motivo resumidamente"></div></div>
+      <div class="form-row"><div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div><div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div><div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div><div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div></div>
+      <div class="form-row"><div class="field"><label>HORA</label><input type="time" id="envio-hora"></div><div class="field"><label>SENT.</label><input type="text" id="envio-sentido" placeholder="Ex: IDA, VOLTA. Garagem..."></div></div>
+      <div class="form-section"><label>HISTÓRICO: <span id="historico-contador" style="font-size:0.7rem;">(0/1400)</span></label><div style="display:flex; gap:8px;"><textarea id="envio-historico" rows="4" style="flex:1;"></textarea><button type="button" id="btn-microfone" class="btn-icon" title="Ditar histórico">🎤</button></div></div>
+      <div class="form-row"><div class="field"><label>LOCAL:</label><select id="envio-local"><option value="">Selecione...</option></select></div><div class="field"><label>RESPONSÁVEL:</label><input type="text" id="envio-responsavel" readonly></div><div class="field"><label>DATA:</label><input type="date" id="envio-data" max=""></div></div>
+      <div class="action-grid-container"><div class="action-row"><button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button><div id="lista-anexos" class="grid-anexos-preview"><small>Nenhum anexo selecionado (máx. 4)</small></div></div><div class="action-row"><button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button><button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button><button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button></div></div>
     </form>
   </div>
 </div>
@@ -177,36 +122,23 @@
 
 <!-- MODAL DETALHE DO ENVIO -->
 <div id="modal-detalhe-envio" class="modal modal-detalhe-envio">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">📄 DETALHES DO RELATÓRIO</h2>
-      <button class="modal-close" onclick="fecharModalDetalheEnvio()">×</button>
-    </div>
-    <div id="detalhe-envio-conteudo"></div>
-  </div>
+  <div class="modal-content"><div class="modal-header"><h2 class="modal-title">📄 DETALHES DO RELATÓRIO</h2><button class="modal-close" onclick="fecharModalDetalheEnvio()">×</button></div><div id="detalhe-envio-conteudo"></div></div>
 </div>
-<!-- MODAL PAINEL DE ADMINISTRAÇÃO -->
-<div id="modal-admin-panel" class="modal">
-  <div class="modal-content admin-modal-content">
+
+<!-- MODAL OCORRÊNCIA -->
+<div id="modal-ocorrencia" class="modal">
+  <div class="modal-content" style="max-width: 900px; width: 95%; max-height: 85vh; overflow-y: auto;">
     <div class="modal-header">
-      <h2 class="modal-title"><i class="fas fa-shield-alt"></i> Painel de Administração</h2>
-      <button class="modal-close" onclick="fecharModalAdmin()">×</button>
+      <h2 class="modal-title">📝 Registro de Ocorrência</h2>
+      <button class="modal-close" onclick="fecharModalOcorrencia()">×</button>
     </div>
-    <div id="admin-panel-conteudo">
-      <!-- Abas serão inseridas dinamicamente -->
-    </div>
+    <div id="ocorrencia-form"></div>
   </div>
 </div>
 
-<!-- Modal para edição de botões -->
-<div id="modal-editar-botoes" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modal-botoes-titulo">Editar Botões</h2>
-      <button class="modal-close" onclick="fecharModalEditarBotoes()">×</button>
-    </div>
-    <div id="editar-botoes-conteudo"></div>
-  </div>
+<!-- MODAL LISTA DE OCORRÊNCIAS -->
+<div id="modal-lista-ocorrencias" class="modal">
+  <div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Lista de Ocorrências</h2><button class="modal-close" onclick="fecharModalListaOcorrencias()">×</button></div><div id="lista-ocorrencias-container"></div></div>
 </div>
 
 <script src="config.js"></script>
@@ -215,6 +147,7 @@
 <script src="auth.js"></script>
 <script src="inspecao.js"></script>
 <script src="envio.js"></script>
+<script src="ocorrencia.js"></script>
 <script src="admin.js"></script>
 <script src="main.js"></script>
 </body>
