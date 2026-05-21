@@ -1172,3 +1172,143 @@ function iniciarReconhecimentoVoz() {
 
   reconhecimentoVoz.start();
 }
+// Função para Alternar entre as Abas
+function switchOcorrenciaTab(event, tabId) {
+  if(event) event.preventDefault();
+  
+  // Remove classe active de todos os botões e conteúdos
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  
+  // Adiciona ao selecionado
+  if(event) event.currentTarget.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// Manipulação Dinâmica da Tabela de Vítimas
+function addVitimaRow() {
+  const tbody = document.querySelector('#table-vitimas tbody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input type="text" class="form-control vit-nome" required></td>
+    <td>
+      <select class="form-control vit-tipo">
+        <option value="Passageiro">Passageiro</option>
+        <option value="Pedestre">Pedestre</option>
+        <option value="Condutor Terceiro">Condutor Terceiro</option>
+        <option value="Outro">Outro</option>
+      </select>
+    </td>
+    <td><input type="text" class="form-control vit-estado" placeholder="Ex: Removido ao PS"></td>
+    <td><button type="button" class="btn-remove-row" onclick="this.closest('tr').remove()">❌</button></td>
+  `;
+  tbody.appendChild(row);
+}
+
+// Manipulação Dinâmica da Tabela de Bens de Terceiros
+function addTerceiroRow() {
+  const tbody = document.querySelector('#table-terceiros tbody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input type="text" class="form-control ter-nome" placeholder="Nome do Dono" required></td>
+    <td><input type="text" class="form-control ter-veiculo" placeholder="Marca/Modelo/Placa" required></td>
+    <td><input type="tel" class="form-control ter-fone" placeholder="(11) 99999-9999"></td>
+    <td><button type="button" class="btn-remove-row" onclick="this.closest('tr').remove()">❌</button></td>
+  `;
+  tbody.appendChild(row);
+}
+
+// Manipulação Dinâmica da Tabela de Testemunhas
+function addTestemunhaRow() {
+  const tbody = document.querySelector('#table-testemunhas tbody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input type="text" class="form-control tes-nome" required></td>
+    <td><input type="tel" class="form-control tes-fone"></td>
+    <td><input type="text" class="form-control tes-obs" placeholder="O que viu..."></td>
+    <td><button type="button" class="btn-remove-row" onclick="this.closest('tr').remove()">❌</button></td>
+  `;
+  tbody.appendChild(row);
+}
+
+// Simulação / Integração de busca de Operador por Chapa (RE)
+function buscarOperadorPorChapa(chapa) {
+  if (!chapa) return;
+  const campoNome = document.getElementById('oc_motorista');
+  campoNome.value = "A carregar...";
+  
+  google.script.run
+    .withSuccessHandler(function(nomeNome) {
+       campoNome.value = nomeNome ? nomeNome : "Operador não encontrado";
+    })
+    .withFailureHandler(function() {
+       campoNome.value = "Erro ao buscar";
+    })
+    .obterNomeOperador(chapa);
+}
+
+// Recolha dos dados estruturados e envio definitivo para o Back-end
+function salvarOcorrenciaCompleta(event) {
+  event.preventDefault();
+  
+  // Recolha das tabelas dinâmicas
+  const vitimas = [];
+  document.querySelectorAll('#table-vitimas tbody tr').forEach(tr => {
+    vitimas.push({
+      nome: tr.querySelector('.vit-nome').value,
+      tipo: tr.querySelector('.vit-tipo').value,
+      estado: tr.querySelector('.vit-estado').value
+    });
+  });
+
+  const terceiros = [];
+  document.querySelectorAll('#table-terceiros tbody tr').forEach(tr => {
+    terceiros.push({
+      nome: tr.querySelector('.ter-nome').value,
+      veiculo: tr.querySelector('.ter-veiculo').value,
+      telefone: tr.querySelector('.ter-fone').value
+    });
+  });
+
+  const testemunhas = [];
+  document.querySelectorAll('#table-testemunhas tbody tr').forEach(tr => {
+    testemunhas.push({
+      nome: tr.querySelector('.tes-nome').value,
+      telefone: tr.querySelector('.tes-fone').value,
+      obs: tr.querySelector('.tes-obs').value
+    });
+  });
+
+  // Objeto Consolidade final
+  const payloadCompleto = {
+    linha: document.getElementById('oc_linha').value,
+    prefixo: document.getElementById('oc_prefixo').value,
+    chapa: document.getElementById('oc_chapa').value,
+    motorista: document.getElementById('oc_motorista').value,
+    dataFato: document.getElementById('oc_data_fato').value,
+    horaFato: document.getElementById('oc_hora_fato').value,
+    local: document.getElementById('oc_local').value,
+    sentido: document.getElementById('oc_sentido').value,
+    boletim: document.getElementById('oc_bo').value,
+    historico: document.getElementById('envio-historico').value,
+    anexos: anexosArray, // Mantém a estrutura de uploads em base64 que já possuía
+    jsonVitimas: JSON.stringify(vitimas),
+    jsonTerceiros: JSON.stringify(terceiros),
+    jsonTestemunhas: JSON.stringify(testemunhas)
+  };
+
+  showLoading("Gravando ocorrência e processando imagens...");
+
+  google.script.run
+    .withSuccessHandler(function(resultado) {
+      hideLoading();
+      alert("✅ Ocorrência registada com sucesso!");
+      fecharModalEnvio();
+      if(typeof carregarEnviosLista === 'function') carregarEnviosLista(); // Atualiza painel principal
+    })
+    .withFailureHandler(function(erro) {
+      hideLoading();
+      alert("❌ Erro ao gravar ocorrência: " + erro.message);
+    })
+    .gravarNovaOcorrenciaBackend(payloadCompleto);
+}
