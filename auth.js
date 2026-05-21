@@ -6,7 +6,7 @@ let currentUserRole = '';
 let canCreateInspection = false;
 
 // ====================================================================
-// VERIFICAR STATUS DE LOGIN (VERSÃO CORRIGIDA - SEM ERRO DE SINTAXE)
+// VERIFICAR STATUS DE LOGIN (VERSÃO CORRIGIDA)
 // ====================================================================
 async function checkLoginStatus() {
   const logado = localStorage.getItem('inspectorLoggedIn');
@@ -19,8 +19,10 @@ async function checkLoginStatus() {
   const btnEnvio = getEl('btn-envio-informacoes');
   
   if (logado === 'true' && nome && apelido) {
+    // Tenta obter o papel do localStorage primeiro
     let role = roleSalva;
     
+    // Se o INSPETORES já tiver o dado, usa para validar/atualizar
     if (INSPETORES[apelido]) {
       const roleFromServer = INSPETORES[apelido].funcao;
       if (roleFromServer !== role) {
@@ -30,6 +32,7 @@ async function checkLoginStatus() {
     }
     
     if (!role) {
+      // Sem papel, não pode continuar – força logout
       logoutInspector();
       return;
     }
@@ -37,12 +40,14 @@ async function checkLoginStatus() {
     currentUserRole = role;
     canCreateInspection = (role === 'FISCAL' || role === 'INSPETOR');
     
+    // Lógica existente para mostrar/ocultar os cards especiais (baseada no MONITOR)
     if (btnInspecao && role !== 'MONITOR') btnInspecao.style.display = 'flex';
     else if (btnInspecao) btnInspecao.style.display = 'none';
     
     if (btnEnvio && role !== 'MONITOR') btnEnvio.style.display = 'flex';
     else if (btnEnvio) btnEnvio.style.display = 'none';
     
+    // Ajusta todos os cards conforme o perfil
     ajustarCardsPorPerfil(role);
     
     main.style.display = 'none';
@@ -51,14 +56,8 @@ async function checkLoginStatus() {
     
     const logoutBtn = insp.querySelector('.logout-btn');
     if (logoutBtn) logoutBtn.innerHTML = `Sair<small>${apelido}</small>`;
-    
-    // Carrega avisos personalizados (admin.js)
-    if (typeof carregarAvisosPublicos === 'function') {
-      carregarAvisosPublicos();
-    }
-    
   } else {
-    // Usuário não logado
+    // Usuário não logado: garante que a tela principal apareça e a de inspetor suma
     localStorage.removeItem('inspectorLoggedIn');
     localStorage.removeItem('inspectorName');
     localStorage.removeItem('inspectorApelido');
@@ -95,6 +94,7 @@ async function login(e) {
       localStorage.setItem('inspectorApelido', resposta.apelido);
       localStorage.setItem('inspectorRole', resposta.funcao);
       
+      // Garante que os dados dos inspetores estejam atualizados (opcional)
       await refreshInspetores();
       
       registrarLog(resposta.apelido);
@@ -119,7 +119,7 @@ async function login(e) {
 }
 
 // ====================================================================
-// DEMAIS FUNÇÕES (logout, toast, banner, etc.)
+// DEMAIS FUNÇÕES (logout, toast, banner, etc.) PERMANECEM IGUAIS
 // ====================================================================
 function logoutInspector() {
   localStorage.removeItem('inspectorLoggedIn');
