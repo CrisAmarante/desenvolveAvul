@@ -104,68 +104,145 @@
 <div id="modal-conferir-inspecoes" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Minhas Inspeções</h2><button class="modal-close" onclick="fecharModalConferir()">×</button></div><div id="lista-inspecoes"></div></div></div>
 
 <!-- MODAL ENVIO DE INFORMAÇÕES -->
-<div id="modal-envio-informacoes" class="modal">
-  <div class="modal-content envio-modal-content">
-    <div class="modal-header"><h2 class="modal-title">📋 RELATÓRIO À CHEFIA DO TRÁFEGO</h2><button class="modal-close" onclick="fecharModalEnvio()">×</button></div>
-    <form id="form-envio">
-      <div class="form-section">
-        <label>ÁREA DE DESTINO: <span class="required">*</span></label>
-        <div class="radio-group" id="area-destino-group">
-          <label><input type="radio" name="areaDestino" value="FISCALIZAÇÃO"> FISCALIZAÇÃO</label>
-          <label><input type="radio" name="areaDestino" value="SAF"> SAF</label>
-          <label><input type="radio" name="areaDestino" value="PLANTÃO"> PLANTÃO</label>
-          <label><input type="radio" name="areaDestino" value="OUTRAS ÁREAS"> OUTRAS ÁREAS</label>
-        </div>
-        <div id="campo-outras-area" style="display: none; margin-top: 10px;">
-          <input type="text" id="envio-outras-area" placeholder="Digite a área de destino (ex: Manutenção, Portaria, Seleção...)" style="width: 100%;">
-        </div>
-      </div>
-      <div class="form-section">
-        <label>MOTIVO: <span class="required">*</span></label>
-        <div class="radio-group" id="motivo-group">
-          <label><input type="radio" name="motivo" value="AVARIAS"> AVARIAS</label>
-          <label><input type="radio" name="motivo" value="PEDIDO DE FOLGAS"> PEDIDO DE FOLGAS</label>
-          <label><input type="radio" name="motivo" value="SOLICITAÇÃO DE MATERIAIS"> SOLICITAÇÃO DE MATERIAIS</label>
-          <label><input type="radio" name="motivo" value="OUTROS"> OUTROS</label>
-        </div>
-        <div id="campo-outros-motivo" style="display: none; margin-top: 10px;">
-          <input type="text" id="envio-outros-motivo" placeholder="Descreva o motivo resumidamente" style="width: 100%;">
-        </div>
-      </div>
-      <div class="form-row" id="dados-veiculo">
-        <div class="field"><label>CARRO</label><input type="text" id="envio-carro" placeholder="Carro"></div>
-        <div class="field"><label>LINHA</label><input type="text" id="envio-linha" placeholder="Linha"></div>
-        <div class="field"><label>MOT.</label><input type="text" id="envio-motorista" placeholder="Motorista"></div>
-        <div class="field"><label>COB.</label><input type="text" id="envio-cobrador" placeholder="Cobrador"></div>
-      </div>
-      <div class="form-row" id="dados-hora-sentido">
-        <div class="field"><label>HORA</label><input type="time" id="envio-hora"></div>
-        <div class="field"><label>SENT.</label><input type="text" id="envio-sentido" placeholder="Ex: IDA, VOLTA. Garagem, etc..."></div>
-      </div>
-      <div class="form-section">
-        <label>HISTÓRICO: <span id="historico-contador" style="font-size: 0.7rem; font-weight: normal;">(0/1400)</span></label>
-        <div style="display: flex; gap: 8px; align-items: flex-start;">
-         <textarea id="envio-historico" rows="4" placeholder="Descreva o ocorrido..." style="flex: 1;" maxlength="1400"></textarea>
-          <button type="button" id="btn-microfone" class="btn-icon" title="Ditar histórico (microfone)">🎤</button>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="field"><label>LOCAL:</label><select id="envio-local"><option value="">Selecione...</option></select></div>
-        <div class="field"><label>RESPONSÁVEL:</label><input type="text" id="envio-responsavel" readonly></div>
-        <div class="field"><label>DATA:</label><input type="date" id="envio-data" max=""></div>
-      </div>
-      <div class="action-grid-container">
-        <div class="action-row">
-          <button type="button" id="btn-anexar" class="btn-secundario" onclick="anexarArquivos()">📎 ANEXAR (até 4)</button>
-          <div id="lista-anexos" class="grid-anexos-preview">
-            <small>Nenhum anexo selecionado (máx. 4)</small>
+<div id="modal-envio-informacoes" class="modal modal-envio-informacoes">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-envio-titulo">🚨 REGISTO DE OCORRÊNCIAS / ACIDENTES</h2>
+      <button class="modal-close" onclick="fecharModalEnvio()">×</button>
+    </div>
+
+    <div class="ocorrencias-tabs">
+      <button class="tab-btn active" onclick="switchOcorrenciaTab(event, 'tab-cadastro')">📋 Cadastro</button>
+      <button class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-analise')">🔍 Análise</button>
+      <button class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-vitimas')">🚑 Vítimas</button>
+      <button class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-terceiros')">🚗 Terceiros</button>
+      <button class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-testemunhas')">👥 Testemunhas</button>
+    </div>
+
+    <form id="form-ocorrencia" onsubmit="salvarOcorrenciaCompleta(event)">
+      
+      <div id="tab-cadastro" class="tab-content active">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Linha:</label>
+            <select id="oc_linha" required class="form-control"><option value="">Selecione...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Prefixo do Veículo:</label>
+            <input type="text" id="oc_prefixo" required class="form-control" placeholder="Ex: 40432">
           </div>
         </div>
-        <div class="action-row">
-          <button type="button" id="btn-salvar-rascunho" class="btn-secundario">💾 SALVAR</button>
-          <button type="button" id="btn-enviar-relatorio" class="btn-principal">📤 ENVIAR</button>
-          <button type="button" id="btn-consultar-envios" class="btn-secundario">🔍 CONSULTAR ENVIOS</button>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Chapa/RE Operador:</label>
+            <input type="number" id="oc_chapa" required class="form-control" onblur="buscarOperadorPorChapa(this.value)">
+          </div>
+          <div class="form-group">
+            <label>Nome do Motorista/Operador:</label>
+            <input type="text" id="oc_motorista" readonly class="form-control bg-disabled">
+          </div>
         </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Data do Fato:</label>
+            <input type="date" id="oc_data_fato" required class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Hora do Fato:</label>
+            <input type="time" id="oc_hora_fato" required class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-analise" class="tab-content">
+        <div class="form-group">
+          <label>Local do Acidente (Endereço/Cruzamento):</label>
+          <input type="text" id="oc_local" class="form-control">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Sentido da Via:</label>
+            <input type="text" id="oc_sentido" class="form-control" placeholder="Ex: Centro/Bairro">
+          </div>
+          <div class="form-group">
+            <label>Nº Talão / B.O. (Se houver):</label>
+            <input type="text" id="oc_bo" class="form-control">
+          </div>
+        </div>
+        
+        <div class="form-group main-textarea-group">
+          <div class="textarea-header">
+            <label for="envio-historico">Histórico / Relato da Ocorrência:</label>
+            <button type="button" id="btn-microfone" class="btn-mic">🎤</button>
+          </div>
+          <textarea id="envio-historico" rows="6" placeholder="Descreva detalhadamente a dinâmica do acidente..." required></textarea>
+          <div id="contador-caracteres" class="char-count">0 / 1400 caracteres (0 / 16 linhas)</div>
+        </div>
+
+        <div class="form-group">
+          <label>Evidências Fotográficas (Máx 4 anexos):</label>
+          <div class="upload-container" onclick="document.getElementById('input-arquivos-multiplos').click()">
+            <i class="fas fa-camera"></i> Tirar Fotos ou Selecionar Ficheiros
+          </div>
+          <input type="file" id="input-arquivos-multiplos" multiple accept="image/*" style="display:none;">
+          <div id="lista-anexos-preview" class="anexos-preview-grid"></div>
+        </div>
+      </div>
+
+      <div id="tab-vitimas" class="tab-content">
+        <div class="dinamic-table-wrapper">
+          <table id="table-vitimas" class="table-dinamica">
+            <thead>
+              <tr>
+                <th>Nome da Vítima</th>
+                <th>Tipo (Passageiro/Pedestre/Terceiro)</th>
+                <th>Estado/Remoção</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="btn-add-row" onclick="addVitimaRow()">➕ Adicionar Vítima</button>
+        </div>
+      </div>
+
+      <div id="tab-terceiros" class="tab-content">
+        <div class="dinamic-table-wrapper">
+          <table id="table-terceiros" class="table-dinamica">
+            <thead>
+              <tr>
+                <th>Proprietário/Condutor</th>
+                <th>Veículo (Marca/Modelo/Placa)</th>
+                <th>Contacto/Telefone</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="btn-add-row" onclick="addTerceiroRow()">➕ Adicionar Bem Terceiro</button>
+        </div>
+      </div>
+
+      <div id="tab-testemunhas" class="tab-content">
+        <div class="dinamic-table-wrapper">
+          <table id="table-testemunhas" class="table-dinamica">
+            <thead>
+              <tr>
+                <th>Nome Completo</th>
+                <th>Telefone / Contacto</th>
+                <th>Observações/Relato Rápido</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="btn-add-row" onclick="addTestemunhaRow()">➕ Adicionar Testemunha</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancelar" onclick="fecharModalEnvio()">Cancelar</button>
+        <button type="submit" class="btn-salvar">💾 Gravar Ocorrência</button>
       </div>
     </form>
   </div>
