@@ -9,7 +9,6 @@ const ASSETS_TO_CACHE = [
   './utils.js',
   './api.js',
   './auth.js',
-  './inspecao.js',
   './envio.js',
   './main.js',
   './manifest.json',
