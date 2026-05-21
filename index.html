@@ -251,14 +251,159 @@
 <!-- MODAL LISTA DE ENVIOS -->
 <div id="modal-lista-envios" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 ENVIOS REALIZADOS</h2><button class="modal-close" onclick="fecharModalListaEnvios()">×</button></div><div id="lista-envios-container"></div></div></div>
 
-<!-- MODAL DETALHE DO ENVIO -->
-<div id="modal-detalhe-envio" class="modal modal-detalhe-envio">
+<div id="modal-envio-informacoes" class="modal modal-envio-informacoes">
   <div class="modal-content">
     <div class="modal-header">
-      <h2 class="modal-title">📄 DETALHES DO RELATÓRIO</h2>
-      <button class="modal-close" onclick="fecharModalDetalheEnvio()">×</button>
+      <h2 class="modal-title" id="modal-envio-titulo">🚨 REGISTRO DE OCORRÊNCIAS / ACIDENTES</h2>
+      <button class="modal-close" onclick="fecharModalEnvio()">×</button>
     </div>
-    <div id="detalhe-envio-conteudo"></div>
+
+    <div class="ocorrencias-tabs" style="display: flex; overflow-x: auto; background: var(--card-bg); border-bottom: 2px solid var(--accent); margin-bottom: 15px;">
+      <button type="button" class="tab-btn active" onclick="switchOcorrenciaTab(event, 'tab-cadastro')">📋 Cadastro</button>
+      <button type="button" class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-analise')">🔍 Análise do Acidente</button>
+      <button type="button" class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-vitimas')">🚑 Vítimas</button>
+      <button type="button" class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-terceiros')">🚗 Bens de Terceiros</button>
+      <button type="button" class="tab-btn" onclick="switchOcorrenciaTab(event, 'tab-testemunhas')">👥 Testemunhas</button>
+    </div>
+
+    <form id="form-ocorrencia" onsubmit="salvarOcorrenciaCompleta(event)">
+      <input type="hidden" id="oc_id_ocorrencia" value="">
+      
+      <div id="tab-cadastro" class="tab-content active">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Data do Acidente:</label>
+            <input type="date" id="oc_data_acidente" required class="form-control" onchange="salvarRascunhoAutomatico()">
+          </div>
+          <div class="form-group">
+            <label>Hora do Acidente:</label>
+            <input type="time" id="oc_hora_acidente" required class="form-control" onchange="salvarRascunhoAutomatico()">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Linha:</label>
+            <select id="oc_linha" required class="form-control" onchange="salvarRascunhoAutomatico()">
+              <option value="">Selecione a Linha...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Prefixo do Veículo:</label>
+            <input type="text" id="oc_prefixo_veiculo" required class="form-control" placeholder="Ex: 201" onblur="validarVeiculo(this.value)" oninput="salvarRascunhoAutomatico()">
+            <span id="feedback-veiculo" style="font-size:11px; display:block; margin-top:2px;"></span>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Chapa Motorista:</label>
+            <input type="number" id="oc_chapa_motorista" required class="form-control" placeholder="Digite a chapa..." onblur="buscarMotoristaPorChapa(this.value)" oninput="salvarRascunhoAutomatico()">
+          </div>
+          <div class="form-group">
+            <label>Nome do Motorista:</label>
+            <input type="text" id="oc_nome_motorista" readonly class="form-control bg-disabled" style="background: #e2e8f0;">
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-analise" class="tab-content" style="display:none;">
+        <div class="form-group">
+          <label>Local do Acidente (Endereço / Cruzamento):</label>
+          <input type="text" id="oc_local_acidente" class="form-control" placeholder="Ex: Av. dos Autonomistas, 1200" oninput="salvarRascunhoAutomatico()">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Sentido:</label>
+            <select id="oc_sentido" class="form-control" onchange="salvarRascunhoAutomatico()">
+              <option value="IDA">IDA</option>
+              <option value="VOLTA">VOLTA</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Boletim de Ocorrência / Talão:</label>
+            <input type="text" id="oc_boletim_ocorrencia" class="form-control" placeholder="Se houver..." oninput="salvarRascunhoAutomatico()">
+          </div>
+        </div>
+        
+        <div class="form-group main-textarea-group">
+          <div class="textarea-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <label for="envio-historico">Histórico / Relato da Ocorrência:</label>
+            <button type="button" id="btn-microfone" class="btn-mic" style="cursor:pointer; padding:5px 10px;">🎤 Iniciar Áudio</button>
+          </div>
+          <textarea id="envio-historico" rows="6" class="form-control" placeholder="Relato detalhado da dinâmica do acidente..." required oninput="salvarRascunhoAutomatico()"></textarea>
+          <div id="contador-caracteres" class="char-count" style="font-size:12px; color:#666;">0 / 1400 caracteres (0 / 16 linhas)</div>
+        </div>
+
+        <div class="form-group">
+          <label>Fotos da Ocorrência (Máx 4 anexos - serão compactadas automaticamente):</label>
+          <div class="upload-container" onclick="document.getElementById('input-arquivos-multiplos').click()" style="border: 2px dashed #ccc; padding: 20px; text-align: center; cursor: pointer;">
+            <i class="fas fa-camera" style="font-size:24px;"></i><br>Clique para Capturar ou Selecionar Imagens
+          </div>
+          <input type="file" id="input-arquivos-multiplos" multiple accept="image/*" style="display:none;">
+          <div id="lista-anexos-preview" class="anexos-preview-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div id="tab-vitimas" class="tab-content" style="display:none;">
+        <div class="dynamic-table-wrapper">
+          <table id="table-vitimas" class="table-dinamica" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="background:#f1f5f9;">
+                <th style="padding:8px; border:1px solid #ddd;">Nome da Vítima</th>
+                <th style="padding:8px; border:1px solid #ddd;">Tipo / Vínculo</th>
+                <th style="padding:8px; border:1px solid #ddd;">Estado / Remoção / PS</th>
+                <th style="padding:8px; border:1px solid #ddd; width:50px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="btn-add-row" onclick="addVitimaRow()" style="margin-top:10px; padding:6px 12px; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;">➕ Adicionar Vítima</button>
+        </div>
+      </div>
+
+      <div id="tab-terceiros" class="tab-content" style="display:none;">
+        <div class="dynamic-table-wrapper">
+          <table id="table-terceiros" class="table-dinamica" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="background:#f1f5f9;">
+                <th style="padding:8px; border:1px solid #ddd;">Proprietário / Condutor</th>
+                <th style="padding:8px; border:1px solid #ddd;">Veículo (Marca/Modelo/Placa)</th>
+                <th style="padding:8px; border:1px solid #ddd;">Contato / Telefone</th>
+                <th style="padding:8px; border:1px solid #ddd; width:50px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="btn-add-row" onclick="addTerceiroRow()" style="margin-top:10px; padding:6px 12px; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;">➕ Adicionar Bem de Terceiro</button>
+        </div>
+      </div>
+
+      <div id="tab-testemunhas" class="tab-content" style="display:none;">
+        <div class="dynamic-table-wrapper">
+          <table id="table-testemunhas" class="table-dinamica" style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="background:#f1f5f9;">
+                <th style="padding:8px; border:1px solid #ddd;">Nome Completo</th>
+                <th style="padding:8px; border:1px solid #ddd;">Telefone de Contato</th>
+                <th style="padding:8px; border:1px solid #ddd;">Relato Rápido / Observações</th>
+                <th style="padding:8px; border:1px solid #ddd; width:50px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" class="btn-add-row" onclick="addTestemunhaRow()" style="margin-top:10px; padding:6px 12px; background:#10b981; color:white; border:none; border-radius:4px; cursor:pointer;">➕ Adicionar Testemunha</button>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:space-between;">
+        <div>
+          <button type="button" class="btn-rascunho" onclick="salvarComoIncompletoManual()" style="padding:10px 15px; background:#f59e0b; color:white; border:none; border-radius:6px; cursor:pointer;">💾 Salvar Incompleta (Rascunho)</button>
+        </div>
+        <div>
+          <button type="button" class="btn-cancelar" onclick="fecharModalEnvio()" style="padding:10px 15px; margin-right:10px;">Fechar</button>
+          <button type="submit" class="btn-salvar" style="padding:10px 20px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">🚀 Transmitir Ocorrência</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 <!-- MODAL PAINEL DE ADMINISTRAÇÃO -->
