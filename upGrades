@@ -1,0 +1,11 @@
+Correção 
+
+****Aba ADMIN: não está funcionando a criação de usuários e atualização de senha
+****Está demorando muito para carregar, avaliar trocar linguagens para melhor performance.
+
+####Inciar nova ABA: Modais:
+    Funções da ABA ADIMIN>MODAIS:
+                    Inserir, remover, habilitar e desabilitar os links dos modais 5S, Levantamentos e Clandestinos.
+                    Cada Modal deve ter, no máximo 5 botões, deixar este espaço reservado, os espaços vazios dentro de cada modal não ficam visíveis, o ADMIN organiza, habilita, desabilita e edita os notões dentro do modal.
+                    Dupla validação para salvamento das alterações (digita a senha de acesso novamente)
+                    Registrar todas as alterações no LOG

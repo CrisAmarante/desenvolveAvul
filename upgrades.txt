@@ -1,0 +1,15 @@
+Permitir o download das fotos salvas no naco de dados (dentro da informação)
+
+Adicionar na consulta das informações a data de preenchimento pelo fiscal.
+
+Reduzir a lista de envios mostrada para os útlimos 4 dias, porém, manter a permissão de consulta por período conforme regras atuais.
+
+Criar para os perfis Saf e Encarregado um dashboard no canto direito da tela, ao lado da lista de de envios com a lista de informações não lidas por aquele perfil, ou criar um meio de ocultar da pesquisa geral as informações já lidas. (por exemplo, mostrar apenas as ultimas informações desde a ultima pesquisa)
+
+No Backend, é possível separar as planilhas de login, log de acessos, envios, e inspeções em arquivos separados com códigos do appscripts separados controlados por uma planilha master?
+
+É possível fazer o aplicativo ler telas e interagir com elas, dentro de um aplicativo já logado?
+
+Fazer a limpeza do banco de dados de inspeções, mantendo apenas a última semana, e, se possível, criar um arquivo à parte (json, csv, ou outro tipo que tenha esta capacidade) com as informações que foram removidas para questões de auditoria.
+
+Registrar o endpoint uitlizado.
