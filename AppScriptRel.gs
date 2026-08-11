@@ -1520,3 +1520,118 @@ function adminToggleUsuario(apelido, ativo) {
     return { sucesso: false, erro: e.message };
   }
 }
+// ======================= CADASTRO DE MOTORISTAS NO TACÓGRAFO =======================
+
+function salvarCadastroTacografo(dadosJson) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("CadastroTacografo");
+  if (!sheet) {
+    sheet = ss.insertSheet("CadastroTacografo");
+    sheet.appendRow(["DataHora", "Fiscal", "Terminal", "Linha", "Carro", "Motorista"]);
+  }
+  const agora = Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
+  const { fiscal, terminal, linha, carro, motorista } = dadosJson;
+  sheet.appendRow([agora, fiscal, terminal, linha, carro, motorista]);
+  return true;
+}
+
+function consultarCadastrosTacografo(fiscal, dataInicio, dataFim, terminal, linha, carro, motorista, papel, apelido) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName("CadastroTacografo");
+    if (!sheet) return [];
+    const dados = sheet.getDataRange().getValues();
+    if (dados.length < 2) return [];
+
+    // Filtros de data
+    let dataInicioObj = null;
+    if (dataInicio) {
+      const parts = dataInicio.split('-');
+      dataInicioObj = new Date(parts[0], parts[1]-1, parts[2]);
+    }
+    let dataFimObj = null;
+    if (dataFim) {
+      const parts = dataFim.split('-');
+      dataFimObj = new Date(parts[0], parts[1]-1, parts[2], 23, 59, 59);
+    }
+
+    const cabecalhos = dados[0].map(h => String(h).trim());
+    const idxDataHora = cabecalhos.indexOf("DataHora");
+    const idxFiscal = cabecalhos.indexOf("Fiscal");
+    const idxTerminal = cabecalhos.indexOf("Terminal");
+    const idxLinha = cabecalhos.indexOf("Linha");
+    const idxCarro = cabecalhos.indexOf("Carro");
+    const idxMotorista = cabecalhos.indexOf("Motorista");
+
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    const resultados = [];
+
+    for (let i = 1; i < dados.length; i++) {
+      const linhaDados = dados[i];
+      let dataHora = linhaDados[idxDataHora];
+      const fiscalLinha = linhaDados[idxFiscal];
+      if (!dataHora || !fiscalLinha) continue;
+
+      let dataHoraStr = "";
+      let dataRegistro = null;
+      if (dataHora instanceof Date) {
+        dataHoraStr = Utilities.formatDate(dataHora, "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
+        dataRegistro = new Date(dataHora.getFullYear(), dataHora.getMonth(), dataHora.getDate());
+      } else {
+        dataHoraStr = String(dataHora).trim();
+        const partes = dataHoraStr.split(" ")[0].split("/");
+        if (partes.length === 3) {
+          const dia = parseInt(partes[0], 10);
+          const mes = parseInt(partes[1], 10) - 1;
+          const ano = parseInt(partes[2], 10);
+          dataRegistro = new Date(ano, mes, dia);
+        } else {
+          continue;
+        }
+      }
+
+      // Filtros
+      if (dataInicioObj && dataRegistro < dataInicioObj) continue;
+      if (dataFimObj && dataRegistro > dataFimObj) continue;
+
+      // Se fiscal não for admin/encarregado, filtra pelo seu próprio nome
+      if (papel !== 'ADMIN' && papel !== 'ENCARREGADO' && papel !== 'GERENTE') {
+        if (fiscalLinha !== apelido) continue;
+      } else {
+        // Para admin/encarregado, pode filtrar por fiscal específico se passado
+        if (fiscal && fiscalLinha !== fiscal) continue;
+      }
+
+      if (terminal && linhaDados[idxTerminal] !== terminal) continue;
+      if (linha && linhaDados[idxLinha] !== linha) continue;
+      if (carro && linhaDados[idxCarro] !== carro) continue;
+      if (motorista && !String(linhaDados[idxMotorista]).toLowerCase().includes(motorista.toLowerCase())) continue;
+
+      resultados.push({
+        dataHora: dataHoraStr,
+        dataPreenchimento: dataHoraStr.split(" ")[0],
+        fiscal: fiscalLinha,
+        terminal: linhaDados[idxTerminal] || "",
+        linha: linhaDados[idxLinha] || "",
+        carro: linhaDados[idxCarro] || "",
+        motorista: linhaDados[idxMotorista] || ""
+      });
+    }
+
+    // Ordenar por data decrescente
+    resultados.sort((a,b) => {
+      const [diaA, mesA, anoA] = a.dataPreenchimento.split('/').map(Number);
+      const [diaB, mesB, anoB] = b.dataPreenchimento.split('/').map(Number);
+      const dateA = new Date(anoA, mesA-1, diaA);
+      const dateB = new Date(anoB, mesB-1, diaB);
+      return dateB - dateA;
+    });
+
+    return resultados;
+  } catch (err) {
+    Logger.log("ERRO em consultarCadastrosTacografo: " + err.message);
+    return [];
+  }
+}
