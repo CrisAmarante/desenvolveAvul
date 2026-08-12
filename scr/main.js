@@ -24,6 +24,7 @@ function initModals() {
     inspecoes5s: new ModalController('modal-inspecoes-5s')
   };
   window.modals.inspecaoVeicular = new InspecaoVeicular();
+  window.modals.tacografo = new TacografoModule();
   
   // Inicializa painel admin
   initAdminPanel();

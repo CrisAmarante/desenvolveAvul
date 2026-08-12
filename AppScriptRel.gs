@@ -162,6 +162,107 @@ function salvarInspecao(dadosJson) {
   return true;
 }
 
+// ======================= SALVAR CADASTRO DE TACÓGRAFO =======================
+function salvarTacografoCadastro(dadosJson) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Tacografo_Cadastros");
+  if (!sheet) {
+    sheet = ss.insertSheet("Tacografo_Cadastros");
+    sheet.appendRow([
+      "DataHora", "Terminal", "Linha", "Carro", "Motorista", "Fiscal"
+    ]);
+  }
+  const agora = Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
+  const { terminal, linha, carro, motorista, fiscal, data, hora } = dadosJson;
+  sheet.appendRow([
+    agora, terminal, linha, carro, motorista, fiscal
+  ]);
+  return true;
+}
+
+// ======================= CONSULTAR CADASTROS DE TACÓGRAFO (com filtros) =======================
+function consultarTacografos(fiscalNome, dataInicio, dataFim, carro, fiscalFiltro) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName("Tacografo_Cadastros");
+    if (!sheet) return [];
+    const dados = sheet.getDataRange().getValues();
+    if (dados.length < 2) return [];
+    
+    let dataInicioObj = null;
+    if (dataInicio) {
+      const parts = dataInicio.split('-');
+      dataInicioObj = new Date(parts[0], parts[1]-1, parts[2], 0, 0, 0);
+    }
+    let dataFimObj = null;
+    if (dataFim) {
+      const parts = dataFim.split('-');
+      dataFimObj = new Date(parts[0], parts[1]-1, parts[2], 23, 59, 59);
+    }
+
+    const cabecalhos = dados[0].map(h => String(h).trim());
+    const indices = {
+      dataHora: cabecalhos.indexOf("DataHora"),
+      fiscal: cabecalhos.indexOf("Fiscal"),
+      carro: cabecalhos.indexOf("Carro"),
+      terminal: cabecalhos.indexOf("Terminal"),
+      linha: cabecalhos.indexOf("Linha"),
+      motorista: cabecalhos.indexOf("Motorista")
+    };
+    
+    const resultados = [];
+    
+    for (let i = 1; i < dados.length; i++) {
+      const linha = dados[i];
+      let dataHora = linha[indices.dataHora];
+      const fiscalLinha = linha[indices.fiscal];
+      if (!dataHora || !fiscalLinha) continue;
+      
+      let dataHoraStr = "";
+      let dataRegistro = null;
+      if (dataHora instanceof Date) {
+        dataHoraStr = Utilities.formatDate(dataHora, "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
+        dataRegistro = new Date(dataHora.getFullYear(), dataHora.getMonth(), dataHora.getDate());
+      } else {
+        dataHoraStr = String(dataHora).trim();
+        const partes = dataHoraStr.split(" ")[0].split("/");
+        if (partes.length === 3) {
+          const dia = parseInt(partes[0], 10);
+          const mes = parseInt(partes[1], 10) - 1;
+          const ano = parseInt(partes[2], 10);
+          dataRegistro = new Date(ano, mes, dia);
+        } else {
+          continue;
+        }
+      }
+      
+      if (dataInicioObj && dataRegistro < dataInicioObj) continue;
+      if (dataFimObj && dataRegistro > dataFimObj) continue;
+      
+      if (carro && linha[indices.carro] && !String(linha[indices.carro]).toLowerCase().includes(carro.toLowerCase())) continue;
+      if (fiscalFiltro && fiscalLinha !== fiscalFiltro) continue;
+      if (fiscalNome && fiscalLinha !== fiscalNome) continue; 
+      
+      // Extrai apenas a data (dd/MM/yyyy) da dataHora para exibição como "data de preenchimento"
+      const dataPreenchimento = dataHoraStr.split(" ")[0];
+      
+      resultados.push({
+        dataHora: dataHoraStr,
+        dataPreenchimento: dataPreenchimento,
+        carro: linha[indices.carro] || "",
+        terminal: linha[indices.terminal] || "",
+        linha: linha[indices.linha] || "",
+        motorista: linha[indices.motorista] || "",
+        fiscal: fiscalLinha
+      });
+    }
+    return resultados;
+  } catch (err) {
+    Logger.log("ERRO em consultarTacografos: " + err.message);
+    return [];
+  }
+}
+
 // ======================= CONSULTAR INSPEÇÕES (com filtros) =======================
 function consultarInspecoes(fiscalNome, dataInicio, dataFim, carro, fiscalFiltro) {
   try {
@@ -859,6 +960,13 @@ function doPost(e) {
       LogModule.registrarAcesso(fiscal, 'INSPECAO_SALVA', `Carro: ${dadosObj.carro||''}`, endpoint, imei, localizacaoGps);
       return ContentService.createTextOutput("Inspeção registrada com sucesso").setMimeType(ContentService.MimeType.TEXT);
     }
+    if (acao === "tacografo_cadastro" && dados) {
+      const dadosObj = JSON.parse(dados);
+      salvarTacografoCadastro(dadosObj);
+      const fiscal = dadosObj.fiscal || 'Desconhecido';
+      LogModule.registrarAcesso(fiscal, 'TACOGRAFO_CADASTRO', `Carro: ${dadosObj.carro||''}, Linha: ${dadosObj.linha||''}`, endpoint, imei, localizacaoGps);
+      return ContentService.createTextOutput("Cadastramento de tacógrafo registrado com sucesso").setMimeType(ContentService.MimeType.TEXT);
+    }
     if (acao === "envio_informacoes" && dados) {
       const dadosObj = JSON.parse(dados);
       salvarEnvioInformacoes(dadosObj);
@@ -982,7 +1090,20 @@ function doGet(e) {
       LogModule.registrarAcesso(usuario, 'CONSULTA_INSPICOES', `fiscal:${fiscal||''},dataInicio:${dataInicio||''},dataFim:${dataFim||''}`, endpoint, imei, localizacaoGps);
       return enviarResposta(resultado);
     }
-    // CONSULTAR ENVIOS  
+    
+    // CONSULTA CADASTROS DE TACÓGRAFO
+    if (acao === "consultar_tacografos") {
+      const fiscal = e.parameter.fiscal || null;
+      const dataInicio = e.parameter.dataInicio || null;
+      const dataFim = e.parameter.dataFim || null;
+      const carro = e.parameter.carro || null;
+      const fiscalFiltro = e.parameter.fiscalFiltro || null;
+      const resultado = consultarTacografos(fiscal, dataInicio, dataFim, carro, fiscalFiltro);
+      LogModule.registrarAcesso(usuario, 'CONSULTA_TACOGRAFOS', `fiscal:${fiscal||''},dataInicio:${dataInicio||''},dataFim:${dataFim||''}`, endpoint, imei, localizacaoGps);
+      return enviarResposta(resultado);
+    }
+    
+    // CONSULTAR ENVIOS
   if (acao === "consultar_envios") {
   const fiscal = e.parameter.fiscal || null;
   const dataInicio = e.parameter.dataInicio || null;
