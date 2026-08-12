@@ -113,19 +113,21 @@ function carregarTerminais(forceRefresh = false) {
 }
 
 function preencherSelectTerminais() {
-  const select = getEl('terminal');
-  if (!select) return;
+  const selects = [getEl('terminal'), getEl('tacografo-terminal')].filter(Boolean);
+  if (!selects.length) return;
   
   carregarTerminais().then(terminais => {
-    const valorAtual = select.value;
-    select.innerHTML = '<option value="">Selecione...</option>';
-    terminais.forEach(t => { 
-      const opt = document.createElement('option'); 
-      opt.value = t; 
-      opt.textContent = t; 
-      select.appendChild(opt); 
+    selects.forEach(select => {
+      const valorAtual = select.value;
+      select.innerHTML = '<option value="">Selecione...</option>';
+      terminais.forEach(t => { 
+        const opt = document.createElement('option'); 
+        opt.value = t; 
+        opt.textContent = t; 
+        select.appendChild(opt); 
+      });
+      if (valorAtual && terminais.includes(valorAtual)) select.value = valorAtual;
     });
-    if (valorAtual && terminais.includes(valorAtual)) select.value = valorAtual;
   });
 }
 
