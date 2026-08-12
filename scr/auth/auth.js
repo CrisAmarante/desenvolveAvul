@@ -279,7 +279,7 @@ function ajustarCardsPorPerfil(role) {
   
   if (role === 'FISCAL') {
     todosCards.forEach(card => {
-      if (card === cardInspecao || card === cardEnvio) {
+      if (card === cardInspecao || card === cardEnvio || card === cardTacofrafo) {
         card.style.display = 'flex';
       } else {
         card.style.display = 'none';
