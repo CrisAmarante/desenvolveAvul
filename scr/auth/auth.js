@@ -272,6 +272,7 @@ function ajustarCardsPorPerfil(role) {
   const todosCards = document.querySelectorAll('#inspector-screen .inspector-card');
   const cardInspecao = document.getElementById('btn-inspecao-veicular');
   const cardEnvio = document.getElementById('btn-envio-informacoes');
+  const cardTacografo = document.getElementById('btn-tacografo');
   
   const cardRelatorioDiario = document.querySelector('a.inspector-card[href*="docs.google.com/forms/d/e/1FAIpQLSe82OZRZPC_WTgXqF0N2pAuiFaudKONLYRuSnfnBpLPS0fYpw"]');
   const cardConsultaPlacas = document.querySelector('a.inspector-card[href*="app.powerbi.com/view"]');
