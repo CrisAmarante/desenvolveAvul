@@ -19,6 +19,7 @@
     <script src="scr/api/api.js"></script>
     <script src="scr/auth/auth.js"></script>
     <script src="scr/modules/inspecao/inspecao.js"></script>
+    <script src="scr/modules/tacografo/tacografo.js"></script>
     <script src="scr/modules/envio/envio-base.js"></script>
     <script src="scr/modules/envio/envio-form.js"></script>
     <script src="scr/modules/envio/envio-actions.js"></script>
@@ -93,6 +94,7 @@
             <a href="https://forms.office.com/r/XDdEFdBwrC" class="inspector-card"><div class="card-icon"><i class="fas fa-clipboard-check"></i></div>5S - Guaritas</a>
             <a href="https://forms.office.com/pages/responsepage.aspx?id=BT9x5o7JaUGYVqezBC5ZcbsSouziSbdKtQ1p901JfchUREIxR1pNUzQ0OEJLUTlGNzFRTEZKMTI1OC4u" class="inspector-card"><div class="card-icon"><i class="fa-solid fa-video"></i></div>Solicitação Imagem</a>
             <a href="#" id="btn-inspecao-veicular" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fa-solid fa-bus"></i></div>Inspeção Veicular<br>Diária</a>
+            <a href="#" id="btn-tacografo" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fa-solid fa-clock"></i></div>Tacógrafo</a>
             <a href="#" id="btn-envio-informacoes" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fas fa-paper-plane"></i></div>Envio de Informações</a>
             <a href="#" id="btn-painel-admin" class="inspector-card" style="display: none;"><div class="card-icon"><i class="fas fa-shield-alt"></i></div>Painel Admin</a>
         </div>
@@ -133,6 +135,35 @@
 
 <!-- MODAL CONSULTA INSPEÇÕES -->
 <div id="modal-conferir-inspecoes" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Minhas Inspeções</h2><button class="modal-close" onclick="fecharModalConferir()">×</button></div><div id="lista-inspecoes"></div></div></div>
+
+<!-- MODAL TACÓGRAFO -->
+<div id="modal-tacografo" class="modal">
+  <div class="modal-content inspecao-modal-content">
+    <div class="modal-header"><h2 class="modal-title">🕒 TACÓGRAFO - CADASTRAMENTO DE MOTORISTAS</h2><button class="modal-close" onclick="window.modals.tacografo.close()">×</button></div>
+    <div>
+      <div class="top-fields">
+        <div class="field"><label>TERMINAL</label><select id="tacografo-terminal" required><option value="">Selecione...</option></select></div>
+        <div class="field"><label>LINHA</label><input type="text" id="tacografo-linha" placeholder="Linha" maxlength="50" required></div>
+      </div>
+      <div class="bottom-fields">
+        <div class="field"><label>CARRO (PREFIXO)</label><input type="text" id="tacografo-carro" placeholder="Prefixo" maxlength="10" required></div>
+        <div class="field"><label>MOTORISTA</label><input type="text" id="tacografo-motorista" placeholder="Nome do motorista" maxlength="100" required></div>
+      </div>
+      <div class="bottom-fields" style="margin-top: 15px;">
+        <div class="field"><label>FISCAL</label><input type="text" id="tacografo-fiscal" readonly></div>
+        <div class="field"><label>DATA</label><input type="text" id="tacografo-data" readonly></div>
+        <div class="field"><label>HORA</label><input type="text" id="tacografo-hora" readonly></div>
+      </div>
+      <div class="action-buttons">
+        <button id="btn-conferir-tacografos" class="btn-secundario" style="display: none;">CONFERIR CADASTRAMENTOS</button>
+        <button id="btn-enviar-tacografo" class="btn-principal">ENVIAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONSULTA TACÓGRAFOS -->
+<div id="modal-conferir-tacografos" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">📋 Cadastramentos de Tacógrafo</h2><button class="modal-close" onclick="fecharModalConferirTacografos()">×</button></div><div id="lista-tacografos"></div></div></div>
 
 <!-- MODAL ENVIO DE INFORMAÇÕES -->
 <div id="modal-envio-informacoes" class="modal">
