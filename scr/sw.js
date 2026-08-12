@@ -1,4 +1,4 @@
-const CACHE_NAME = 'penso-cache-v3.1.0.0.2.1';
+const CACHE_NAME = 'penso-cache-v3.1.0.0.2.2';
 //Inclusão do modal de Tacógrafos
 // Lista de arquivos para cache imediato (estáticos)
 const ASSETS_TO_CACHE = [
