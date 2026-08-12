@@ -39,7 +39,7 @@ class TacografoModule {
     const btn = getEl('btn-conferir-tacografos');
     if (btn)
       btn.style.display =
-        currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR' ? 'block' : 'none';
+        currentUserRole === 'FISCAL' || currentUserRole === 'INSPETOR' || currentUserRole === 'ADMIN' ? 'block' : 'none';
   }
 
   preencherAutomatico() {
@@ -162,6 +162,7 @@ class TacografoModule {
     if (dataFim) params.append('dataFim', dataFim);
     if (carro) params.append('carro', carro);
     if (fiscalFiltro) params.append('fiscalFiltro', fiscalFiltro);
+    // Fiscais veem apenas seus próprios registros
     if (currentUserRole === 'FISCAL') {
       params.append(
         'fiscal',
@@ -208,7 +209,10 @@ function mostrarModalConferirTacografos(cadastramentos, role, params) {
   if (!modal || !container) return;
 
   const hoje = new Date().toISOString().split('T')[0];
+  // Fiscais só podem ver seus próprios registros; outros perfis veem todos
   const isFiscal = role === 'FISCAL';
+  const rolesQueVeemTodos = ['INSPETOR', 'ENCARREGADO', 'SAF', 'ADMIN', 'GERENTE', 'PLANTONISTA'];
+  const podeVerTodos = rolesQueVeemTodos.includes(role);
 
   // --- Cria o painel de filtros (se não existir) ---
   if (!document.getElementById('filtros-tacografo')) {
@@ -226,7 +230,7 @@ function mostrarModalConferirTacografos(cadastramentos, role, params) {
         <div><label>Carro</label><input type="text" id="filtro-tacografo-carro" placeholder="Prefixo"></div>
     `;
 
-    if (role !== 'FISCAL') {
+    if (!isFiscal && podeVerTodos) {
       htmlFiltros += `<div><label>Fiscal</label><input type="text" id="filtro-tacografo-fiscal" placeholder="Apelido"></div>`;
     }
 
@@ -247,7 +251,7 @@ function mostrarModalConferirTacografos(cadastramentos, role, params) {
         const dataFim = document.getElementById('filtro-tacografo-data-fim').value;
         const carro = document.getElementById('filtro-tacografo-carro').value;
         const fiscalFiltro =
-          role !== 'FISCAL' ? document.getElementById('filtro-tacografo-fiscal').value : null;
+          !isFiscal && podeVerTodos ? document.getElementById('filtro-tacografo-fiscal').value : null;
         window.modals.tacografo.conferirCadastramentosComFiltro(
           dataInicio,
           dataFim,
@@ -263,7 +267,7 @@ function mostrarModalConferirTacografos(cadastramentos, role, params) {
         document.getElementById('filtro-tacografo-data-inicio').value = hoje;
         document.getElementById('filtro-tacografo-data-fim').value = hoje;
         document.getElementById('filtro-tacografo-carro').value = '';
-        if (role !== 'FISCAL')
+        if (!isFiscal && podeVerTodos)
           document.getElementById('filtro-tacografo-fiscal').value = '';
         window.modals.tacografo.conferirCadastramentos();
       });
@@ -308,7 +312,7 @@ function mostrarModalConferirTacografos(cadastramentos, role, params) {
         html += `<div style="background: var(--card-bg); margin: 10px 0; padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent);">`;
         html += `<strong>Carro: ${cad.carro} | Linha: ${cad.linha}</strong><br>`;
         html += `<small>Terminal: ${cad.terminal} | Motorista: ${cad.motorista}</small><br>`;
-        if (role !== 'FISCAL' && !isFiscal) {
+        if (!isFiscal && podeVerTodos) {
           html += `<small>Fiscal: ${cad.fiscal}</small><br>`;
         }
         html += `</div>`;
@@ -386,7 +390,7 @@ function gerarTextoExportacaoTacografo(cadastramentos, role, isFiscal) {
       texto += `Carro: ${cad.carro} | Linha: ${cad.linha}\n`;
       texto += `Terminal: ${cad.terminal}\n`;
       texto += `Motorista: ${cad.motorista}\n`;
-      if (role !== 'FISCAL' && !isFiscal) {
+      if (!isFiscal && podeVerTodos) {
         texto += `Fiscal: ${cad.fiscal}\n`;
       }
       texto += `\n`;
