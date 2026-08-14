@@ -124,6 +124,63 @@ async function login(e) {
   btnSubmit.disabled = true;
   errorMsg.style.display = 'none';
 
+  // Tenta login via Supabase primeiro (se configurado)
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      // Busca TODOS os inspetores ativos no Supabase
+      const { data: inspetores, error } = await supabaseClient
+        .from('inspetores')
+        .select('apelido, nome, funcao, hash, salt, ativo')
+        .eq('ativo', 'SIM');
+      
+      if (error || !inspetores || inspetores.length === 0) {
+        throw new Error('Nenhum inspetor encontrado');
+      }
+      
+      // Procura o inspetor cujo hash bate com a senha fornecida
+      let inspetorEncontrado = null;
+      
+      for (const inspetor of inspetores) {
+        const hashedPassword = await hashPassword(senha, inspetor.salt || '');
+        if (hashedPassword === inspetor.hash) {
+          inspetorEncontrado = inspetor;
+          break;
+        }
+      }
+      
+      if (!inspetorEncontrado) {
+        throw new Error('Senha incorreta');
+      }
+      
+      // Login bem-sucedido via Supabase
+      localStorage.setItem('inspectorLoggedIn', 'true');
+      localStorage.setItem('inspectorName', inspetorEncontrado.nome);
+      localStorage.setItem('inspectorApelido', inspetorEncontrado.apelido);
+      localStorage.setItem('inspectorRole', inspetorEncontrado.funcao);
+      
+      getEl('password').value = '';
+      
+      await refreshInspetores();
+      registrarLog(inspetorEncontrado.apelido);
+      
+      window.modals.login.close();
+      checkLoginStatus();
+      return;
+      
+    } catch (err) {
+      console.warn('⚠️ Falha no login via Supabase, tentando fallback:', err);
+      // Fallback para método antigo
+      await loginViaGoogleScript(senha, btnSubmit, textoOriginal, errorMsg);
+      return;
+    }
+  } else {
+    // Usa método antigo (Google Script)
+    await loginViaGoogleScript(senha, btnSubmit, textoOriginal, errorMsg);
+  }
+}
+
+// Função auxiliar para login via Google Script (fallback)
+async function loginViaGoogleScript(senha, btnSubmit, textoOriginal, errorMsg) {
   const callbackName = 'loginCallback_' + Date.now();
   
   window[callbackName] = async function(resposta) {
@@ -153,7 +210,7 @@ async function login(e) {
   };
 
   const script = document.createElement('script');
-  script.src = `${URL_PLANILHA}?acao=login&senha=${encodeURIComponent(senha)}&callback=${callbackName}`;
+  script.src = URL_PLANILHA + '?acao=login&senha=' + encodeURIComponent(senha) + '&callback=' + callbackName;
   
   script.onerror = () => {
     delete window[callbackName];
@@ -314,3 +371,4 @@ window.aplicarBloqueioDeDatas = aplicarBloqueioDeDatas;
 window.resetInactivityTimer = resetInactivityTimer;
 window.setupInactivityListeners = setupInactivityListeners;
 window.carregarTimeoutInatividade = carregarTimeoutInatividade;
+window.loginViaGoogleScript = loginViaGoogleScript;
