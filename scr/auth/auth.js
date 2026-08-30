@@ -309,3 +309,4 @@ window.aplicarBloqueioDeDatas = aplicarBloqueioDeDatas;
 window.resetInactivityTimer = resetInactivityTimer;
 window.setupInactivityListeners = setupInactivityListeners;
 window.carregarTimeoutInatividade = carregarTimeoutInatividade;
+window.loginViaGoogleScript = loginViaGoogleScript;
