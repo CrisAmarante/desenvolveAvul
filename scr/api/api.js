@@ -4,7 +4,12 @@
  */
 
 // Inicializa cliente Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabase;
+if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  console.error('Supabase SDK não carregado corretamente');
+}
 
 let INSPETORES = {};
 let refreshPromise = null;
@@ -244,7 +249,6 @@ async function carregarTimeoutInatividade() {
 }
 
 // Exportar para escopo global
-window.supabase = window.supabase || supabase;
 window.INSPETORES = INSPETORES;
 window.refreshInspetores = refreshInspetores;
 window.carregarTerminais = carregarTerminais;
@@ -254,3 +258,13 @@ window.preencherSelectLocal = preencherSelectLocal;
 window.registrarLog = registrarLog;
 window.loginSupabase = loginSupabase;
 window.carregarTimeoutInatividade = carregarTimeoutInatividade;
+if (supabase) {
+  window.supabase = supabase;
+}
+
+// Função legacy para compatibilidade (não faz nada, só evita erros)
+function loginViaGoogleScript() {
+  console.warn('loginViaGoogleScript foi removido. Use loginSupabase.');
+  return Promise.resolve({ sucesso: false, erro: 'Método obsoleto' });
+}
+window.loginViaGoogleScript = loginViaGoogleScript;

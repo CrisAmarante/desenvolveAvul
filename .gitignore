@@ -1,1 +1,41 @@
-Nothing should be ignored based on the provided file changes. The changes consist only of source code files (.md, .html, .js) and configuration files, with no build artifacts, dependencies, or temporary files present.
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+.env
+.env.local
+*.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# MyPy cache
+.mypy_cache/
+# Pytest cache
+.pytest_cache/
+```

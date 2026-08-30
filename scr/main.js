@@ -167,7 +167,7 @@ function initTheme() {
 // ====================================================================
 function registerServiceWorker() { 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
+    navigator.serviceWorker.register('./scr/sw.js')
       .then(r => console.log('SW registrado:', r.scope))
       .catch(e => console.error('Falha no SW:', e)); 
   }
