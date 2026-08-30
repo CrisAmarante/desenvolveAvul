@@ -18,14 +18,6 @@
     <!-- Scripts refatorados em módulos -->
     <script src="scr/config/config.js"></script>
     <script src="scr/core/utils.js"></script>
-    <script>
-      // Inicializa Supabase após carregar config
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof createClient !== 'undefined') {
-          initSupabase();
-        }
-      });
-    </script>
     <script src="scr/api/api.js"></script>
     <script src="scr/auth/auth.js"></script>
     <script src="scr/modules/inspecao/inspecao.js"></script>

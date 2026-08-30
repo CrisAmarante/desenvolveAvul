@@ -1,22 +1,22 @@
-const CACHE_NAME = 'penso-cache-v3.1.0.0.3.1';
+const CACHE_NAME = 'penso-cache-v3.1.0.0.3.2';
 //Mudança de BD
 // Lista de arquivos para cache imediato (estáticos)
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
-  './styles.css',
-  './src/config/config.js',
-  './src/core/utils.js',
-  './src/api/api.js',
-  './src/auth/auth.js',
-  './src/modules/inspecao/inspecao.js',
-  './src/modules/envio/envio-base.js',
-  './src/modules/envio/envio-form.js',
-  './src/modules/envio/envio-actions.js',
-   './src/modules/tacografo/tacografo.js',
-  './src/main.js',
-  './manifest.json',
-  './icon.png',
+  '../index.html',
+  '../styles.css',
+  './config/config.js',
+  './core/utils.js',
+  './api/api.js',
+  './auth/auth.js',
+  './modules/inspecao/inspecao.js',
+  './modules/envio/envio-base.js',
+  './modules/envio/envio-form.js',
+  './modules/envio/envio-actions.js',
+  './modules/tacografo/tacografo.js',
+  './main.js',
+  '../manifest.json',
+  '../icon.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css'
 ];
 

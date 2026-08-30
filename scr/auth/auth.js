@@ -13,27 +13,10 @@ let inactivityTimer = null;
 let INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutos padrão (pode ser atualizado pelo admin)
 
 // ====================================================================
-// CARREGAR TIMEOUT DO BACKEND
+// CARREGAR TIMEOUT DO BACKEND (REMOVIDO - AGORA EM api.js)
 // ====================================================================
-async function carregarTimeoutInatividade() {
-  try {
-    const { data, error } = await supabase
-      .from('config')
-      .select('valor')
-      .eq('chave', 'timeout_inatividade')
-      .single();
-    
-    if (error || !data) return;
-    
-    const timeout = parseInt(data.valor);
-    if (timeout) {
-      INACTIVITY_TIMEOUT = timeout;
-      console.log(`✅ Timeout de inatividade carregado: ${INACTIVITY_TIMEOUT / 60000} minutos`);
-    }
-  } catch (err) {
-    console.warn('⚠️ Falha ao carregar timeout do servidor, usando padrão:', err);
-  }
-}
+// Esta função foi movida para api.js para evitar duplicação
+// A versão em auth.js foi removida para evitar conflito
 
 // ====================================================================
 // VERIFICAR STATUS DE LOGIN
@@ -308,5 +291,5 @@ window.mostrarBannerAviso = mostrarBannerAviso;
 window.aplicarBloqueioDeDatas = aplicarBloqueioDeDatas;
 window.resetInactivityTimer = resetInactivityTimer;
 window.setupInactivityListeners = setupInactivityListeners;
-window.carregarTimeoutInatividade = carregarTimeoutInatividade;
-window.loginViaGoogleScript = loginViaGoogleScript;
+// Removido: window.carregarTimeoutInatividade (agora definido em api.js)
+// Removido: window.loginViaGoogleScript (agora definido em api.js)
