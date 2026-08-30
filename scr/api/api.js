@@ -3,12 +3,13 @@
  * Substitui a comunicação anterior com Google Apps Script
  */
 
-// Verifica se Supabase já foi inicializado
+// Cria o cliente Supabase apenas se ainda não existir
 if (typeof window.supabaseClient === 'undefined') {
-  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
-const supabase = window.supabaseClient;
+// Referencia o cliente global
+const supabaseClientInstance = window.supabaseClient;
 
 let INSPETORES = {};
 let refreshPromise = null;
@@ -32,7 +33,7 @@ async function loginSupabase(senha) {
     const senhaHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     // Busca usuário na tabela users
-    const { data: usuario, error } = await supabase
+    const { data: usuario, error } = await supabaseClientInstance
       .from('users')
       .select('apelido, nome, funcao, hash, ativo')
       .eq('hash', senhaHash)
@@ -60,7 +61,7 @@ async function loginSupabase(senha) {
 // ====================================================================
 async function registrarLog(nomeApelido) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClientInstance
       .from('logs')
       .insert([{ 
         usuario: nomeApelido, 
@@ -100,7 +101,7 @@ async function refreshInspetores() {
   
   refreshPromise = new Promise(async (resolve, reject) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClientInstance
         .from('users')
         .select('apelido, hash, nome, funcao, ativo');
       
@@ -133,10 +134,10 @@ function carregarTerminais(forceRefresh = false) {
   
   terminaisPromise = new Promise(async (resolve) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClientInstance
         .from('terminais')
         .select('nome')
-        .eq('ativo', 'SIM');
+        .eq('ativo', true);
       
       if (error) throw error;
       
@@ -187,7 +188,7 @@ function carregarTodosTerminais(forceRefresh = false) {
   
   todosTerminaisPromise = new Promise(async (resolve) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClientInstance
         .from('terminais')
         .select('nome');
       
@@ -229,7 +230,7 @@ function preencherSelectLocal() {
 // ====================================================================
 async function carregarTimeoutInatividade() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClientInstance
       .from('config')
       .select('valor')
       .eq('chave', 'timeout_inatividade')
@@ -248,7 +249,6 @@ async function carregarTimeoutInatividade() {
 }
 
 // Exportar para escopo global
-window.supabase = window.supabase || supabase;
 window.INSPETORES = INSPETORES;
 window.refreshInspetores = refreshInspetores;
 window.carregarTerminais = carregarTerminais;
@@ -258,4 +258,5 @@ window.preencherSelectLocal = preencherSelectLocal;
 window.registrarLog = registrarLog;
 window.loginSupabase = loginSupabase;
 window.carregarTimeoutInatividade = carregarTimeoutInatividade;
-window.loginViaGoogleScript = loginSupabase; // Alias para compatibilidade
+// Alias para compatibilidade com código legado
+window.loginViaGoogleScript = loginSupabase;

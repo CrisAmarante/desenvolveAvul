@@ -308,5 +308,3 @@ window.mostrarBannerAviso = mostrarBannerAviso;
 window.aplicarBloqueioDeDatas = aplicarBloqueioDeDatas;
 window.resetInactivityTimer = resetInactivityTimer;
 window.setupInactivityListeners = setupInactivityListeners;
-window.carregarTimeoutInatividade = carregarTimeoutInatividade;
-// loginSupabase já é exportado em api.js
