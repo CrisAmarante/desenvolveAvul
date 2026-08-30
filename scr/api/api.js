@@ -3,10 +3,10 @@
  * Substitui a comunicação anterior com Google Apps Script
  */
 
-// Inicializa cliente Supabase
-let supabase;
+// Inicializa cliente Supabase (usando nome diferente para evitar conflito com SDK global)
+let supabaseClient;
 if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } else {
   console.error('Supabase SDK não carregado corretamente');
 }
@@ -33,7 +33,7 @@ async function loginSupabase(senha) {
     const senhaHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     // Busca usuário na tabela users
-    const { data: usuario, error } = await supabase
+    const { data: usuario, error } = await supabaseClient
       .from('users')
       .select('apelido, nome, funcao, hash, ativo')
       .eq('hash', senhaHash)
@@ -61,7 +61,7 @@ async function loginSupabase(senha) {
 // ====================================================================
 async function registrarLog(nomeApelido) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('logs')
       .insert([{ 
         usuario: nomeApelido, 
@@ -101,7 +101,7 @@ async function refreshInspetores() {
   
   refreshPromise = new Promise(async (resolve, reject) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('users')
         .select('apelido, hash, nome, funcao, ativo');
       
@@ -134,7 +134,7 @@ function carregarTerminais(forceRefresh = false) {
   
   terminaisPromise = new Promise(async (resolve) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('terminais')
         .select('nome')
         .eq('ativo', 'SIM');
@@ -188,7 +188,7 @@ function carregarTodosTerminais(forceRefresh = false) {
   
   todosTerminaisPromise = new Promise(async (resolve) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('terminais')
         .select('nome');
       
@@ -230,7 +230,7 @@ function preencherSelectLocal() {
 // ====================================================================
 async function carregarTimeoutInatividade() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('config')
       .select('valor')
       .eq('chave', 'timeout_inatividade')
@@ -258,8 +258,8 @@ window.preencherSelectLocal = preencherSelectLocal;
 window.registrarLog = registrarLog;
 window.loginSupabase = loginSupabase;
 window.carregarTimeoutInatividade = carregarTimeoutInatividade;
-if (supabase) {
-  window.supabase = supabase;
+if (supabaseClient) {
+  window.supabaseClient = supabaseClient;
 }
 
 // Função legacy para compatibilidade (não faz nada, só evita erros)
