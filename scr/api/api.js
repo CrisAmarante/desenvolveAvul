@@ -1,7 +1,10 @@
 /**
- * API - Comunicação com backend (Google Apps Script)
- * Gerencia inspetores, terminais e logs
+ * API Supabase - Comunicação com backend Supabase
+ * Substitui a comunicação anterior com Google Apps Script
  */
+
+// Inicializa cliente Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let INSPETORES = {};
 let refreshPromise = null;
@@ -13,14 +16,55 @@ let todosTerminaisCache = [];
 let todosTerminaisPromise = null;
 
 // ====================================================================
+// LOGIN COM SUPABASE
+// ====================================================================
+async function loginSupabase(senha) {
+  try {
+    // Hash da senha em SHA-256 (mesmo formato do Apps Script)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(senha);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const senhaHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Busca usuário na tabela users
+    const { data: usuario, error } = await supabase
+      .from('users')
+      .select('apelido, nome, funcao, hash, ativo')
+      .eq('hash', senhaHash)
+      .eq('ativo', 'SIM')
+      .single();
+
+    if (error || !usuario) {
+      return { sucesso: false, erro: 'Usuário ou senha inválidos' };
+    }
+
+    return {
+      sucesso: true,
+      apelido: usuario.apelido,
+      nome: usuario.nome,
+      funcao: usuario.funcao
+    };
+  } catch (err) {
+    console.error('Erro no login:', err);
+    return { sucesso: false, erro: 'Erro de conexão' };
+  }
+}
+
+// ====================================================================
 // LOG DE ATIVIDADES
 // ====================================================================
 async function registrarLog(nomeApelido) {
   try {
-    const formData = new URLSearchParams();
-    formData.append("nome", nomeApelido);
-    formData.append("acao", "Login bem-sucedido");
-    await fetch(URL_PLANILHA, { method: "POST", body: formData, mode: "no-cors" });
+    const { error } = await supabase
+      .from('logs')
+      .insert([{ 
+        usuario: nomeApelido, 
+        acao: 'Login bem-sucedido',
+        data_hora: new Date().toISOString()
+      }]);
+    
+    if (error) console.warn('Falha ao registrar log:', error);
   } catch (err) { 
     console.warn("Falha ao registrar log:", err); 
   }
@@ -29,7 +73,7 @@ async function registrarLog(nomeApelido) {
 // ====================================================================
 // CARREGAR INSPETORES
 // ====================================================================
-function processarDadosPlanilha(dados) {
+function processarDadosUsuarios(dados) {
   if (Array.isArray(dados)) {
     const novoObjeto = {};
     dados.forEach(row => {
@@ -50,24 +94,22 @@ function processarDadosPlanilha(dados) {
 async function refreshInspetores() {
   if (refreshPromise) return refreshPromise;
   
-  refreshPromise = new Promise((resolve, reject) => {
-    const callbackName = 'processarDadosPlanilha_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-    
-    window[callbackName] = function(dados) {
-      processarDadosPlanilha(dados);
-      delete window[callbackName];
+  refreshPromise = new Promise(async (resolve, reject) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('apelido, hash, nome, funcao, ativo');
+      
+      if (error) throw error;
+      
+      processarDadosUsuarios(data);
       refreshPromise = null;
       resolve();
-    };
-    
-    const script = document.createElement('script');
-    script.src = `${URL_PLANILHA}?callback=${callbackName}&_=${Date.now()}`;
-    script.onerror = () => { 
-      delete window[callbackName]; 
-      refreshPromise = null; 
-      reject(); 
-    };
-    document.body.appendChild(script);
+    } catch (err) {
+      console.error('Erro ao carregar inspetores:', err);
+      refreshPromise = null;
+      reject(err);
+    }
   });
   
   return refreshPromise;
@@ -85,28 +127,26 @@ function carregarTerminais(forceRefresh = false) {
   
   if (terminaisPromise) return terminaisPromise;
   
-  terminaisPromise = new Promise((resolve) => {
-    const callbackName = 'carregarTerminaisCallback_' + Date.now();
-    
-    window[callbackName] = function(terminais) {
-      terminaisCache = terminais;
+  terminaisPromise = new Promise(async (resolve) => {
+    try {
+      const { data, error } = await supabase
+        .from('terminais')
+        .select('nome')
+        .eq('ativo', 'SIM');
+      
+      if (error) throw error;
+      
+      terminaisCache = data.map(t => t.nome);
       terminaisTimestamp = Date.now();
-      delete window[callbackName];
       terminaisPromise = null;
-      resolve(terminais);
-    };
-    
-    const script = document.createElement('script');
-    script.src = `${URL_PLANILHA}?acao=terminais&callback=${callbackName}&_=${Date.now()}`;
-    
-    script.onerror = () => {
-      delete window[callbackName];
+      resolve(terminaisCache);
+    } catch (err) {
+      console.warn('Erro ao carregar terminais, usando fallback:', err);
       terminaisPromise = null;
       terminaisCache = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
       terminaisTimestamp = Date.now();
       resolve(terminaisCache);
-    };
-    document.body.appendChild(script);
+    }
   });
   
   return terminaisPromise;
@@ -141,26 +181,23 @@ function carregarTodosTerminais(forceRefresh = false) {
   
   if (todosTerminaisPromise) return todosTerminaisPromise;
   
-  todosTerminaisPromise = new Promise((resolve) => {
-    const callbackName = 'carregarTodosTerminaisCallback_' + Date.now();
-    
-    window[callbackName] = function(terminais) {
-      todosTerminaisCache = terminais;
-      delete window[callbackName];
+  todosTerminaisPromise = new Promise(async (resolve) => {
+    try {
+      const { data, error } = await supabase
+        .from('terminais')
+        .select('nome');
+      
+      if (error) throw error;
+      
+      todosTerminaisCache = data.map(t => t.nome);
       todosTerminaisPromise = null;
-      resolve(terminais);
-    };
-    
-    const script = document.createElement('script');
-    script.src = `${URL_PLANILHA}?acao=terminais_todos&callback=${callbackName}&_=${Date.now()}`;
-    
-    script.onerror = () => {
-      delete window[callbackName];
+      resolve(todosTerminaisCache);
+    } catch (err) {
+      console.warn('Erro ao carregar todos terminais, usando fallback:', err);
       todosTerminaisPromise = null;
       todosTerminaisCache = ['Terminal A', 'Terminal B', 'Terminal C', 'Terminal D'];
       resolve(todosTerminaisCache);
-    };
-    document.body.appendChild(script);
+    }
   });
   
   return todosTerminaisPromise;
@@ -183,7 +220,31 @@ function preencherSelectLocal() {
   });
 }
 
+// ====================================================================
+// CONFIGURAÇÕES DO ADMIN
+// ====================================================================
+async function carregarTimeoutInatividade() {
+  try {
+    const { data, error } = await supabase
+      .from('config')
+      .select('valor')
+      .eq('chave', 'timeout_inatividade')
+      .single();
+    
+    if (error || !data) return;
+    
+    const timeout = parseInt(data.valor);
+    if (timeout) {
+      INACTIVITY_TIMEOUT = timeout;
+      console.log(`✅ Timeout de inatividade carregado: ${INACTIVITY_TIMEOUT / 60000} minutos`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Falha ao carregar timeout do servidor, usando padrão:', err);
+  }
+}
+
 // Exportar para escopo global
+window.supabase = window.supabase || supabase;
 window.INSPETORES = INSPETORES;
 window.refreshInspetores = refreshInspetores;
 window.carregarTerminais = carregarTerminais;
@@ -191,3 +252,5 @@ window.preencherSelectTerminais = preencherSelectTerminais;
 window.carregarTodosTerminais = carregarTodosTerminais;
 window.preencherSelectLocal = preencherSelectLocal;
 window.registrarLog = registrarLog;
+window.loginSupabase = loginSupabase;
+window.carregarTimeoutInatividade = carregarTimeoutInatividade;

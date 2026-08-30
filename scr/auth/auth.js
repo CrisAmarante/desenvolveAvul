@@ -17,10 +17,17 @@ let INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutos padrão (pode ser atualiz
 // ====================================================================
 async function carregarTimeoutInatividade() {
   try {
-    const response = await fetch(`${URL_PLANILHA}?acao=admin_get_config&_=${Date.now()}`);
-    const data = await response.json();
-    if (data && data.sucesso && data.dados && data.dados.timeout) {
-      INACTIVITY_TIMEOUT = data.dados.timeout;
+    const { data, error } = await supabase
+      .from('config')
+      .select('valor')
+      .eq('chave', 'timeout_inatividade')
+      .single();
+    
+    if (error || !data) return;
+    
+    const timeout = parseInt(data.valor);
+    if (timeout) {
+      INACTIVITY_TIMEOUT = timeout;
       console.log(`✅ Timeout de inatividade carregado: ${INACTIVITY_TIMEOUT / 60000} minutos`);
     }
   } catch (err) {
@@ -111,7 +118,7 @@ async function checkLoginStatus() {
 }
 
 // ====================================================================
-// LOGIN
+// LOGIN COM SUPABASE
 // ====================================================================
 async function login(e) {
   e.preventDefault();
@@ -124,101 +131,32 @@ async function login(e) {
   btnSubmit.disabled = true;
   errorMsg.style.display = 'none';
 
-  // Tenta login via Supabase primeiro (se configurado)
-  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-    try {
-      // Busca TODOS os inspetores ativos no Supabase
-      const { data: inspetores, error } = await supabaseClient
-        .from('inspetores')
-        .select('apelido, nome, funcao, hash, salt, ativo')
-        .eq('ativo', 'SIM');
-      
-      if (error || !inspetores || inspetores.length === 0) {
-        throw new Error('Nenhum inspetor encontrado');
-      }
-      
-      // Procura o inspetor cujo hash bate com a senha fornecida
-      let inspetorEncontrado = null;
-      
-      for (const inspetor of inspetores) {
-        const hashedPassword = await hashPassword(senha, inspetor.salt || '');
-        if (hashedPassword === inspetor.hash) {
-          inspetorEncontrado = inspetor;
-          break;
-        }
-      }
-      
-      if (!inspetorEncontrado) {
-        throw new Error('Senha incorreta');
-      }
-      
-      // Login bem-sucedido via Supabase
-      localStorage.setItem('inspectorLoggedIn', 'true');
-      localStorage.setItem('inspectorName', inspetorEncontrado.nome);
-      localStorage.setItem('inspectorApelido', inspetorEncontrado.apelido);
-      localStorage.setItem('inspectorRole', inspetorEncontrado.funcao);
-      
-      getEl('password').value = '';
-      
-      await refreshInspetores();
-      registrarLog(inspetorEncontrado.apelido);
-      
-      window.modals.login.close();
-      checkLoginStatus();
-      return;
-      
-    } catch (err) {
-      console.warn('⚠️ Falha no login via Supabase, tentando fallback:', err);
-      // Fallback para método antigo
-      await loginViaGoogleScript(senha, btnSubmit, textoOriginal, errorMsg);
-      return;
-    }
+  // Usa a nova função de login com Supabase
+  const resultado = await loginSupabase(senha);
+  
+  btnSubmit.innerHTML = textoOriginal;
+  btnSubmit.disabled = false;
+
+  if (resultado.sucesso) {
+    localStorage.setItem('inspectorLoggedIn', 'true');
+    localStorage.setItem('inspectorName', resultado.nome);
+    localStorage.setItem('inspectorApelido', resultado.apelido);
+    localStorage.setItem('inspectorRole', resultado.funcao);
+    
+    // Limpa o campo de senha após login bem-sucedido
+    getEl('password').value = '';
+    
+    await refreshInspetores();
+    registrarLog(resultado.apelido);
+    
+    window.modals.login.close();
+    checkLoginStatus();
   } else {
-    // Usa método antigo (Google Script)
-    await loginViaGoogleScript(senha, btnSubmit, textoOriginal, errorMsg);
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = resultado.erro || 'Usuário ou senha inválidos';
+    getEl('password').value = '';
+    getEl('password').focus();
   }
-}
-
-// Função auxiliar para login via Google Script (fallback)
-async function loginViaGoogleScript(senha, btnSubmit, textoOriginal, errorMsg) {
-  const callbackName = 'loginCallback_' + Date.now();
-  
-  window[callbackName] = async function(resposta) {
-    delete window[callbackName];
-    btnSubmit.innerHTML = textoOriginal;
-    btnSubmit.disabled = false;
-
-    if (resposta && resposta.sucesso) {
-      localStorage.setItem('inspectorLoggedIn', 'true');
-      localStorage.setItem('inspectorName', resposta.nome);
-      localStorage.setItem('inspectorApelido', resposta.apelido);
-      localStorage.setItem('inspectorRole', resposta.funcao);
-      
-      // Limpa o campo de senha após login bem-sucedido
-      getEl('password').value = '';
-      
-      await refreshInspetores();
-      registrarLog(resposta.apelido);
-      
-      window.modals.login.close();
-      checkLoginStatus();
-    } else {
-      errorMsg.style.display = 'block';
-      getEl('password').value = '';
-      getEl('password').focus();
-    }
-  };
-
-  const script = document.createElement('script');
-  script.src = URL_PLANILHA + '?acao=login&senha=' + encodeURIComponent(senha) + '&callback=' + callbackName;
-  
-  script.onerror = () => {
-    delete window[callbackName];
-    btnSubmit.innerHTML = textoOriginal;
-    btnSubmit.disabled = false;
-    alert('Erro de conexão. Verifique sua internet.');
-  };
-  document.body.appendChild(script);
 }
 
 // ====================================================================
