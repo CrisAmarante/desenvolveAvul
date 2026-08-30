@@ -3,8 +3,12 @@
  * Substitui a comunicação anterior com Google Apps Script
  */
 
-// Inicializa cliente Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Verifica se Supabase já foi inicializado
+if (typeof window.supabaseClient === 'undefined') {
+  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+const supabase = window.supabaseClient;
 
 let INSPETORES = {};
 let refreshPromise = null;
@@ -254,3 +258,4 @@ window.preencherSelectLocal = preencherSelectLocal;
 window.registrarLog = registrarLog;
 window.loginSupabase = loginSupabase;
 window.carregarTimeoutInatividade = carregarTimeoutInatividade;
+window.loginViaGoogleScript = loginSupabase; // Alias para compatibilidade
