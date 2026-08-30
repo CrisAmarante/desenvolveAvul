@@ -17,10 +17,17 @@ let INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutos padrão (pode ser atualiz
 // ====================================================================
 async function carregarTimeoutInatividade() {
   try {
-    const response = await fetch(`${URL_PLANILHA}?acao=admin_get_config&_=${Date.now()}`);
-    const data = await response.json();
-    if (data && data.sucesso && data.dados && data.dados.timeout) {
-      INACTIVITY_TIMEOUT = data.dados.timeout;
+    const { data, error } = await supabase
+      .from('config')
+      .select('valor')
+      .eq('chave', 'timeout_inatividade')
+      .single();
+    
+    if (error || !data) return;
+    
+    const timeout = parseInt(data.valor);
+    if (timeout) {
+      INACTIVITY_TIMEOUT = timeout;
       console.log(`✅ Timeout de inatividade carregado: ${INACTIVITY_TIMEOUT / 60000} minutos`);
     }
   } catch (err) {
@@ -111,7 +118,7 @@ async function checkLoginStatus() {
 }
 
 // ====================================================================
-// LOGIN
+// LOGIN COM SUPABASE
 // ====================================================================
 async function login(e) {
   e.preventDefault();
@@ -124,44 +131,32 @@ async function login(e) {
   btnSubmit.disabled = true;
   errorMsg.style.display = 'none';
 
-  const callbackName = 'loginCallback_' + Date.now();
+  // Usa a nova função de login com Supabase
+  const resultado = await loginSupabase(senha);
   
-  window[callbackName] = async function(resposta) {
-    delete window[callbackName];
-    btnSubmit.innerHTML = textoOriginal;
-    btnSubmit.disabled = false;
+  btnSubmit.innerHTML = textoOriginal;
+  btnSubmit.disabled = false;
 
-    if (resposta && resposta.sucesso) {
-      localStorage.setItem('inspectorLoggedIn', 'true');
-      localStorage.setItem('inspectorName', resposta.nome);
-      localStorage.setItem('inspectorApelido', resposta.apelido);
-      localStorage.setItem('inspectorRole', resposta.funcao);
-      
-      // Limpa o campo de senha após login bem-sucedido
-      getEl('password').value = '';
-      
-      await refreshInspetores();
-      registrarLog(resposta.apelido);
-      
-      window.modals.login.close();
-      checkLoginStatus();
-    } else {
-      errorMsg.style.display = 'block';
-      getEl('password').value = '';
-      getEl('password').focus();
-    }
-  };
-
-  const script = document.createElement('script');
-  script.src = `${URL_PLANILHA}?acao=login&senha=${encodeURIComponent(senha)}&callback=${callbackName}`;
-  
-  script.onerror = () => {
-    delete window[callbackName];
-    btnSubmit.innerHTML = textoOriginal;
-    btnSubmit.disabled = false;
-    alert('Erro de conexão. Verifique sua internet.');
-  };
-  document.body.appendChild(script);
+  if (resultado.sucesso) {
+    localStorage.setItem('inspectorLoggedIn', 'true');
+    localStorage.setItem('inspectorName', resultado.nome);
+    localStorage.setItem('inspectorApelido', resultado.apelido);
+    localStorage.setItem('inspectorRole', resultado.funcao);
+    
+    // Limpa o campo de senha após login bem-sucedido
+    getEl('password').value = '';
+    
+    await refreshInspetores();
+    registrarLog(resultado.apelido);
+    
+    window.modals.login.close();
+    checkLoginStatus();
+  } else {
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = resultado.erro || 'Usuário ou senha inválidos';
+    getEl('password').value = '';
+    getEl('password').focus();
+  }
 }
 
 // ====================================================================
